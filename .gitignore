@@ -1,0 +1,49 @@
+# ****************************************************************************************************************
+# * Kira - cross-platform component-based modular application development framework written in C11               *
+# *                                                                                                              *
+# * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                  *
+# *                                                                                                              *
+# * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
+# * this project. If this file is not present, visit                                                             *
+# *     https://www.apache.org/licenses/LICENSE-2.0                                                              *
+# ****************************************************************************************************************
+
+
+# CMake build directories
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/CMakeScripts/
+/Makefile
+/cmake_install.cmake
+/CTestTestfile.cmake
+
+# User-specific files
+*.user
+*.userprefs
+*.swp
+*.swo
+
+# IDE directories and files
+.vscode/
+.idea/
+.cache/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Debug/Release folders
+/[Bb]in/
+/[Dd]ocs/html/
+/x86/
+/x64/
+/[Dd]ebug/
+/[Rr]elease/
+
+# generated documentation
+/docs/html/
+/docs/latex/
+
+# Python files
+__pycache__/
