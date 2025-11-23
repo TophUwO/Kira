@@ -75,14 +75,48 @@ KI_NATIVE typedef KiEErrorCode (KI_CALL *KiFCommandLineValidationRoutine)(KiSCom
 /**
  */
 KI_NATIVE typedef enum KiECommandLineArgumentCategory {
-    KiCmdlArgCat_Invalid = 0,
+    KiCmdlAC_Invalid    = 0,
 
-    KiCmdlArgCat_Positional,
-    KiCmdlArgCat_Option,
-    KiCmdlArgCat_SubCommand,
+    KiCmdlAC_Positional = 1 << 0,
+    KiCmdlAC_Option     = 1 << 1,
+    KiCmdlAC_SubCommand = 1 << 2,
 
-    __KiCmdlArgCat_Count__
+    KiCmdlAC_All        = KiCmdlAC_Positional | KiCmdlAC_Option | KiCmdlAC_SubCommand,
+    KiCmdlAC_Args       = KiCmdlAC_Positional | KiCmdlAC_Option,
+
+    KI_ENUM_GEN_LAST(__KiCmdlAC_Last__, KiCmdlAC_SubCommand)
 } KiECommandLineArgumentCategory;
+
+/**
+ */
+KI_NATIVE typedef enum KiECommandLineArgumentProperty {
+    KiCmdlAP_Invalid = 0,
+
+    KiCmdlAP_Type,
+    KiCmdlAP_Spec,
+    KiCmdlAP_Desc,
+    KiCmdlAP_Flags,
+    KiCmdlAP_MetaVar,
+    KiCmdlAP_Default,
+    KiCmdlAP_Enum,
+    KiCmdlAP_Bounds,
+    KiCmdlAP_Check,
+    KiCmdlAP_Proc,
+    KiCmdlAP_Args,
+
+    __KiCmdlAP_Count__
+} KiECommandLineArgumentProperty;
+
+/**
+ */
+KI_NATIVE typedef enum KiECommandLineArgumentPropertyKind {
+    KiCmdlAPK_None = 0,
+
+    KiCmdlAPK_Val,
+    KiCmdlAPK_Ptr,
+
+    __KiCmdlAPK_Count__
+} KiECommandLineArgumentPropertyKind;
 
  
 /**
@@ -91,6 +125,15 @@ KI_NATIVE typedef struct KiSCommandLineValidationPass {
     KiSStringView                   m_passName;
     KiFCommandLineValidationRoutine m_routine;
 } KiSCommandLineValidationPass;
+
+/**
+ */
+KI_NATIVE typedef struct KiSCommandLineArgumentPropertyEntry {
+    KiTChar                            const *mp_propIdent;
+    KiECommandLineArgumentCategory            m_validCats;
+    KiECommandLineArgumentPropertyKind        m_propKind;
+    KiTOffset                                 m_propOff;
+} KiSCommandLineArgumentPropertyEntry;
 
 /**
  */
@@ -113,18 +156,18 @@ KI_NATIVE typedef struct KiSCommandLineNamespace {
  */
 static KiECommandLineArgumentCategory KI_CALL KiInternal_CmdlGetArgumentCategory(KiSCommandLineArgument const *argPtr) {
     if (argPtr == nullptr)
-        return KiCmdlArgCat_Invalid;
+        return KiCmdlAC_Invalid;
 
     /* If first two chars are '--' or the first char is ';', we assume it's an option. */
     if (strlen(argPtr->mp_spec) >= 2 && *argPtr->mp_spec == '-' && argPtr->mp_spec[1] == '-' || *argPtr->mp_spec == ';')
-        return KiCmdlArgCat_Option;
+        return KiCmdlAC_Option;
 
     /*
      * Otherwise, if we have child arguments, we assume it's a sub-command or, if not, a positional argument.
      * Positionals cannot start with a '-' or any other character in KI_SEP (if present), but are accepted here. In such
      * a case, an error would be thrown when validating the schema.
      */
-    return argPtr->mp_args != nullptr ? KiCmdlArgCat_SubCommand : KiCmdlArgCat_Positional;
+    return argPtr->mp_args != nullptr ? KiCmdlAC_SubCommand : KiCmdlAC_Positional;
 }
 #pragma endregion
 
@@ -138,7 +181,7 @@ static KiTSize constexpr gl_c_IndentSize = 4;
 /**
  */
 static KiTChar const *KI_CALL KiInternal_CmdlMakeSchemaFlags(KiECommandLineSchemaFlags flags) {
-    static KiTChar _Thread_local gl_SchFlagBuffer[(sizeof "KiSchFl_CaseInsensitive" + 2) * KI_P2LOG2(__KiSchFl_Last__)];
+    static KiTChar _Thread_local gl_SchFlagBuffer[256];
     {
         /**
          */
@@ -169,13 +212,15 @@ static KiTChar const *KI_CALL KiInternal_CmdlMakeArgumentCategoryStr(KiSCommandL
     /**
      */
     static KiTChar constexpr *gl_c_CmdlArgCategoryStrings[] = {
-        [KiCmdlArgCat_Invalid]    = "<error-type>",
+        [KiCmdlAC_Invalid]    = "<error-type>",
 
-        [KiCmdlArgCat_Positional] = "POSITIONAL",
-        [KiCmdlArgCat_Option]     = "OPTION",
-        [KiCmdlArgCat_SubCommand] = "SUBCOMMAND"
+        [KiCmdlAC_Positional] = "POSITIONAL",
+        [KiCmdlAC_Option]     = "OPTION",
+        [KiCmdlAC_SubCommand] = "SUBCOMMAND",
+
+        [__KiCmdlAC_Last__]   = "<error-type>"
     };
-    KI_VERIFY_LUT(gl_c_CmdlArgCategoryStrings, __KiCmdlArgCat_Count__);
+    KI_VERIFY_LUT(gl_c_CmdlArgCategoryStrings, __KiCmdlAC_Last__ + 1);
 
     /*
      * KiInternal_CmdlGetArgumentCategory() only returns values that are part of the KiECommandLineArgumentCategory
@@ -221,46 +266,101 @@ static KiSStringView KI_CALL KiInternal_CmdlMakeFirstArgumentName(KiTChar const 
 }
 
 
-/**
- */
-static KiTVoid KI_CALL KiInternal_CmdlPrintArgumentSpec(KiTChar const *rawSpecStr, KiTInt32 lvl) {
+static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArgumentValue(
+    KiSCommandLineSchema const *schPtr,
+    KiSCommandLineArgument const *argPtr,
+    KiECommandLineArgumentProperty propId,
+    KiTInt32 lvl
+) {
 
 }
 
 /**
  */
-static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArgument(KiSCommandLineArgument const *argPtr, KiTInt32 lvl) {
+static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArgument(
+    KiSCommandLineSchema const *schPtr,
+    KiSCommandLineArgument const *argPtr,
+    KiTInt32 lvl
+) {
     KiSStringView const argName = KiInternal_CmdlMakeFirstArgumentName(argPtr->mp_spec);
 
     printf("%*sARGUMENT<%s> %.*s {\n",
-        lvl * gl_c_IndentSize, "",
+        (KiTInt32)(lvl * gl_c_IndentSize), "",
         KiInternal_CmdlMakeArgumentCategoryStr(argPtr),
-        argName.m_sizeInBytes, argName.mp_strPtr
+        (KiTInt32)argName.m_sizeInBytes, argName.mp_strPtr
     );
     {
-        KiInternal_CmdlPrintArgumentSpec(argPtr->mp_spec, lvl + 1);
+        /**
+         * \brief lookup table mapping property IDs to string identifiers as well as argument categories for which the
+         *        property is valid
+         */
+        static KiSCommandLineArgumentPropertyEntry constexpr gl_c_PropTable[] = {
+            [KiCmdlAP_Type]    = { "type   ", KiCmdlAC_Args,       KiCmdlAPK_Val, KI_OFFSETOF(KiSCommandLineArgument, m_type)     },
+            [KiCmdlAP_Spec]    = { "spec   ", KiCmdlAC_All,        KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_spec)    },
+            [KiCmdlAP_Desc]    = { "desc   ", KiCmdlAC_All,        KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_desc)    },
+            [KiCmdlAP_Flags]   = { "flags  ", KiCmdlAC_All,        KiCmdlAPK_Val, KI_OFFSETOF(KiSCommandLineArgument, m_flags)    },
+            [KiCmdlAP_MetaVar] = { "meta   ", KiCmdlAC_Args,       KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_metaVar) },
+            [KiCmdlAP_Default] = { "default", KiCmdlAC_Args,       KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_defVal)  },
+            [KiCmdlAP_Enum]    = { "enum   ", KiCmdlAC_Args,       KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_enum)    },
+            [KiCmdlAP_Bounds]  = { "bounds ", KiCmdlAC_Args,       KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_bounds)  },
+            [KiCmdlAP_Check]   = { "check  ", KiCmdlAC_Args,       KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_checkCb) },
+            [KiCmdlAP_Proc]    = { "proc   ", KiCmdlAC_Args,       KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_procCb)  },
+            [KiCmdlAP_Args]    = { "args   ", KiCmdlAC_SubCommand, KiCmdlAPK_Ptr, KI_OFFSETOF(KiSCommandLineArgument, mp_args)    }
+        };
+        KI_VERIFY_LUT(gl_c_PropTable, __KiCmdlAP_Count__);
+
+        /* Go through the lookup table and print all the args if necessary. */
+        KiECommandLineArgumentCategory const argCat = KiInternal_CmdlGetArgumentCategory(argPtr);
+        {
+            for (KiTInt32 i = 0; i < __KiCmdlAP_Count__; i++) {
+                /*
+                 * Get current entry and skip 'args' as well as properties not valid for the current argument's category.
+                 */
+                KiSCommandLineArgumentPropertyEntry const *const currProp = &gl_c_PropTable[i];
+                if (i == KiCmdlAP_Args || (currProp->m_validCats & argCat) == KI_FALSE)
+                    continue;
+                /* Only print the argument if it is not nullptr. */
+                if (currProp->m_propKind == KiCmdlAPK_Ptr && *(KiTVoid **)((KiTChar *)argPtr + currProp->m_propOff) == nullptr)
+                    continue;
+
+                printf("%*sPROPERTY %s\n", (KiTInt32)((lvl + 1) * gl_c_IndentSize), "", currProp->mp_propIdent);
+                KiInternal_CmdlPrintCommandLineArgumentValue(nullptr, argPtr, i, lvl + 2);
+            }
+        }
 
         /* If we have child arguments, we print them. */
         if (argPtr->mp_args != nullptr) {
             /** \cond */
-            extern KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(KiSStaticArray const *argArr, KiTInt32 lvl);
+            extern KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(
+                KiSCommandLineSchema const *schPtr,
+                KiSStaticArray const *argArr,
+                KiTInt32 lvl
+            );
             /** \endcond */
 
-            KiInternal_CmdlPrintCommandLineArguments(argPtr->mp_args, lvl + 1);
+            KiInternal_CmdlPrintCommandLineArguments(schPtr, argPtr->mp_args, lvl + 1);
         }
     }
-    printf("%*s}\n", lvl * gl_c_IndentSize, "");
+    printf("%*s}\n", (KiTInt32)(lvl * gl_c_IndentSize), "");
 }
 
 /**
  */
-static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(KiSStaticArray const *argArr, KiTInt32 lvl) {
-    printf("\n%*sARGUMENTS {\n", lvl * gl_c_IndentSize, "");
+static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(
+    KiSCommandLineSchema const *schPtr,
+    KiSStaticArray const *argArr,
+    KiTInt32 lvl
+) {
+    printf("\n%*sARGUMENTS {\n", (KiTInt32)(lvl * gl_c_IndentSize), "");
     {
         for (KiTSize i = 0; i < argArr->m_elemCount; i++)
-            KiInternal_CmdlPrintCommandLineArgument(((KiSCommandLineArgument const **)argArr->mp_arrPtr)[i], lvl + 1);
+            KiInternal_CmdlPrintCommandLineArgument(
+                schPtr,
+                ((KiSCommandLineArgument const **)argArr->mp_arrPtr)[i],
+                lvl + 1
+            );
     }
-    printf("%*s}\n", lvl * gl_c_IndentSize, "");
+    printf("%*s}\n", (KiTInt32)(lvl * gl_c_IndentSize), "");
 }
 
 /**
@@ -268,16 +368,16 @@ static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(KiSStaticArray c
 static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineSchema(KiSCommandLineSchema const *cmdlSchemaPtr) {
     printf("SCHEMA %s {\n", cmdlSchemaPtr->mp_name);
     {
-        printf("%*sPROPERTY<string> name       \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_name);
-        printf("%*sPROPERTY<string> desc       \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_desc);
-        printf("%*sPROPERTY<flags>  flags       %s\n", 
-            1 * gl_c_IndentSize, "",
+        printf("%*sPROPERTY name       \"%s\"\n", (KiTInt32)(1 * gl_c_IndentSize), "", cmdlSchemaPtr->mp_name);
+        printf("%*sPROPERTY desc       \"%s\"\n", (KiTInt32)(1 * gl_c_IndentSize), "", cmdlSchemaPtr->mp_desc);
+        printf("%*sPROPERTY flags       %s\n", 
+            (KiTInt32)(1 * gl_c_IndentSize), "",
             KiInternal_CmdlMakeSchemaFlags(cmdlSchemaPtr->m_flags)
         );
-        printf("%*sPROPERTY<string> prefixes   \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_prefixes);
-        printf("%*sPROPERTY<string> separators \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_seps);
+        printf("%*sPROPERTY prefixes   \"%s\"\n", (KiTInt32)(1 * gl_c_IndentSize), "", cmdlSchemaPtr->mp_prefixes);
+        printf("%*sPROPERTY separators \"%s\"\n", (KiTInt32)(1 * gl_c_IndentSize), "", cmdlSchemaPtr->mp_seps);
 
-        KiInternal_CmdlPrintCommandLineArguments(cmdlSchemaPtr->mp_args, 1);
+        KiInternal_CmdlPrintCommandLineArguments(cmdlSchemaPtr, cmdlSchemaPtr->mp_args, 1);
     }
     printf("}\n");
 }
@@ -312,7 +412,7 @@ static KiEErrorCode KI_CALL KiInternal_ValidateNode(
     {
         /**
          */
-        static KiSCommandLineValidationPass const gl_c_ValidationPasses[] = {
+        static KiSCommandLineValidationPass constexpr gl_c_ValidationPasses[] = {
             { KI_MAKE_STRING_VIEW("ValidateSpec"), &KiInternal_ValidateSpec }
         };
 

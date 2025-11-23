@@ -24,48 +24,48 @@
 
 /**
  */
-KI_NATIVE typedef struct KiSKrnlString KiSKrnlString;
+KI_NATIVE typedef struct KiSString KiSString;
 
 
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringCreate(KiTChar const *srcStr, KiSKrnlString **resPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringCreate(KiTChar const *srcStr, KiSString **resPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlStringDestroy(KiSKrnlString *strPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiKrnlStringDestroy(KiSString *strPtr);
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringAssign(KiSKrnlString *strPtr, KiTChar const *srcPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringAssign(KiSString *strPtr, KiTChar const *srcPtr);
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringDuplicate(KiSKrnlString const *srcPtr, KiSKrnlString **resPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringDuplicate(KiSString const *srcPtr, KiSString **resPtr);
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringConcat(KiSKrnlString *strPtr, KiTChar const *srcStr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringConcat(KiSString *strPtr, KiTChar const *srcStr);
 /**
  */
 KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlStringPushPathComponent(
-    KiSKrnlString *strPtr,
+    KiSString *strPtr,
     KiTChar const *pathCompPtr
 );
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlStringPopPathComponent(KiSKrnlString *strPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiKrnlStringPopPathComponent(KiSString *strPtr);
 /**
  */
 KI_NATIVE extern KiTSize KI_CALL KiKrnlStringReplaceChar(
-    KiSKrnlString *strPtr,
+    KiSString *strPtr,
     KiTChar ch2Replace,
     KiTChar replaceWith
 );
 /**
  */
-KI_NATIVE extern KiTChar const *KI_CALL KiKrnlStringCStr(KiSKrnlString const *strPtr);
+KI_NATIVE extern KiTChar const *KI_CALL KiKrnlStringCStr(KiSString const *strPtr);
 /**
  */
-KI_NATIVE extern KiTSize KI_CALL KiKrnlStringSize(KiSKrnlString const *strPtr);
+KI_NATIVE extern KiTSize KI_CALL KiKrnlStringSize(KiSString const *strPtr);
 /**
  */
-KI_NATIVE extern KiTChar const *KI_CALL KiKrnlStringFindChar(KiSKrnlString const *strPtr, KiTChar ch, KiTBool isRev);
+KI_NATIVE extern KiTChar const *KI_CALL KiKrnlStringFindChar(KiSString const *strPtr, KiTChar ch, KiTBool isRev);
 
 

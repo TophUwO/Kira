@@ -37,6 +37,12 @@ KI_NATIVE KiSBuffer *KI_CALL KiCreateBuffer(KiTSize initSize);
 /**
  */
 KI_NATIVE KiTVoid KI_CALL KiDestroyBuffer(KiSBuffer *bufPtr);
+/**
+ */
+KI_NATIVE KiEErrorCode KI_CALL KiReserveBuffer(KiSBuffer *bufPtr, KiTSize s);
+/**
+ */
+KI_NATIVE KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize bufSize);
 
 /**
  */

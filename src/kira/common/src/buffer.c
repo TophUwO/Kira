@@ -46,7 +46,7 @@ static KiTSize inline KI_CALL KiInternal_BufferComputeNewSize(KiSBuffer const *b
     if ((KiTSize)bufPtr->m_off + reqSpace <= bufPtr->m_size)
         return bufPtr->m_size;
 
-    return (KiTSize)bufPtr->m_off + (reqSpace << 3);
+    return KI_MAX((KiTSize)bufPtr->m_off + reqSpace, bufPtr->m_size << 1);
 }
 /** \endcond */
 
@@ -61,7 +61,7 @@ KiSBuffer *KI_CALL KiCreateBuffer(KiTSize initSize) {
      * calloc()) and allocate it as long as we write data into it.
      */
     if (initSize > 0 && initSize <= (KiTSize)KI_OFFSET_MAX) {
-        KiTVoid *intBuf = malloc(initSize * sizeof(KiTByte));
+        KiTVoid *intBuf = malloc(initSize);
         if (intBuf == nullptr) {
             free(bufObj);
 
@@ -86,6 +86,28 @@ KiTVoid KI_CALL KiDestroyBuffer(KiSBuffer *bufPtr) {
     free(bufPtr);
 }
 
+KiEErrorCode KI_CALL KiReserveBuffer(KiSBuffer *bufPtr, KiTSize s) {
+    KiTSize const newSize = bufPtr->m_size + s;
+    {
+        KiTVoid *newBuf = realloc(bufPtr->mp_buffer, newSize);
+        if (newBuf == nullptr)
+            return KiErr_MemoryReallocation;
+
+        bufPtr->mp_buffer = newBuf;
+        bufPtr->m_size    = newSize;
+    }
+
+    return KiErr_Ok;
+}
+
+KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize bufSize) {
+    KiTSize const writeCount = bufPtr->m_size / bufSize;
+    {
+        for (KiTSize i = 0; i < writeCount; i++)
+            memcpy((KiTByte *)bufPtr->mp_buffer + i * bufSize, srcBuf, bufSize);
+    }
+}
+
 
 KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr, KiTSize s) {
     if (KiInternal_BufferNeedsResize(bufPtr, s)) {
@@ -104,7 +126,7 @@ KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr
             bufPtr->m_size    = newSize;
         }
     }
-    memcpy_s((KiTByte *)bufPtr->mp_buffer + bufPtr->m_off, bufPtr->m_size - (KiTSize)bufPtr->m_off, dataPtr, s);
+    memcpy((KiTByte *)bufPtr->mp_buffer + bufPtr->m_off, dataPtr, s);
 
     /* All good. */
     bufPtr->m_off += s;
@@ -115,14 +137,14 @@ KiEErrorCode KI_CALL KiReadBufferData(KiSBuffer const *bufPtr, KiTVoid *dstBuf, 
     if (off + s > bufPtr->m_size)
         return KiErr_RangeError;
 
-    memcpy_s(dstBuf, s, (KiTByte const *)bufPtr->mp_buffer + off, s);
+    memcpy(dstBuf, (KiTByte const *)bufPtr->mp_buffer + off, s);
     return KiErr_Ok;
 }
 
 KiTOffset KI_CALL KiSeekBufferPosition(KiSBuffer *bufPtr, KiTOffset off) {
     KiTOffset const oldOff = bufPtr->m_off;
     {
-        bufPtr->m_off = off;
+        bufPtr->m_off = KI_MAX(off == KI_SEEK_END ? (KiTOffset)bufPtr->m_size : off, 0);
     }
 
     return oldOff;
