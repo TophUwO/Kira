@@ -104,7 +104,7 @@ endif()
 
 # Set global include directory.
 include_directories(${CMAKE_SOURCE_DIR}/src)
-add_compile_definitions(KIRA_TARGET_X64)
+add_compile_definitions(KI_TARGET_X64)
 
 # Add common utils target.
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/kira/common)

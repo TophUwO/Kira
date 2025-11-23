@@ -84,6 +84,9 @@
 /**
  */
 #define KI_CONCAT5(a, b, c, d, e)      __KI_CONCAT2_IMPL__(__KI_CONCAT3_IMPL__(a, b, c), __KI_CONCAT2_IMPL__(d, e))
+/**
+ */
+#define KI_STRINGIFY(...)              #__VA_ARGS__
 
 /**
  */
@@ -192,6 +195,9 @@
         KI_COUNTOF(l) == (KiTSize)(s),                                          \
         "Kismatch between actual and required size of lookup table \"" #l "\"." \
     );
+/**
+ */
+#define KI_ENUM_GEN_LAST(n, prev) n = (1 << (KI_P2LOG2(prev) + 1))
 
 
 /**

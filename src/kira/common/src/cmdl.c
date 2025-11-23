@@ -132,35 +132,35 @@ static KiECommandLineArgumentCategory KI_CALL KiInternal_CmdlGetArgumentCategory
 #pragma region Schema-Printing
 /**
  */
-static KiTChar const *KI_CALL KiInternal_CmdlMakeIndent(KiTInt32 lvl) {
-    /**
-     */
-    static KiTSize constexpr gl_c_TabSize = 4;
-     
-    static KiTSize _Thread_local gl_IndentSize;
-    static KiTChar _Thread_local gl_IndentBuffer[256];
-    {
-        /* Clear the old indent. */
-        memset(gl_IndentBuffer, 0, gl_IndentSize);
+static KiTSize constexpr gl_c_IndentSize = 4;
 
-        /* Write the new indent. */
-        for (KiTSize i = 0; i < KI_MIN((KiTSize)lvl, sizeof gl_IndentBuffer / gl_c_TabSize); i++)
-            strcat_s(gl_IndentBuffer, sizeof gl_IndentBuffer, "    ");
-        gl_IndentSize = lvl * gl_c_TabSize;
-    }
-
-    return gl_IndentBuffer;
-}
 
 /**
  */
 static KiTChar const *KI_CALL KiInternal_CmdlMakeSchemaFlags(KiECommandLineSchemaFlags flags) {
-    static KiTSize _Thread_local gl_IndentSize;
-    static KiTChar _Thread_local gl_IndentBuffer[256];
+    static KiTChar _Thread_local gl_SchFlagBuffer[(sizeof "KiSchFl_CaseInsensitive" + 2) * KI_P2LOG2(__KiSchFl_Last__)];
+    {
+        /**
+         */
+        static KiTChar constexpr *gl_c_SchFlagTable[] = {
+            [KI_P2LOG2(KiSchFl_NoHelp)]          = KI_STRINGIFY(no-help),
+            [KI_P2LOG2(KiSchFl_CaseInsensitive)] = KI_STRINGIFY(case-insensitive),
+            [KI_P2LOG2(KiSchFl_Strict)]          = KI_STRINGIFY(strict),
+            [KI_P2LOG2(KiSchFl_SubcmdsOptional)] = KI_STRINGIFY(optional-subcmds)
+        };
 
-    static KiECommandLineSchemaFlags const gl_c_CmdlSchemaColl[] = {
-        
-    };
+        memset(gl_SchFlagBuffer, 0, sizeof gl_SchFlagBuffer);
+        for (KiTSize i = 0; i < KI_P2LOG2(__KiSchFl_Last__); i++) {
+            if (flags & (1 << i)) {
+                if (*gl_SchFlagBuffer != '\0')
+                    strcat_s(gl_SchFlagBuffer, sizeof gl_SchFlagBuffer, ", ");
+
+                strcat_s(gl_SchFlagBuffer, sizeof gl_SchFlagBuffer, gl_c_SchFlagTable[i]);
+            }
+        }
+    }
+
+    return gl_SchFlagBuffer;
 }
 
 /**
@@ -184,19 +184,61 @@ static KiTChar const *KI_CALL KiInternal_CmdlMakeArgumentCategoryStr(KiSCommandL
     return gl_c_CmdlArgCategoryStrings[KiInternal_CmdlGetArgumentCategory(argPtr)];
 }
 
+/**
+ */
+static KiSStringView KI_CALL KiInternal_CmdlMakeFirstArgumentName(KiTChar const *rawSpecStr) {
+    KiTSize const specLen = strlen(rawSpecStr);
+    {
+        /* If the name is longer than two characters, it might be a longer positional or a --X where X is any spec. */
+        if (specLen > 2) {
+            /* Find the first delimiter. */
+            KiTChar const *endPtr = strpbrk(rawSpecStr, ",;");
+            /*
+             * Calculate the size. If there is no delimiter, we assume the entire thing is a single name. In such a
+             * case, the size of our name portion is the total size minus 2 if and only if the first two characters are
+             * '-' (which means it's an option argument followed by a long name.)
+             */
+            KiTSize const nSize = endPtr == nullptr
+                ? specLen
+                : (KiTSize)(endPtr - rawSpecStr)
+            - 2 * (KiTSize)(rawSpecStr[0] == '-' && rawSpecStr[1] == '-');
+
+            return (KiSStringView){
+                .mp_strPtr     = &rawSpecStr[2 * (KiTSize)(rawSpecStr[0] == '-' && rawSpecStr[1] == '-')],
+                .m_sizeInBytes = nSize
+            };
+        }
+
+        /* Is either positional or ';X' where X is any alphabetic ASCII character. */
+        switch (*rawSpecStr) {
+            case ';': return (KiSStringView){ .mp_strPtr = rawSpecStr + 1, .m_sizeInBytes = 1       };
+            default:  return (KiSStringView){ .mp_strPtr = rawSpecStr + 0, .m_sizeInBytes = specLen };
+        }
+    }
+
+    /* Should never arrive here. */
+    return KI_MAKE_STRING_VIEW("<error-name>");
+}
+
 
 /**
  */
-static KiTVoid KI_CALL KiInternal_CmdlPrintArgumentSpec(KiTChar const *rawSpecStr) {
+static KiTVoid KI_CALL KiInternal_CmdlPrintArgumentSpec(KiTChar const *rawSpecStr, KiTInt32 lvl) {
 
 }
 
 /**
  */
 static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArgument(KiSCommandLineArgument const *argPtr, KiTInt32 lvl) {
-    printf("%s%s %s {\n", KiInternal_CmdlMakeIndent(lvl), KiInternal_CmdlMakeArgumentCategoryStr(argPtr), argPtr->mp_spec);
+    KiSStringView const argName = KiInternal_CmdlMakeFirstArgumentName(argPtr->mp_spec);
+
+    printf("%*sARGUMENT<%s> %.*s {\n",
+        lvl * gl_c_IndentSize, "",
+        KiInternal_CmdlMakeArgumentCategoryStr(argPtr),
+        argName.m_sizeInBytes, argName.mp_strPtr
+    );
     {
-        KiInternal_CmdlPrintArgumentSpec(argPtr->mp_spec);
+        KiInternal_CmdlPrintArgumentSpec(argPtr->mp_spec, lvl + 1);
 
         /* If we have child arguments, we print them. */
         if (argPtr->mp_args != nullptr) {
@@ -207,18 +249,18 @@ static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArgument(KiSCommandLineArg
             KiInternal_CmdlPrintCommandLineArguments(argPtr->mp_args, lvl + 1);
         }
     }
-    printf("%s}\n", KiInternal_CmdlMakeIndent(lvl));
+    printf("%*s}\n", lvl * gl_c_IndentSize, "");
 }
 
 /**
  */
 static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(KiSStaticArray const *argArr, KiTInt32 lvl) {
-    printf("\n%sARGUMENTS {\n", KiInternal_CmdlMakeIndent(lvl));
+    printf("\n%*sARGUMENTS {\n", lvl * gl_c_IndentSize, "");
     {
         for (KiTSize i = 0; i < argArr->m_elemCount; i++)
             KiInternal_CmdlPrintCommandLineArgument(((KiSCommandLineArgument const **)argArr->mp_arrPtr)[i], lvl + 1);
     }
-    printf("%s}\n", KiInternal_CmdlMakeIndent(lvl));
+    printf("%*s}\n", lvl * gl_c_IndentSize, "");
 }
 
 /**
@@ -226,11 +268,14 @@ static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArguments(KiSStaticArray c
 static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineSchema(KiSCommandLineSchema const *cmdlSchemaPtr) {
     printf("SCHEMA %s {\n", cmdlSchemaPtr->mp_name);
     {
-        printf("%sPROPERTY name       \"%s\"\n", KiInternal_CmdlMakeIndent(1), cmdlSchemaPtr->mp_name);
-        printf("%sPROPERTY desc       \"%s\"\n", KiInternal_CmdlMakeIndent(1), cmdlSchemaPtr->mp_desc);
-        printf("%sPROPERTY flags       %s\n",    KiInternal_CmdlMakeIndent(1), "");
-        printf("%sPROPERTY prefixes   \"%s\"\n", KiInternal_CmdlMakeIndent(1), cmdlSchemaPtr->mp_prefixes);
-        printf("%sPROPERTY separators \"%s\"\n", KiInternal_CmdlMakeIndent(1), cmdlSchemaPtr->mp_seps);
+        printf("%*sPROPERTY<string> name       \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_name);
+        printf("%*sPROPERTY<string> desc       \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_desc);
+        printf("%*sPROPERTY<flags>  flags       %s\n", 
+            1 * gl_c_IndentSize, "",
+            KiInternal_CmdlMakeSchemaFlags(cmdlSchemaPtr->m_flags)
+        );
+        printf("%*sPROPERTY<string> prefixes   \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_prefixes);
+        printf("%*sPROPERTY<string> separators \"%s\"\n", 1 * gl_c_IndentSize, "", cmdlSchemaPtr->mp_seps);
 
         KiInternal_CmdlPrintCommandLineArguments(cmdlSchemaPtr->mp_args, 1);
     }

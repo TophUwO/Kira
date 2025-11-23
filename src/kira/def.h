@@ -18,7 +18,6 @@
 
 /* Kira includes */
 #include <kira/compat.h>
-#include <stdint.h>
 
 
 /**
@@ -61,7 +60,7 @@
 
 
 /**
- * \defgroup KiTypedefs Integer Type Definitions
+ * \defgroup KiTypedefs Main Type Definitions
  * \brief    defines some common integer types for use by the APIs
  */
 /** @{ */

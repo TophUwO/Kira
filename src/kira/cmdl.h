@@ -184,7 +184,9 @@ KI_NATIVE typedef enum KiECommandLineSchemaFlags : KiTUint32 {
     KiSchFl_Strict          = (1 << 2),
     KiSchFl_SubcmdsOptional = (1 << 3),
 
-    KiSchFl_Default         = KiSchFl_Strict
+    KiSchFl_Default         = KiSchFl_Strict,
+
+    KI_ENUM_GEN_LAST(__KiSchFl_Last__, KiSchFl_SubcmdsOptional)
 } KiECommandLineSchemaFlags;
 
 

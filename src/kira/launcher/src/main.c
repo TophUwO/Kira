@@ -28,10 +28,11 @@ KI_COMMANDLINE(gl_c_CommandLine) {
     KI_DESC   "default run-time for Kira applications",
     KI_PREFIX "-/",
     KI_SEP    "=:",
+    KI_FLAGS  KiSchFl_CaseInsensitive | KiSchFl_Strict | KiSchFl_NoHelp,
 
     KI_ARGUMENTS ({
-        KI_ARGUMENT { KI_TYPE KiArgTy_String, KI_SPEC "--config-file", KI_DESC "config file to use"                                      },
-        KI_ARGUMENT { KI_TYPE KiArgTy_String, KI_SPEC "--use-profile", KI_DESC "profile to load"                                         },
+        KI_ARGUMENT { KI_TYPE KiArgTy_String, KI_SPEC "--config-file,cfg,config;c", KI_DESC "config file to use"                         },
+        KI_ARGUMENT { KI_TYPE KiArgTy_String, KI_SPEC "--use-profile;p", KI_DESC "profile to load"                                       },
         KI_ARGUMENT { KI_TYPE KiArgTy_String, KI_SPEC "--module-path", KI_DESC "module path to load modules from", KI_FLAGS KiArgFl_List },
 
         KI_SUBCOMMAND {
