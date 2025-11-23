@@ -185,11 +185,11 @@ static KiTChar const *KI_CALL KiInternal_CmdlMakeSchemaFlags(KiECommandLineSchem
     {
         /**
          */
-        static KiTChar constexpr *gl_c_SchFlagTable[] = {
-            [KI_P2LOG2(KiSchFl_NoHelp)]          = KI_STRINGIFY(no-help),
-            [KI_P2LOG2(KiSchFl_CaseInsensitive)] = KI_STRINGIFY(case-insensitive),
-            [KI_P2LOG2(KiSchFl_Strict)]          = KI_STRINGIFY(strict),
-            [KI_P2LOG2(KiSchFl_SubcmdsOptional)] = KI_STRINGIFY(optional-subcmds)
+        static KiSStringView constexpr gl_c_SchFlagTable[] = {
+            [KI_P2LOG2(KiSchFl_NoHelp)]          = KI_MAKE_STRING_VIEW("KiSchFl_NoHelp"),
+            [KI_P2LOG2(KiSchFl_CaseInsensitive)] = KI_MAKE_STRING_VIEW("KiSchFl_CaseInsensitive"),
+            [KI_P2LOG2(KiSchFl_Strict)]          = KI_MAKE_STRING_VIEW("KiSchFl_Strict"),
+            [KI_P2LOG2(KiSchFl_SubcmdsOptional)] = KI_MAKE_STRING_VIEW("KiSchFl_SubcmdsOptional")
         };
 
         memset(gl_SchFlagBuffer, 0, sizeof gl_SchFlagBuffer);
@@ -198,7 +198,7 @@ static KiTChar const *KI_CALL KiInternal_CmdlMakeSchemaFlags(KiECommandLineSchem
                 if (*gl_SchFlagBuffer != '\0')
                     strcat_s(gl_SchFlagBuffer, sizeof gl_SchFlagBuffer, ", ");
 
-                strcat_s(gl_SchFlagBuffer, sizeof gl_SchFlagBuffer, gl_c_SchFlagTable[i]);
+                strcat_s(gl_SchFlagBuffer, sizeof gl_SchFlagBuffer, gl_c_SchFlagTable[i].mp_strPtr);
             }
         }
     }
@@ -208,17 +208,17 @@ static KiTChar const *KI_CALL KiInternal_CmdlMakeSchemaFlags(KiECommandLineSchem
 
 /**
  */
-static KiTChar const *KI_CALL KiInternal_CmdlMakeArgumentCategoryStr(KiSCommandLineArgument const *argPtr) {
+static KiSStringView const *KI_CALL KiInternal_CmdlMakeArgumentCategoryStr(KiSCommandLineArgument const *argPtr) {
     /**
      */
-    static KiTChar constexpr *gl_c_CmdlArgCategoryStrings[] = {
-        [KiCmdlAC_Invalid]    = "<error-type>",
+    static KiSStringView constexpr gl_c_CmdlArgCategoryStrings[] = {
+        [KiCmdlAC_Invalid]    = KI_MAKE_STRING_VIEW("<error-type>"),
 
-        [KiCmdlAC_Positional] = "POSITIONAL",
-        [KiCmdlAC_Option]     = "OPTION",
-        [KiCmdlAC_SubCommand] = "SUBCOMMAND",
+        [KiCmdlAC_Positional] = KI_MAKE_STRING_VIEW("POSITIONAL"),
+        [KiCmdlAC_Option]     = KI_MAKE_STRING_VIEW("OPTION"),
+        [KiCmdlAC_SubCommand] = KI_MAKE_STRING_VIEW("SUBCOMMAND"),
 
-        [__KiCmdlAC_Last__]   = "<error-type>"
+        [__KiCmdlAC_Last__]   = KI_MAKE_STRING_VIEW("<error-type>")
     };
     KI_VERIFY_LUT(gl_c_CmdlArgCategoryStrings, __KiCmdlAC_Last__ + 1);
 
@@ -226,7 +226,7 @@ static KiTChar const *KI_CALL KiInternal_CmdlMakeArgumentCategoryStr(KiSCommandL
      * KiInternal_CmdlGetArgumentCategory() only returns values that are part of the KiECommandLineArgumentCategory
      * enumeration.
      */
-    return gl_c_CmdlArgCategoryStrings[KiInternal_CmdlGetArgumentCategory(argPtr)];
+    return &gl_c_CmdlArgCategoryStrings[KiInternal_CmdlGetArgumentCategory(argPtr)];
 }
 
 /**
@@ -286,7 +286,7 @@ static KiTVoid KI_CALL KiInternal_CmdlPrintCommandLineArgument(
 
     printf("%*sARGUMENT<%s> %.*s {\n",
         (KiTInt32)(lvl * gl_c_IndentSize), "",
-        KiInternal_CmdlMakeArgumentCategoryStr(argPtr),
+        KiInternal_CmdlMakeArgumentCategoryStr(argPtr)->mp_strPtr,
         (KiTInt32)argName.m_sizeInBytes, argName.mp_strPtr
     );
     {
