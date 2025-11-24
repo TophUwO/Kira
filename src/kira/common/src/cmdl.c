@@ -87,13 +87,6 @@ KI_NATIVE typedef enum KiECommandLineArgumentCategory {
     KI_ENUM_GEN_LAST(__KiCmdlAC_Last__, KiCmdlAC_SubCommand)
 } KiECommandLineArgumentCategory;
 
- 
-/**
- */
-KI_NATIVE typedef struct KiSCommandLineValidationPass {
-    KiSStringView                   m_passName;
-    KiFCommandLineValidationRoutine m_routine;
-} KiSCommandLineValidationPass;
 
 /**
  */
@@ -133,13 +126,16 @@ static KiECommandLineArgumentCategory KI_CALL KiInternal_CmdlGetArgumentCategory
 #pragma region Schema-Validation
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_ValidateSpec(KiSCommandLineArgument const *argPtr) {
+static KiEErrorCode KI_CALL KiInternal_CmdlValidateArgumentSpec(KiSCommandLineArgument const *argPtr) {
 
 }
 
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_ValidateRoot(KiSCommandLineSchema const *cmdlSchemaPtr) {
+static KiEErrorCode KI_CALL KiInternal_CmdlValidateSchemaRoot(KiSCommandLineSchema const *cmdlSchemaPtr) {
+    if (cmdlSchemaPtr == nullptr)
+        return KiErr_InParameter;
+
     /* (1) 'name' and 'desc' must not be empty. */
     KiTBool const isNameValid = cmdlSchemaPtr->mp_name != nullptr && *cmdlSchemaPtr->mp_name ^ '\0';
     KiTBool const isDescValid = cmdlSchemaPtr->mp_desc != nullptr && *cmdlSchemaPtr->mp_desc ^ '\0';
@@ -158,12 +154,12 @@ static KiEErrorCode KI_CALL KiInternal_ValidateNode(
     {
         /**
          */
-        static KiSCommandLineValidationPass constexpr gl_c_ValidationPasses[] = {
-            { KI_MAKE_STRING_VIEW("ValidateSpec"), &KiInternal_ValidateSpec }
+        static KiFCommandLineValidationRoutine constexpr gl_c_ValidationPasses[] = {
+            &KiInternal_CmdlValidateArgumentSpec
         };
 
         for (KiTSize i = 0; i < KI_COUNTOF(gl_c_ValidationPasses); i++) {
-            errCode = (*gl_c_ValidationPasses[i].m_routine)(cmdlArgPtr);
+            errCode = (*gl_c_ValidationPasses[i])(cmdlArgPtr);
 
             if (errCode != KiErr_Ok) {
                 printf("%s: Error validating command-line schema.", nsPtr->mp_schemaPtr->mp_name);
@@ -184,7 +180,7 @@ static KiEErrorCode KI_CALL KiInternal_ValidateCommandLineSchema(
     KiSCommandLineNamespace const *nsPtr
 ) {
     /* We first validate the root, then recursively validate all nodes. */
-    KiEErrorCode validationRes = KiInternal_ValidateRoot(cmdlSchemaPtr);
+    KiEErrorCode validationRes = KiInternal_CmdlValidateSchemaRoot(cmdlSchemaPtr);
     if (validationRes != KiErr_Ok)
         return validationRes;
 

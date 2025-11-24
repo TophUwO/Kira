@@ -107,7 +107,7 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
                     KI_TYPE    KiArgTy_String,
                     KI_SPEC    "--output-fmt;o",
                     KI_DESC    "output string format",
-                    KI_DEFAULT KI_STRING("blakkasjdfnli jsndflJKe3fffff"),
+                    KI_DEFAULT KI_STRING("blake"),
                     KI_ENUM    ({ KI_STRING("sha1"), KI_STRING("sha256"), KI_STRING("sha384"), KI_STRING("blake3") })
                 }
             })
