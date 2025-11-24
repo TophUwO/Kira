@@ -94,7 +94,7 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
                     KI_SPEC    "in",
                     KI_DESC    "input range",
                     KI_FLAGS   KiArgFl_Optional,
-                    KI_DEFAULT KI_RANGE(0.0, 1.0)
+                    KI_DEFAULT KI_RANGE(1.0, 2.0)
                 },
                 KI_ARGUMENT {
                     KI_TYPE    KiArgTy_Float,
@@ -107,7 +107,7 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
                     KI_TYPE    KiArgTy_String,
                     KI_SPEC    "--output-fmt;o",
                     KI_DESC    "output string format",
-                    KI_DEFAULT KI_STRING("blake3"),
+                    KI_DEFAULT KI_STRING("blakkasjdfnli jsndflJKe3fffff"),
                     KI_ENUM    ({ KI_STRING("sha1"), KI_STRING("sha256"), KI_STRING("sha384"), KI_STRING("blake3") })
                 }
             })

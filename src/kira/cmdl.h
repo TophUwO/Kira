@@ -181,11 +181,13 @@ KI_NATIVE typedef enum KiECommandLineArgumentFlags : KiTUint32 {
 /**
  */
 KI_NATIVE typedef enum KiECommandLineSchemaFlags : KiTUint32 {
+    KiSchFl_None            = 0,
+
     KiSchFl_NoHelp          = (1 << 0),
     KiSchFl_CaseInsensitive = (1 << 1),
     KiSchFl_Strict          = (1 << 2),
     KiSchFl_SubcmdsOptional = (1 << 3),
-
+    
     KiSchFl_Default         = KiSchFl_Strict,
 
     KI_ENUM_GEN_LAST(__KiSchFl_Last__, KiSchFl_SubcmdsOptional)
