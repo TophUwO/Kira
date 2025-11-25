@@ -37,7 +37,7 @@
     //  (r) positionals can be LIST so everything up until the next flag is considered its value
     //  (s) spec/name and desc and type are always required and cannot be empty
     //  (t) ranges are given as decimals x..y or x-y
-    //  (u) flag grouping (e.g., -vsx for -v -s -x) is not allowed unless all flags in the group take no value (are countable, switch or invswitch)
+    //  (u) flag grouping (e.g., -vsx for -v -s -x) is not allowed unless all flags in the group take no value (are countable, switch or invswitch) except for last one
     //  (v) globals must be unique in their name; cannot appear anywhere in any other sub-tree
     //  (x) globals must appear only at the root scope
     //  (y) if a global is given after a sub-command, then global scope is searched and matched (globals are highest class citizens)
@@ -57,7 +57,6 @@
 
 
 /* stdlib includes */
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -288,7 +287,6 @@ KiSVariant KI_CALL KiGetCommandLineArgument(KiSCommandLineNamespace const *nsPtr
         return (KiSVariant){ KiVarTy_Null };
 
     /* Get the value. */
-
 }
 
 
