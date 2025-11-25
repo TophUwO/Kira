@@ -47,10 +47,11 @@ KiTVoid KI_CALL ProcDigestSize(KiSCommandLineArgument const *aPtr, KiSVariant *v
 }
     
 static KI_COMMANDLINE(gl_c_MultiFunction) {
-    KI_NAME   "kitool",
-    KI_DESC   "example command line schema implementing a single devtool for generating hashes and uuids",
-    KI_PREFIX "-/",
-    KI_SEP    "=:",
+    KI_NAME    "kitool",
+    KI_DESC    "example command line schema implementing a single devtool for generating hashes and uuids",
+    KI_PREFIX  "-/",
+    KI_SEP     "=:",
+    KI_HELPFMT KiHelpFmt_Option,
 
     KI_ARGUMENTS({
         // global optional arguments
@@ -105,7 +106,7 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
                 },
                 KI_ARGUMENT {
                     KI_TYPE    KiArgTy_String,
-                    KI_SPEC    "--output-fmt;o",
+                    KI_SPEC    "--output-fmt{};o",
                     KI_DESC    "output string format",
                     KI_DEFAULT KI_STRING("blake"),
                     KI_ENUM    ({ KI_STRING("sha1"), KI_STRING("sha256"), KI_STRING("sha384"), KI_STRING("blake3") })

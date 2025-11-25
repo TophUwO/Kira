@@ -41,6 +41,8 @@
     //  (v) globals must be unique in their name; cannot appear anywhere in any other sub-tree
     //  (x) globals must appear only at the root scope
     //  (y) if a global is given after a sub-command, then global scope is searched and matched (globals are highest class citizens)
+    //  (z) if count is given and bounds are specified, an error will be thrown if the count is not in range
+    //  (aa) count is only valid for option flags (take no value)
 
     // is subcmd if mpp_args is not nullptr, else is arg
     // is option arg when spec starts with '--', else is it positional
@@ -84,7 +86,7 @@ KI_NATIVE typedef enum KiECommandLineArgumentCategory {
     KiCmdlAC_All        = KiCmdlAC_Positional | KiCmdlAC_Option | KiCmdlAC_SubCommand,
     KiCmdlAC_Args       = KiCmdlAC_Positional | KiCmdlAC_Option,
 
-    KI_ENUM_GEN_LAST(__KiCmdlAC_Last__, KiCmdlAC_SubCommand)
+    KI_ENUM_LAST(__KiCmdlAC_Last__, KiCmdlAC_SubCommand)
 } KiECommandLineArgumentCategory;
 
 
@@ -146,10 +148,7 @@ static KiEErrorCode KI_CALL KiInternal_CmdlValidateSchemaRoot(KiSCommandLineSche
 
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_ValidateNode(
-    KiSCommandLineArgument const *cmdlArgPtr,
-    KiSCommandLineNamespace const *nsPtr
-) {
+static KiEErrorCode KI_CALL KiInternal_ValidateNode(KiSCommandLineArgument const *cmdlArgPtr) {
     KiEErrorCode errCode = KiErr_Ok;
     {
         /**
@@ -161,11 +160,8 @@ static KiEErrorCode KI_CALL KiInternal_ValidateNode(
         for (KiTSize i = 0; i < KI_COUNTOF(gl_c_ValidationPasses); i++) {
             errCode = (*gl_c_ValidationPasses[i])(cmdlArgPtr);
 
-            if (errCode != KiErr_Ok) {
-                printf("%s: Error validating command-line schema.", nsPtr->mp_schemaPtr->mp_name);
-
+            if (errCode != KiErr_Ok)
                 return errCode;
-            }
         }
     }
 
@@ -175,23 +171,22 @@ static KiEErrorCode KI_CALL KiInternal_ValidateNode(
 
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_ValidateCommandLineSchema(
-    KiSCommandLineSchema const *cmdlSchemaPtr,
-    KiSCommandLineNamespace const *nsPtr
-) {
+static KiEErrorCode KI_CALL KiInternal_ValidateCommandLineSchema(KiSCommandLineSchema const *cmdlSchemaPtr) {
+    if (cmdlSchemaPtr == nullptr)
+        return KiErr_InParameter;
+    
     /* We first validate the root, then recursively validate all nodes. */
     KiEErrorCode validationRes = KiInternal_CmdlValidateSchemaRoot(cmdlSchemaPtr);
     if (validationRes != KiErr_Ok)
         return validationRes;
 
-    /* Now, we recursively validate the child arguments. */
-    //if (cmdlSchemaPtr->mpp_args != nullptr)
-    //    for (KiSCommandLineArgument const *currArg = cmdlSchemaPtr->mpp_args[0]; currArg != nullptr;) {
-    //        validationRes = KiInternal_ValidateNode(currArg, nsPtr);
-//
-    //        if (validationRes != KiErr_Ok)
-    //            return validationRes;
-    //    }
+    /* Now, we recursively validate the child arguments if they exist. */
+    for (KiTSize i = 0; i < (cmdlSchemaPtr->mp_args != nullptr ? cmdlSchemaPtr->mp_args->m_elemCount : 0); i++) {
+        KiSCommandLineArgument const *const currArg = ((KiSCommandLineArgument **)cmdlSchemaPtr->mp_args->mp_arrPtr)[i];
+
+        if ((validationRes = KiInternal_ValidateNode(currArg)) != KiErr_Ok)
+            return validationRes;
+    }
 
     /* All good. */
     return KiErr_Ok;
@@ -202,14 +197,41 @@ static KiEErrorCode KI_CALL KiInternal_ValidateCommandLineSchema(
 #pragma region Namespace-Mngt
 /**
  */
-static KiSCommandLineNamespace *KI_CALL KiInternal_CmdlCreateNamespace(KiSCommandLineSchema const *cmdlSchemaPtr) {
-    return malloc(sizeof(KiSCommandLineNamespace));
+static KiEErrorCode KI_CALL KiInternal_CmdlCreateNamespace(
+    KiSCommandLineSchema const *cmdlSchemaPtr,
+    KiSCommandLineNamespace **resPtr
+) {
+    if (cmdlSchemaPtr == nullptr) return KiErr_InParameter;
+    if (resPtr == nullptr)        return KiErr_OutptrParameter;
+
+    /* Create the namespace object. Right now, the schema is not yet validated. */
+    if ((*resPtr = malloc(sizeof **resPtr)) == nullptr)
+        return KiErr_MemoryAllocation;
+    /* Create string buffer. */
+    KiSBuffer *strBuf = KiCreateBuffer(0);
+    if (strBuf == nullptr) {
+        free(*resPtr);
+
+        *resPtr = nullptr;
+        return KiErr_MemoryAllocation;
+    }
+
+    **resPtr = (KiSCommandLineNamespace const){
+        .mp_schemaPtr = cmdlSchemaPtr,
+        .mp_strBuffer = strBuf,
+        .m_errCode    = KiErr_Ok
+    };
+    return KiErr_Ok;
 }
 
 /**
  */
 static KiTVoid KI_CALL KiInternal_CmdlDestroyNamespace(KiSCommandLineNamespace *nsPtr) {
+    if (nsPtr == nullptr)
+        return;
 
+    KiDestroyBuffer(nsPtr->mp_strBuffer);
+    free(nsPtr);
 }
 #pragma endregion
 /** \endcond */
@@ -217,20 +239,26 @@ static KiTVoid KI_CALL KiInternal_CmdlDestroyNamespace(KiSCommandLineNamespace *
 
 KiSCommandLineNamespace KI_CALL *KiParseCommandLine(KiSCommandLineSchema const *cmdlSchemaPtr, int argc, char **argv) {
     /* Create namespace object. */
-    KiSCommandLineNamespace *nsPtr = KiInternal_CmdlCreateNamespace(cmdlSchemaPtr);
-    if (nsPtr == nullptr)
-        return nullptr;
+    KiSCommandLineNamespace *nsObj;
+    {
+        KiEErrorCode const errCode = KiInternal_CmdlCreateNamespace(cmdlSchemaPtr, &nsObj);
 
+        if (nsObj == nullptr)
+            return nullptr;
+    }
     /* Before we can parse the command-line, we must validate our schema. */
-    KiEErrorCode schValRes = KiInternal_ValidateCommandLineSchema(cmdlSchemaPtr, nsPtr);
+    KiEErrorCode schValRes = KiInternal_ValidateCommandLineSchema(cmdlSchemaPtr);
     if (schValRes != KiErr_Ok) {
-        KiInternal_CmdlDestroyNamespace(nsPtr);
+        nsObj->m_errCode = schValRes;
 
-        return nullptr;
+        return nsObj;
     }
 
+    /* Now we actually parse the command-line arguments. */
+    // ...
+
     /* All good. */
-    return nsPtr;
+    return nsObj;
 }
 
 KiTVoid KI_CALL KiCleanupCommandLine(KiSCommandLineNamespace *nsPtr) {

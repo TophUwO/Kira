@@ -64,46 +64,49 @@
 
 /**
  */
-#define KI_TYPE    .m_type = (KiECommandLineArgumentType const)
+#define KI_TYPE      .m_type =
 /**
  */
-#define KI_NAME    .mp_name = (KiTChar *)
+#define KI_NAME      .mp_name =
 /**
  */
-#define KI_SPEC    .mp_spec = (KiTChar *)
+#define KI_SPEC      .mp_spec =
 /**
  */
-#define KI_DESC    .mp_desc = (KiTChar *)
+#define KI_DESC      .mp_desc =
 /**
  */
-#define KI_PREFIX  .mp_prefixes = (KiTChar *)
+#define KI_PREFIX    .mp_prefixes =
 /**
  */
-#define KI_SEP     .mp_seps = (KiTChar *)
+#define KI_SEP       .mp_seps =
 /**
  */
-#define KI_DEFAULT .mp_defVal = (KiSVariant const *)
+#define KI_DEFAULT   .mp_defVal =
 /**
  */
-#define KI_METAVAR .mp_metaVar = (KiTChar *)
+#define KI_METAVAR   .mp_metaVar =
 /**
  */
-#define KI_FLAGS   .m_flags =
+#define KI_FLAGS     .m_flags =
+/**
+ */
+#define KI_HELPFMT   .m_helpFmt =
+/**
+ */
+#define KI_DEFCHK    .m_defChk =
 /**
  */
 #define KI_ENUM(...) .mp_enum = &KI_MAKE_STATIC_ARRAY((KiSVariant const *const[])KI_EXPAND(__VA_ARGS__))
 /**
  */
-#define KI_BOUNDS  .mp_bounds = &KI_MAKE_NUMERIC_RANGE
+#define KI_BOUNDS    .mp_bounds = &KI_MAKE_NUMERIC_RANGE
 /**
  */
-#define KI_CHECK   .mp_checkCb = (KiFCommandLineArgumentCheck)
+#define KI_CHECK     .mp_checkCb =
 /**
  */
-#define KI_PROC    .mp_procCb = (KiFCommandLineArgumentProc)
-/**
- */
-#define KI_END     ((KiTVoid *)(nullptr))
+#define KI_PROC      .mp_procCb =
 
 /**
  */
@@ -133,10 +136,7 @@ KI_NATIVE typedef struct KiSCommandLineNamespace KiSCommandLineNamespace;
 
 /**
  */
-KI_NATIVE typedef KiEErrorCode (KI_CALL *KiFCommandLineArgumentCheck)(
-    KiSCommandLineArgument const *aPtr,
-    KiSVariant const *vPtr
-);
+KI_NATIVE typedef KiEErrorCode (KI_CALL *KiFCommandLineArgumentCheck)(KiSCommandLineArgument const *aPtr, KiSVariant const *vPtr);
 /**
  */
 KI_NATIVE typedef KiTVoid (KI_CALL *KiFCommandLineArgumentProc)(KiSCommandLineArgument const *aPtr, KiSVariant *vPtr);
@@ -144,22 +144,32 @@ KI_NATIVE typedef KiTVoid (KI_CALL *KiFCommandLineArgumentProc)(KiSCommandLineAr
 
 /**
  */
-KI_NATIVE typedef enum KiECommandLineArgumentType : KiTUint32 {
-    KiArgTy_Invalid         = 0,
+KI_NATIVE typedef enum KiECommandLineArgumentType {
+    KiArgTy_Invalid,
 
-    KiArgTy_String          = 1,
-    KiArgTy_Bool            = 2,
-    KiArgTy_Integer         = 3,
-    KiArgTy_UnsignedInteger = 4,
-    KiArgTy_Float           = 5,
-    KiArgTy_NumericRange    = 6,
+    KiArgTy_String,
+    KiArgTy_Bool,
+    KiArgTy_Integer,
+    KiArgTy_UnsignedInteger,
+    KiArgTy_Float,
+    KiArgTy_NumericRange,
+    KiArgTy_SubCommand,
 
-    __KiArgTy_Count__
+    KI_ENUM_COUNT(__KiArgTy_Count__)
 } KiECommandLineArgumentType;
 
 /**
  */
-KI_NATIVE typedef enum KiECommandLineArgumentFlags : KiTUint32 {
+KI_NATIVE typedef enum KiECommandLineHelpFormat {
+    KiHelpFmt_Option,
+    KiHelpFmt_Command,
+
+    KI_ENUM_COUNT(__KiHelpFmt_Count__)
+} KiECommandLineHelpFormat;
+
+/**
+ */
+KI_NATIVE typedef enum KiECommandLineArgumentFlags {
     KiArgFl_None            = 0,
 
     KiArgFl_Required        = (1 << 0),  // required
@@ -175,40 +185,52 @@ KI_NATIVE typedef enum KiECommandLineArgumentFlags : KiTUint32 {
     KiArgFl_Global          = (1 << 10), // only for options; option can appear anywhere; largest sub-tree is considered not just of the current subcmd
     KiArgFl_SubcmdsOptional = (1 << 11), // direct child subcommands are optional
 
-    KI_ENUM_GEN_LAST(__KiArgFl_Last__, KiArgFl_SubcmdsOptional)
+    KI_ENUM_LAST(__KiArgFl_Last__, KiArgFl_SubcmdsOptional)
 } KiECommandLineArgumentFlags;
 
 /**
  */
-KI_NATIVE typedef enum KiECommandLineSchemaFlags : KiTUint32 {
-    KiSchFl_None            = 0,
+KI_NATIVE typedef enum KiECommandLineSchemaFlags {
+    KiSchFl_None            = 0,        /**< no special flags; default behavior */
 
-    KiSchFl_NoHelp          = (1 << 0),
+    KiSchFl_NoHelp          = (1 << 0), /**< do not generate 'help' option/sub-command */
     KiSchFl_CaseInsensitive = (1 << 1),
     KiSchFl_Strict          = (1 << 2),
     KiSchFl_SubcmdsOptional = (1 << 3),
-    
-    KiSchFl_Default         = KiSchFl_Strict,
 
-    KI_ENUM_GEN_LAST(__KiSchFl_Last__, KiSchFl_SubcmdsOptional)
+    KI_ENUM_LAST(__KiSchFl_Last__, KiSchFl_SubcmdsOptional)
 } KiECommandLineSchemaFlags;
+
+/**
+ */
+KI_NATIVE typedef enum KiECommandLineArgumentDefaultChecks {
+    KiDefChk_None          = 0,
+
+    KiDefChk_PathExists    = (1 << 0),
+    KiDefChk_PathNotExists = (1 << 1),
+    KiDefChk_ValueInRange  = (1 << 2),
+
+    KI_ENUM_LAST(__KiDefChk_Last__, KiDefChk_ValueInRange)
+} KiECommandLineArgumentDefaultChecks;
 
 
 /**
  */
 KI_NATIVE typedef struct KiSCommandLineArgument {
-    KiTSize                     const        m_structSize;
-    KiECommandLineArgumentType  const        m_type;
-    KiTChar                     const *const mp_spec;
-    KiTChar                     const *const mp_desc;
-    KiTChar                     const *const mp_metaVar;
-    KiSVariant                  const *const mp_defVal;
-    KiSStaticArray              const *const mp_enum;
-    KiSNumericRange             const *const mp_bounds;
-    KiECommandLineArgumentFlags const        m_flags;
-    KiFCommandLineArgumentCheck const        mp_checkCb;
-    KiFCommandLineArgumentProc  const        mp_procCb;
-    KiSStaticArray              const *const mp_args;
+    KiTSize                             const        m_structSize;
+    KiECommandLineArgumentType          const        m_type;
+    KiTChar                             const *const mp_spec;
+    KiTChar                             const *const mp_desc;
+    KiTChar                             const *const mp_metaVar;
+    KiSVariant                          const *const mp_defVal;
+    KiSStaticArray                      const *const mp_enum;
+    KiSNumericRange                     const *const mp_bounds;
+    KiECommandLineArgumentFlags         const        m_flags;
+    KiECommandLineHelpFormat            const        m_helpFmt;
+    KiECommandLineArgumentDefaultChecks const        m_defChk;
+    KiFCommandLineArgumentCheck         const        mp_checkCb;
+    KiFCommandLineArgumentProc          const        mp_procCb;
+    KiSStaticArray                      const *const mp_args;
 } KiSCommandLineArgument;
 
 /**
@@ -220,6 +242,7 @@ KI_NATIVE typedef struct KiSCommandLineSchema {
     KiTChar                   const *const mp_prefixes;
     KiTChar                   const *const mp_seps;
     KiECommandLineSchemaFlags const        m_flags;
+    KiECommandLineHelpFormat  const        m_helpFmt;
     KiSStaticArray            const *const mp_args;
 } KiSCommandLineSchema;
 
@@ -247,7 +270,28 @@ KI_NATIVE KI_API KiSVariant KI_CALL KiGetCommandLineArgument(KiSCommandLineNames
 
 
 /**
- * \page KiCmdlExamples Command-line schema examples
+ * \page KiCmdlExamples Kira command-line parser
+ *
+ * Kira is a general-purpose component-based application development framework. This means it must be able to cater to 
+ * various circumstances. One of the most basic of them being CLI (command-line interface) tools. Command-line parsing
+ * is an issue for which many different solutions exist. Some of them are very simple and rigid while others are complex
+ * but tedious to use. Kira tries to circumvent this problem by introducing a command-line parser that is both flexible
+ * and easy to use. It solves this goal by --- instead of procedurally generating the command-line schema by the means
+ * of <tt>AddArgument()</tt>- and <tt>AddSubParser()</tt>-like routines --- declaring the schema using a tree.
+ * This page serves as the introduction to the parser and how to use it to express various CLI requirements: basic as
+ * well as complex. On top of that, it will cover some pitfalls and implementation details.
+ *
+ * <h1>Basic Concepts</h1>
+ * Before we get into the specifics on how get the most out of the command-line parser, we shall introduce some of its
+ * core concepts --- namely the \e schema and the \e namespace. These are the main two significant entities the user has
+ * to create and manage in order to interact with the parser.
+ * <h2>Schema</h2>
+ * The central configuration element of the command-line parser is the \e schema. The schema is essentially a tree-like
+ * structure representing the nature of the CLI interface, specified using a custom DSL (the <em>Kira command-line
+ * schema language</em> (KiSL)).
+ * <h2>Namespace</h2>
+ * The \e namespace is the second fundamental entity in the command-line parser. It contains the parsed command-line
+ * arguments associated with their values in a form easily readable by the application.
  *
  * \code{.c}
  * KiEErrorCode KI_CALL CheckDigestSize(KiSCommandLineArgument const *aPtr, KiSVariant const *vPtr) {
@@ -272,17 +316,18 @@ KI_NATIVE KI_API KiSVariant KI_CALL KiGetCommandLineArgument(KiSCommandLineNames
  * KiTVoid KI_CALL ProcDigestSize(KiSCommandLineArgument const *aPtr, KiSVariant *vPtr) {
  *     // Function that can be used to do post-processing on the actual value (vPtr).
  *     // You are allowed to modify the value in vPtr; the changes you make to vPtr
- *     // will be reflected when the argument is queried via \c KiGetCommandLineArgument().
+ *     // will be reflected when the argument is queried via KiGetCommandLineArgument().
  * }
  *     
  * static KI_COMMANDLINE(gl_c_MultiFunction) {
- *     KI_NAME   "kitool",
- *     KI_DESC   "example command line schema implementing a single devtool for generating hashes and uuids",
- *     KI_PREFIX "-/",
- *     KI_SEP    "=:",
+ *     KI_NAME    "kitool",
+ *     KI_DESC    "example command line schema implementing a single devtool for generating hashes and uuids",
+ *     KI_PREFIX  "-/",
+ *     KI_SEP     "=:",
+ *     KI_HELPFMT KiHelpFmt_Option,
  * 
  *     KI_ARGUMENTS({
- *         // global optional arguments
+ *         // global option arguments
  *         KI_ARGUMENT { KI_TYPE KiArgTy_Integer, KI_SPEC "--verbose;v", KI_DESC "enable verbose mode",      KI_FLAGS KiArgFl_Countable },
  *         KI_ARGUMENT { KI_TYPE KiArgTy_Bool,    KI_SPEC "--copy;c",    KI_DESC "copy result to clipboard", KI_FLAGS KiArgFl_Switch    },
  *         

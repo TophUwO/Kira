@@ -197,7 +197,10 @@
     );
 /**
  */
-#define KI_ENUM_GEN_LAST(n, prev) n = (1 << (KI_P2LOG2(prev) + 1))
+#define KI_ENUM_LAST(n, prev) n = (1 << (KI_P2LOG2(prev) + 1))
+/**
+ */
+#define KI_ENUM_COUNT(n)      n
 
 
 /**
