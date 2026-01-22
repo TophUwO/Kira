@@ -43,8 +43,13 @@
         #define KI_API
     #endif
 #endif
-#define KI_NORETURN __attribute__((noreturn))
-#define KI_CALL     __attribute__((cdecl))
+#if (defined KI_HOST_MSVC)
+    #define KI_CALL     __cdecl
+    #define KI_NORETURN __declspec(noreturn)
+#else
+    #define KI_CALL     __attribute__((cdecl))
+    #define KI_NORETURN __attribute__((noreturn))
+#endif
 
 /**
  * \def   KI_VIRTUAL
@@ -77,7 +82,6 @@ typedef void               KiTVoid, *KiTDynLibHandle;
 typedef float              KiTFloat;
 typedef double             KiTDouble;
 typedef long double        KiTLongDouble;
-typedef _Atomic(bool)      KiTAtomicFlag;
 #if (defined KI_TARGET_X64)
     typedef KiTInt64  KiTIntptr, KiTOffset, KiTIndex;
     typedef KiTUint64 KiTSize;
@@ -86,14 +90,14 @@ typedef _Atomic(bool)      KiTAtomicFlag;
     typedef KiTUint32 KiTSize;
 #endif
 
-_Static_assert(sizeof(KiTByte)     == 1, "Size of type 'KiTByte' must be exactly one byte!");
-_Static_assert(sizeof(KiTInt16)    == 2, "Size of type 'KiTInt16' must be exactly two bytes!");
-_Static_assert(sizeof(KiTInt32)    == 4, "Size of type 'KiTInt32' must be exactly four bytes!");
-_Static_assert(sizeof(KiTInt64)    == 8, "Size of type 'KiTInt64' must be exactly eight bytes!");
-_Static_assert(_Alignof(KiTByte)   == 1, "Alignment requirement of type 'KiTByte' must be exactly one byte!");
-_Static_assert(_Alignof(KiTInt16)  == 2, "Alignment requirement of type 'KiTInt16' must be exactly two bytes!");
-_Static_assert(_Alignof(KiTInt32)  == 4, "Alignment requirement of type 'KiTInt32' must be exactly four bytes!");
-_Static_assert(_Alignof(KiTInt64)  == 8, "Alignment requirement of type 'KiTInt64' must be exactly eight bytes!");
+_Static_assert(sizeof(KiTByte)     == 1, "Size of type \"KiTByte\" must be exactly one byte.");
+_Static_assert(sizeof(KiTInt16)    == 2, "Size of type \"KiTInt16\" must be exactly two bytes.");
+_Static_assert(sizeof(KiTInt32)    == 4, "Size of type \"KiTInt32\" must be exactly four bytes.");
+_Static_assert(sizeof(KiTInt64)    == 8, "Size of type \"KiTInt64\" must be exactly eight bytes.");
+_Static_assert(_Alignof(KiTByte)   == 1, "Alignment requirement of type \"KiTByte\" must be exactly one byte.");
+_Static_assert(_Alignof(KiTInt16)  == 2, "Alignment requirement of type \"KiTInt16\" must be exactly two bytes.");
+_Static_assert(_Alignof(KiTInt32)  == 4, "Alignment requirement of type \"KiTInt32\" must be exactly four bytes.");
+_Static_assert(_Alignof(KiTInt64)  == 8, "Alignment requirement of type \"KiTInt64\" must be exactly eight bytes.");
 /** @} */
 
 
@@ -148,5 +152,4 @@ _Static_assert(_Alignof(KiTInt64)  == 8, "Alignment requirement of type 'KiTInt6
 #endif
 /** @} */
 
- 
  

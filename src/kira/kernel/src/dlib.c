@@ -19,17 +19,17 @@
 #include <kira/kernel/int/platform.h>
 
 
-KiEErrorCode KI_CALL KiKrnlLoadLibrary(KiTChar const *libPath, KiTDynLibHandle *resPtr) {
+KiEErrorCode KI_CALL KiLoadLibrary(KiTChar const *libPath, KiTDynLibHandle *resPtr) {
     if (libPath == nullptr || *libPath == '\0') return KiErr_InParameter;
     if (resPtr == nullptr)                      return KiErr_OutptrParameter;
 
-    return (resPtr = KiPlatform_LoadLibrary(libPath)) != nullptr
+    return (*resPtr = KiPlatform_LoadLibrary(libPath)) != nullptr
         ? KiErr_Ok
         : KiErr_DlibLoadLibrary
     ;
 }
 
-KiEErrorCode KI_CALL KiKrnlUnloadLibrary(KiTDynLibHandle libHnd) {
+KiEErrorCode KI_CALL KiUnloadLibrary(KiTDynLibHandle libHnd) {
     if (libHnd == nullptr)
         return KiErr_InOutParameter;
 
@@ -37,15 +37,17 @@ KiEErrorCode KI_CALL KiKrnlUnloadLibrary(KiTDynLibHandle libHnd) {
     return KiErr_Ok;
 }
 
-KiEErrorCode KI_CALL KiKrnlResolveSymbol(KiTDynLibHandle libHnd, KiTChar const *symName, KiTVoid **resPtr) {
+KiEErrorCode KI_CALL KiResolveSymbol(KiTDynLibHandle libHnd, KiTChar const *symName, KiTVoid **resPtr) {
     if (libHnd == nullptr)                      return KiErr_InOutParameter;
     if (symName == nullptr || *symName == '\0') return KiErr_InParameter;
     if (resPtr != nullptr)                      return KiErr_OutptrParameter;
 
-    return (*resPtr = KiPlatform_ResolveSymbol(libHnd, symName)) != nullptr
-        ? KiErr_Ok
-        : KiErr_DlibResolveSymbol
-    ;
+    KiSFunctionHandle res = KiPlatform_ResolveSymbol(libHnd, symName);
+    {
+        *resPtr = res.mp_rawPtr;
+
+        return *resPtr != nullptr ? KiErr_Ok : KiErr_DlibResolveSymbol;
+    }
 }
 
 

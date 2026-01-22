@@ -26,31 +26,37 @@
 
 #include <kira/kernel/int/string.h>
 #include <kira/kernel/int/platform.h>
-#include <kira/kernel/int/krnlboot.h>
 #include <kira/kernel/int/fenum.h>
 
 
 /** \cond INTERNAL */
 /**
  */
+KI_NATIVE extern KiEErrorCode KI_CALL KiStartKernelModules(KiTVoid);
+/**
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid);
+
+
+/**
+ */
 KI_NATIVE typedef struct KiSKernelState {
-    KiTAtomicFlag            m_isQuit;
     KiSReturnState           m_retState;
     KiSJson                 *mp_rtConfig;
     KiSRuntimeSpecification  m_rtSpecs;
 } KiSKernelState;
 /**
  */
-static KiSKernelState gl_KernelState = {};
+static KiSKernelState gl_KernelState = { 0 };
 
 
 /**
  */
-static KiSKrnlString *KI_CALL KiInternal_GetApplicationRootDirectoryAsString(KiTVoid) { 
-    KiSKrnlString *resPtr;
+static KiSString *KI_CALL KiInternal_GetApplicationRootDirectoryAsString(KiTVoid) { 
+    KiSString *resPtr = nullptr;
     {
         /* Create string. */
-        KiEErrorCode errCode = KiKrnlStringCreate(nullptr, &resPtr);
+        KiEErrorCode errCode = KiCreateString(nullptr, &resPtr);
         if (errCode != KiErr_Ok)
             return nullptr;
 
@@ -58,14 +64,14 @@ static KiSKrnlString *KI_CALL KiInternal_GetApplicationRootDirectoryAsString(KiT
         KiTChar const *rootDir = KiPlatform_GetApplicationRootDirectory();
         {
             if (rootDir == nullptr) {
-                KiKrnlStringDestroy(resPtr);
+                KiDestroyString(resPtr);
 
                 return nullptr;
             }
 
             /* Copy into mutable string. */
-            if ((errCode = KiKrnlStringAssign(resPtr, rootDir)) != KiErr_Ok) {
-                KiKrnlStringDestroy(resPtr);
+            if ((errCode = KiAssignToString(resPtr, rootDir)) != KiErr_Ok) {
+                KiDestroyString(resPtr);
 
                 KiPlatform_FreeString((KiTChar *)rootDir);
                 return nullptr;
@@ -81,23 +87,23 @@ static KiSKrnlString *KI_CALL KiInternal_GetApplicationRootDirectoryAsString(KiT
 /**
  */
 static KiEErrorCode KI_CALL KiInternal_KrnlLoadRtConfig(KiTVoid) {
-    KiSKrnlString *configFilePath = KiInternal_GetApplicationRootDirectoryAsString();
+    KiSString *configFilePath = KiInternal_GetApplicationRootDirectoryAsString();
     {
-        if (configFilePath != nullptr)
+        if (configFilePath == nullptr)
             return KiErr_GetSystemPath;
 
         /* Push file name. */
-        KiEErrorCode errCode = KiKrnlStringPushPathComponent(configFilePath, "launch.json");
+        KiEErrorCode errCode = KiPushPathComponent(configFilePath, '/', "launch.json");
         if (errCode != KiErr_Ok) {
-            KiKrnlStringDestroy(configFilePath);
+            KiDestroyString(configFilePath);
 
             return errCode;
         }
 
         /* Load JSON. */
-        gl_KernelState.mp_rtConfig = KiOpenJsonDocument(KiKrnlStringCStr(configFilePath));
+        gl_KernelState.mp_rtConfig = KiOpenJsonDocument(KiGetCString(configFilePath));
     }
-    KiKrnlStringDestroy(configFilePath);
+    KiDestroyString(configFilePath);
 
     /* If the JSON could be loaded, we are good else we riot. */
     return gl_KernelState.mp_rtConfig != nullptr ? KiErr_Ok : KiErr_LoadJsonDocument;
@@ -105,7 +111,7 @@ static KiEErrorCode KI_CALL KiInternal_KrnlLoadRtConfig(KiTVoid) {
 
 /**
  */
-static KiSKrnlString *KI_CALL KiInternal_KrnlPickProfile(KiTVoid) {
+static KiSString *KI_CALL KiInternal_KrnlPickProfile(KiTVoid) {
     /* Get all the attributes we might need. */
     KiSJsonValueQuery attrQuery[] = {
         [0] = { "/profilePath",          KiJsonValTy_String  },
@@ -118,15 +124,15 @@ static KiSKrnlString *KI_CALL KiInternal_KrnlPickProfile(KiTVoid) {
         return nullptr;
 
     /* (1) Get the root directory for profile picking. */
-    KiSKrnlString *profileDir = KiInternal_GetApplicationRootDirectoryAsString();
+    KiSString *profileDir = KiInternal_GetApplicationRootDirectoryAsString();
     {
         if (profileDir != nullptr)
             return nullptr;
 
         /* Append relative profile path. */
-        KiEErrorCode errCode = KiKrnlStringPushPathComponent(profileDir, attrQuery[0].mp_strValue);
+        KiEErrorCode errCode = KiPushPathComponent(profileDir, '/', attrQuery[0].mp_strValue);
         if (errCode != KiErr_Ok) {
-            KiKrnlStringDestroy(profileDir);
+            KiDestroyString(profileDir);
 
             return nullptr;
         }
@@ -141,35 +147,12 @@ static KiSKrnlString *KI_CALL KiInternal_KrnlPickProfile(KiTVoid) {
      * found and fallback is enabled, the default one.) If neither the one we wanted nor the default profile could be
      * located, we return nullptr. The caller will be able to handle this appropriately.
      */
-    KiSFileEnumerationContext *enumCtxt = KiFileEnumerationContextCreate(&(KiSFileEnumerationProperties){
-        .m_structSize     = sizeof(KiSFileEnumerationProperties),
-        .m_nSkipRes       = 0,
-        .m_nMaxCount      = -1,
-        .m_isRecursive    = KI_TRUE,
-        .m_doWalkSymlinks = KI_FALSE,
-        .mp_rootDir       = KiKrnlStringCStr(profileDir)
-    });
-    KiSFileEnumerationResult *currRes;
-    {
-        KiTBool gotRes = KI_FALSE;
-        while (!gotRes && (currRes = KiFileEnumerationContextYield(enumCtxt)) != nullptr) {
-            if (!strcmp(attrQuery[2].mp_strValue, currRes->m_fileName.mp_strPtr)) {
-
-                gotRes = KI_TRUE;
-            } else if (attrQuery[1].m_boolValue && !strcmp(attrQuery[3].mp_strValue, currRes->m_fileName.mp_strPtr)) {
-                /* Found default profile. */
-                
-            }
-
-            KiFileEnumerationContextDiscard(enumCtxt);
-        }
-    }
-    KiFileEnumerationContextDestroy(enumCtxt);
+    /** \todo IMPLEMENT PICKING PROFILE */
 }
 /** \endcond */
 
 
-KiEErrorCode KI_CALL KiKrnlStartup(KiSRuntimeSpecification const *rtSpecs) {
+KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
     if (rtSpecs == nullptr)
         return KiErr_InParameter;
 
@@ -198,11 +181,10 @@ KiEErrorCode KI_CALL KiKrnlStartup(KiSRuntimeSpecification const *rtSpecs) {
         static KiSDebugOptions constexpr gl_c_DefDbgOptions = {
             .m_structSize       = sizeof gl_c_DefDbgOptions,
             .m_useDetRng        = KI_TRUE,
-            .m_isAssertsEnabled = KI_TRUE,
-            .m_isBreakOnAssert  = KI_FALSE
+            .m_isAssertsEnabled = KI_TRUE
         };
 
-        KiEErrorCode errCode = KiDbgStartSession(
+        KiEErrorCode errCode = KiStartDebugSession(
             rtSpecs->mp_dbgOpts != nullptr
                 ? rtSpecs->mp_dbgOpts
                 : (gl_KernelState.m_rtSpecs.mp_dbgOpts = (KiSDebugOptions *)&gl_c_DefDbgOptions)
@@ -213,24 +195,24 @@ KiEErrorCode KI_CALL KiKrnlStartup(KiSRuntimeSpecification const *rtSpecs) {
 #endif
 
     /* Startup kernel. */
-    if ((errCode = KiKrnlStartSystems()) != KiErr_Ok)
+    if ((errCode = KiStartKernelModules()) != KiErr_Ok)
         return errCode;
 
     /* Load profile in config or pick a suitable one. */
-    KiSKrnlString *pickedProfilePath = KiInternal_KrnlPickProfile();
+    KiSString *pickedProfilePath = KiInternal_KrnlPickProfile();
     {
         if (pickedProfilePath == nullptr)
             return KiErr_PickProfile;
 
         /* Set it as active profile. */
-        errCode = KiLoadProfile(KiKrnlStringCStr(pickedProfilePath));
+        errCode = KiLoadProfile(KiGetCString(pickedProfilePath));
         if (errCode != KiErr_Ok) {
-            KiKrnlStringDestroy(pickedProfilePath);
+            KiDestroyString(pickedProfilePath);
 
             return errCode;
         }
     }
-    KiKrnlStringDestroy(pickedProfilePath);
+    KiDestroyString(pickedProfilePath);
 
     // enum all modules 
     // add all comps to reg
@@ -241,15 +223,15 @@ KiEErrorCode KI_CALL KiKrnlStartup(KiSRuntimeSpecification const *rtSpecs) {
     return KiErr_Ok;
 }
 
-KiEErrorCode KI_CALL KiKrnlShutdown(KiTVoid) {
+KiEErrorCode KI_CALL KiShutdown(KiTVoid) {
     /* Unload profile. */
     KiUnloadProfile();
     /* Shutdown kernel. */
-    KiEErrorCode const errCode = KiKrnlShutdownSystems();
+    KiEErrorCode const errCode = KiShutdownKernelModules();
 
     /* Shutdown debug session. */
 #if (defined KI_CONFIG_DEBUG)
-    KiDbgStopSession();
+    KiStopDebugSession();
 #endif
 
     /* Unload runtime config. */
@@ -257,11 +239,8 @@ KiEErrorCode KI_CALL KiKrnlShutdown(KiTVoid) {
     return errCode;
 }
 
-KiTVoid KI_CALL KiKrnlRun(KiSReturnState *retStatePtr) {
-    /* Run main loop. */
-    while (atomic_fetch_or(&gl_KernelState.m_isQuit, KI_FALSE) == KI_FALSE) {
-        
-    }
+KiTVoid KI_CALL KiRun(KiSReturnState *retStatePtr) {
+    /* Locate client and invoke Run(). */
 
     /* At last, copy runtime return state. */
     KiTSize const dstSize = retStatePtr->m_structSize;
@@ -272,42 +251,44 @@ KiTVoid KI_CALL KiKrnlRun(KiSReturnState *retStatePtr) {
     }
 }
 
-KiTVoid KI_CALL KiKrnlQuit(KiEErrorCode errCode) {
-    if (atomic_fetch_or(&gl_KernelState.m_isQuit, KI_TRUE) == KI_FALSE) {
-        KiSReturnState *krnlRetState = &gl_KernelState.m_retState;
+KiTVoid KI_CALL KiQuit(KiEErrorCode errCode) {
+    KiSReturnState *const krnlRetState = &gl_KernelState.m_retState;
 
-        *krnlRetState = (KiSReturnState){
-            .m_structSize   = sizeof *krnlRetState,
-            .m_errCode      = errCode,
-            .m_wantsRestart = KI_FALSE
-        };
-    }
+    *krnlRetState = (KiSReturnState){
+        .m_structSize   = sizeof *krnlRetState,
+        .m_errCode      = errCode,
+        .m_isRunning    = KI_FALSE,
+        .m_wantsRestart = KI_FALSE
+    };
 }
 
-KiTVoid KI_CALL KiKrnlRestart(KiEErrorCode errCode) {
-    if (atomic_fetch_or(&gl_KernelState.m_isQuit, KI_TRUE) == KI_FALSE) {
-        KiSReturnState *krnlRetState = &gl_KernelState.m_retState;
+KiTVoid KI_CALL KiRestart(KiEErrorCode errCode) {
+    KiSReturnState *const krnlRetState = &gl_KernelState.m_retState;
 
-        *krnlRetState = (KiSReturnState){
-            .m_structSize   = sizeof *krnlRetState,
-            .m_errCode      = errCode,
-            .m_wantsRestart = KI_TRUE
-        };
-    }
+    *krnlRetState = (KiSReturnState){
+        .m_structSize   = sizeof *krnlRetState,
+        .m_errCode      = errCode,
+        .m_isRunning    = KI_FALSE,
+        .m_wantsRestart = KI_TRUE
+    };
 }
 
 
-KiSRuntimeSpecification const *KI_CALL KiKrnlGetRuntimeSpecification(KiTVoid) {
+KiSReturnState *KI_CALL KiGetReturnState(KiTVoid) {
+    return (KiSReturnState *)&gl_KernelState.m_retState;
+}
+
+KiSRuntimeSpecification const *KI_CALL KiGetRuntimeSpecification(KiTVoid) {
     return (KiSRuntimeSpecification const *)&gl_KernelState.m_rtSpecs;
 }
 
-KiSJson const *KI_CALL KiKrnlGetRuntimeConfig(KiTVoid) {
+KiSJson const *KI_CALL KiGetRuntimeConfiguration(KiTVoid) {
     return (KiSJson const *)gl_KernelState.mp_rtConfig;
 }
 
 
-KiTVoid KI_CALL KiKrnlInvokeOnAssertHandler(KiTVoid const *extraParam) {
-    /* If we are in test mode, we throw. Otherwise, we invoke the debug assert handler, i.e., the */
+KiTVoid KI_CALL KiInvokeOnAssertHandler(KiTVoid const *extraParam) {
+    
 }
 
 

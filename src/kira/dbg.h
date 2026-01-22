@@ -28,19 +28,17 @@
             KiSDebugOptions const *dbgOpt = KiGetDebugOptions();                 \
             if (!dbgOpt->m_isAssertsEnabled)                                     \
                 goto KI_CONCAT2(__lbl_END_, __LINE__);                           \
-            if (dbgOpt->m_isBreakOnAssert)                                       \
-                KI_DEBUGBREAK();                                                 \
                                                                                  \
-            KiThrowException(&(KiSException const){                              \
+            KiRaiseException(&(KiSException const){                              \
                 .m_structSize  = sizeof(KiSException),                           \
-                .m_excType     = KiKrnlExcTy_AssertionFailed,                    \
+                .m_excType     = KiExcTy_AssertionFailed,                        \
                 .mp_excDataPtr = (KiTVoid *)&(KiSDebugTerminationContext const){ \
                     .m_structSize  = sizeof(KiSDebugTerminationContext),         \
                     .m_failedExpr  = KI_MAKE_STRING_VIEW(#expr),                 \
                     .m_filePath    = KI_MAKE_STRING_VIEW(__FILE__),              \
                     .m_fileLine    = (KiTUint64)__LINE__,                        \
-                    .m_fnName      = KI_MAKE_STRING_VIEW(__FUNCTION__),          \
-                    .m_fnSig       = KI_MAKE_STRING_VIEW(__PRETTY_FUNCTION__),   \
+                    .m_fnName      = KI_MAKE_STRING_VIEW(__func__),              \
+                    .m_fnSig       = KI_MAKE_STRING_VIEW(__func__),              \
                     .m_errorCode   = (enum KiEErrorCode)(errorCode),             \
                     .m_extraMsg    = KI_MAKE_STRING_VIEW("")                     \
                 },                                                               \
@@ -49,15 +47,7 @@
             KI_CONCAT2(__lbl_END_, __LINE__):                                    \
             (KiTVoid)(0);                                                        \
         }
-    #if (defined KI_PLATFORM_WINDOWS)
-        /**
-         */
-        #define KI_DEBUGBREAK() __debugbreak()
-    #else
-        #define KI_DEBUGBREAK() raise(SIGTRAP)
-    #endif
 #else
-    #define KI_DEBUGBREAK()
     #define KI_ASSERT(expr, errorCode)
 #endif
 
@@ -77,20 +67,20 @@ KI_NATIVE typedef KiTVoid (KI_CALL *KiFExceptionHandler)(KiSException const *exc
 
 /**
  */
-KI_NATIVE typedef enum KiSExceptionType {
-    KiKrnlExcTy_Invalid         = 0,
+KI_NATIVE typedef enum KiEExceptionType {
+    KiExcTy_Invalid,
 
-    KiKrnlExcTy_AssertionFailed = 1,
+    KiExcTy_AssertionFailed,
 
-    __KiKrnlExcTy_Count__
-} KiSExceptionType;
+    KI_ENUM_COUNT(KiExcTy)
+} KiEExceptionType;
 
 
 /**
  */
 KI_NATIVE typedef struct KiSException {
     KiTSize           m_structSize;
-    KiSExceptionType  m_excType;
+    KiEExceptionType  m_excType;
     KiTVoid          *mp_excDataPtr;
     KiTSize           m_excDataSize;
 } KiSException;
@@ -101,7 +91,6 @@ KI_NATIVE typedef struct KiSDebugOptions {
     KiTSize m_structSize;
     KiTBool m_useDetRng;
     KiTBool m_isAssertsEnabled;
-    KiTBool m_isBreakOnAssert;
     KiTBool m_registerOnAssertHandler;
 } KiSDebugOptions;
 
@@ -164,6 +153,6 @@ KI_NATIVE KI_API KiSDebugOptions const *KiGetDebugOptions(KiTVoid);
 KI_NATIVE KI_API KiTVoid KI_CALL KiPostDebugEvent(KiSDebugEvent const *dbgEventPtr);
 /**
  */
-KI_NATIVE KI_API KiTVoid KI_CALL KiThrowException(KiSException const *excPtr, KiTVoid *extraParam);
+KI_NATIVE KI_API KiTVoid KI_CALL KiRaiseException(KiSException const *excPtr, KiTVoid *extraParam);
 
 

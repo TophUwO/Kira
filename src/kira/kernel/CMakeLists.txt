@@ -9,40 +9,33 @@
 # *****************************************************************************************************************
 
 
-# If we are on Windows and building a DLL, we need to set CMAKE_RUNTIME_OUTPUT_DIRECTORY to our module directory because
-# Windows uses the same variable for both exe and dll files.
-if (WIN32)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
-endif()
-
 # Enumerate all common sources. 
 file(
-    GLOB_RECURSE KI_COMMON_SOURCES
+    GLOB KI_COMMON_SOURCES
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
 )
 set(KI_SOURCES ${KI_COMMON_SOURCES})
 # Enumerate all external sources.
 file(
-    GLOB_RECURSE externAL_SOURCES
+    GLOB_RECURSE KI_EXTERNAL_SOURCES
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ext/*.c
 )
-list(APPEND KI_SOURCES ${externAL_SOURCES})
+list(APPEND KI_SOURCES ${KI_EXTERNAL_SOURCES})
 # Enumerate all platform-specific sources.
 file(
     GLOB_RECURSE KI_PLATFORM_SOURCES
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/${KI_PLATFORM_PREFIX}/*.c
+    CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/${CMAKE_KIRA_PSRCDIR}/*.c
 )
 list(APPEND KI_SOURCES ${KI_PLATFORM_SOURCES})
 
 # Set the target.
 # The core module is the only module that is statically linked into the runtime because it contains the code that
 # handles dynamic library loading.
-add_library(skkrnl SHARED ${KI_SOURCES})
-set_target_properties(skkrnl PROPERTIES OUTPUT_NAME "kikrnl")
+add_library(kikrnl SHARED ${KI_SOURCES})
 # Set target specific defines.
-target_compile_definitions(skkrnl PRIVATE KI_KERNEL_EXPORT KI_KERNEL)
+target_compile_definitions(kikrnl PRIVATE KI_KERNEL_EXPORT KI_KERNEL)
 
 

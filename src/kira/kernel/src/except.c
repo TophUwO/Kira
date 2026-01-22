@@ -20,28 +20,31 @@
 #include <string.h>
 
 /* Kira includes */
+#include <kira/dbg.h>
+
 #include <kira/kernel/except.h>
 
 #include <kira/kernel/int/sync.h>
 #include <kira/kernel/int/krnlmod.h>
 
-#include <kira/dbg/dbg.h>
-
 
 /** \cond INTERNAL */
-KI_NATIVE typedef struct KiSKrnlExceptionSystemState {
-    KiTAtomicFlag              m_initFlag;
-    KiTKrnlExceptionHandlerCb  ma_handlerTable[__KiKrnlExcTy_Count__];
-    KiSKrnlRWLock             *mp_rwLock;
-} KiSKrnlExceptionSystemState;
 /**
  */
-static KiSKrnlExceptionSystemState gl_ExceptionSystemState = {};
+KI_NATIVE typedef struct KiSExceptionSystemState {
+    KiTBool              m_isInit;
+    KiFExceptionHandler  ma_handlerTable[__KiExcTy_Count__];
+    KiTRWLockHandle      m_rwLock;
+} KiSExceptionSystemState;
+
+/**
+ */
+static KiSExceptionSystemState gl_ExceptionSystemState;
 
 
 /**
  */
-static KiTVoid KI_CALL KiInternal_KrnlExcHndSystemPanic(KiSKrnlException const *excPtr, KiTVoid *extraParam) {
+static KiTVoid KI_CALL KiInternal_ExcHndSystemPanic(KiSException const *excPtr, KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
     KI_UNREFERENCED_PARAMETER(excPtr);
 
@@ -55,25 +58,23 @@ static KiTVoid KI_CALL KiInternal_KrnlExcHndSystemPanic(KiSKrnlException const *
 static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ExceptionHandlingSystem)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    if (atomic_fetch_or(&gl_ExceptionSystemState.m_initFlag, KI_TRUE) == KI_FALSE) {
+    if (gl_ExceptionSystemState.m_isInit == KI_FALSE) {
         /* Reset state. */
         memset(&gl_ExceptionSystemState, 0, sizeof gl_ExceptionSystemState);
 
         /* Initialize the handler table. */
         for (KiTIndex i = 0; i < KI_COUNTOF(gl_ExceptionSystemState.ma_handlerTable); i++)
-            gl_ExceptionSystemState.ma_handlerTable[i] = &KiInternal_KrnlExcHndSystemPanic;
+            gl_ExceptionSystemState.ma_handlerTable[i] = &KiInternal_ExcHndSystemPanic;
 
         /* Create rwlock. */
-        KiEErrorCode errorCode = KiKrnlRWLockCreate(&gl_ExceptionSystemState.mp_rwLock);
+        KiEErrorCode errorCode = KiCreateRWLock(&gl_ExceptionSystemState.m_rwLock);
         {
-            if (errorCode != KiErr_Ok) {
-                atomic_store(&gl_ExceptionSystemState.m_initFlag, KI_FALSE);
-
+            if (errorCode != KiErr_Ok)
                 return errorCode;
-            }
         }
 
         /* All good. */
+        gl_ExceptionSystemState.m_isInit = KI_TRUE;
         return KiErr_Ok;
     }
 
@@ -86,10 +87,11 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ExceptionHandlingSystem)(KiTVoid *
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(ExceptionHandlingSystem)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    if (atomic_fetch_and(&gl_ExceptionSystemState.m_initFlag, KI_FALSE) == KI_TRUE) {
+    if (gl_ExceptionSystemState.m_isInit == KI_TRUE) {
         /* Destroy rwlock. */
-        KiKrnlRWLockDestroy(gl_ExceptionSystemState.mp_rwLock);
+        KiDestroyRWLock(&gl_ExceptionSystemState.m_rwLock);
 
+        gl_ExceptionSystemState.m_isInit = KI_FALSE;
         return KiErr_Ok;
     }
 
@@ -99,53 +101,53 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(ExceptionHandlingSystem)(KiTVoid
 /** \endcond */
 
 
-KiTVoid KI_CALL KiKrnlThrowException(KiSKrnlException const *excPtr, KiTVoid *extraParam) {
-    if (atomic_load(&gl_ExceptionSystemState.m_initFlag) == KI_FALSE)
+KiTVoid KI_CALL KiRaiseException(KiSException const *excPtr, KiTVoid *extraParam) {
+    if (gl_ExceptionSystemState.m_isInit == KI_FALSE)
         return;
 
-    KiTKrnlExceptionHandlerCb fnExcHandler = &KiInternal_KrnlExcHndSystemPanic;
+    KiFExceptionHandler fnExcHandler = &KiInternal_ExcHndSystemPanic;
 
     /* Select callback. */
-    KiKrnlRWLockAcquireWrite(gl_ExceptionSystemState.mp_rwLock);
+    KiAcquireWrite(&gl_ExceptionSystemState.m_rwLock);
     {
-        if (KI_INRANGE_INCL(excPtr->m_excType, KiKrnlExcTy_Invalid, __KiKrnlExcTy_Count__ - 1))
+        if (KI_INRANGE_INCL(excPtr->m_excType, KiExcTy_Invalid, __KiExcTy_Count__ - 1))
             fnExcHandler = gl_ExceptionSystemState.ma_handlerTable[excPtr->m_excType];
     }
-    KiKrnlRWLockReleaseWrite(gl_ExceptionSystemState.mp_rwLock);
+    KiReleaseWrite(&gl_ExceptionSystemState.m_rwLock);
 
     /* Invoke exception handler. */
     (*fnExcHandler)(excPtr, extraParam);
 }
 
-KiTBool KI_CALL KiKrnlSetExceptionHandler(KiSKrnlExceptionType excType, KiTKrnlExceptionHandlerCb fnHnd) {
-    if (atomic_load(&gl_ExceptionSystemState.m_initFlag) == KI_FALSE)
+KiTBool KI_CALL KiSetExceptionHandler(KiEExceptionType excType, KiFExceptionHandler fnHnd) {
+    if (gl_ExceptionSystemState.m_isInit == KI_FALSE)
         return KI_FALSE;
 
     /* Check if the type is in range. */
-    if (!KI_INRANGE_INCL(excType, KiKrnlExcTy_Invalid, __KiKrnlExcTy_Count__ - 1))
+    if (!KI_INRANGE_INCL(excType, KiExcTy_Invalid, __KiExcTy_Count__ - 1))
         return KI_FALSE;
 
     /* Update handler table. */
-    KiKrnlRWLockAcquireWrite(gl_ExceptionSystemState.mp_rwLock);
+    KiAcquireWrite(&gl_ExceptionSystemState.m_rwLock);
     {
         /* If there is already a handler registered for the current exception type, we reject the new one. */
-        if (gl_ExceptionSystemState.ma_handlerTable[excType] != &KiInternal_KrnlExcHndSystemPanic) {
-            KiKrnlRWLockReleaseWrite(gl_ExceptionSystemState.mp_rwLock);
+        if (gl_ExceptionSystemState.ma_handlerTable[excType] != &KiInternal_ExcHndSystemPanic) {
+            KiReleaseWrite(&gl_ExceptionSystemState.m_rwLock);
 
             return KI_FALSE;
         }
 
         /* Update. */
-        gl_ExceptionSystemState.ma_handlerTable[excType] = fnHnd != nullptr ? fnHnd : &KiInternal_KrnlExcHndSystemPanic;
+        gl_ExceptionSystemState.ma_handlerTable[excType] = fnHnd != nullptr ? fnHnd : &KiInternal_ExcHndSystemPanic;
     }
-    KiKrnlRWLockReleaseWrite(gl_ExceptionSystemState.mp_rwLock);
+    KiReleaseWrite(&gl_ExceptionSystemState.m_rwLock);
 
     /* All good. */
     return KI_TRUE;
 }
 
 
-KiTSize KI_CALL KiKrnlGetMaximumExceptionHandlerCount(KiTVoid) {
+KiTSize KI_CALL KiGetMaximumExceptionHandlerCount(KiTVoid) {
     /* Currently, we only allow one handler. */
     return 1;
 }
@@ -153,9 +155,9 @@ KiTSize KI_CALL KiKrnlGetMaximumExceptionHandlerCount(KiTVoid) {
 
 /** \cond */
 KI_KRNLMOD_DEFINE(ExceptionHandlingSystem) {
-    .m_structSize = sizeof(KiSKrnlModuleInfo),
-    .m_modUuid    = {},
-    .m_modId      = KI_MAKE_STRING_VIEW("exception handling system"),
+    .m_structSize = sizeof(KiSModuleInfo),
+    .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
+    .mp_modId     = &KI_MAKE_STRING_VIEW("exception handling system"),
     .m_modFlags   = 0,
     
     .mp_fnInit    = &KI_KRNLMOD_INITFN(ExceptionHandlingSystem),

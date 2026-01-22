@@ -27,69 +27,69 @@
 #endif
 
 /* Kira includes */
+#include <kira/dbg.h>
+
 #include <kira/kernel/reg.h>
 #include <kira/kernel/dir.h>
 
 #include <kira/kernel/int/fenum.h>
 #include <kira/kernel/int/string.h>
-#include <kira/kernel/int/gparray.h>
-
-#include <kira/dbg/dbg.h>
+#include <kira/kernel/int/array.h>
 
 
 /** \cond INTERNAL */
-struct KiSKrnlFileEnumerationContext {
-    KiEErrorCode                      m_lastError;
-    KiTBool                           m_isError;
-    KiTBool                           m_isInit;
-    KiSKrnlFileEnumerationResult     *mp_currResPtr;
-    KiSKrnlString                    *mp_currElem;
-    KiSKrnlGPArray                   *mp_dirStack;
-    DIR                              *mp_currDirHnd;
-    KiTInt32                          m_currResIndex;
-    KiTInt32                          m_nResProc;
-    KiSKrnlFileEnumerationProperties  m_enumProps;
+struct KiSFileEnumerationContext {
+    KiEErrorCode                  m_lastError;
+    KiTBool                       m_isError;
+    KiTBool                       m_isInit;
+    KiSFileEnumerationResult     *mp_currResPtr;
+    KiSString                    *mp_currElem;
+    KiSArray                     *mp_dirStack;
+    DIR                          *mp_currDirHnd;
+    KiTInt32                      m_currResIndex;
+    KiTInt32                      m_nResProc;
+    KiSFileEnumerationProperties  m_enumProps;
 };
 
 
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_KrnlFileEnumerationContextReset(
-    KiSKrnlFileEnumerationContext *ctxtPtr,
-    KiSKrnlFileEnumerationProperties const *enumPropsPtr
+static KiEErrorCode KI_CALL KiInternal_FileEnumerationContextReset(
+    KiSFileEnumerationContext *ctxtPtr,
+    KiSFileEnumerationProperties const *enumPropsPtr
 ) {
     KI_ASSERT(enumPropsPtr != nullptr, KiErr_InParameter);
 
     /* Copy root directory. */
-    KiSKrnlString *currDirPath;
-    KiEErrorCode errCode = KiKrnlStringCreate(enumPropsPtr->mp_rootDir, &currDirPath);
+    KiSString *currDirPath;
+    KiEErrorCode errCode = KiCreateString(enumPropsPtr->mp_rootDir, &currDirPath);
     if (errCode != KiErr_Ok) {
         free(ctxtPtr);
 
         return errCode;
     }
     /* Create directory stack. */
-    KiSKrnlGPArray *dirStack;
-    errCode = KiKrnlGPArrayCreate(&dirStack);
+    KiSArray *dirStack;
+    errCode = KiCreateArray(&dirStack);
     if (errCode != KiErr_Ok) {
-        KiKrnlStringDestroy(currDirPath);
+        KiDestroyString(currDirPath);
 
         return errCode;
     }
     /* Open root directory. */
-    DIR *currDir = opendir(enumPropsPtr->mp_rootDir);
+    DIR *currDir = opendir((char const *)enumPropsPtr->mp_rootDir);
     if (currDir == nullptr) {
-        KiKrnlGPArrayDestroy(dirStack);
-        KiKrnlStringDestroy(currDirPath);
+        KiDestroyArray(dirStack);
+        KiDestroyString(currDirPath);
 
-        return (errCode = KiKrnlErrnoToKiraErrorCode(errno)) != KiErr_Unknown
+        return (errCode = KiErrnoToKiraErrorCode(errno)) != KiErr_Unknown
             ? errCode
             : KiErr_MemoryAllocation
         ;
     }
 
     /* Finally, initialize context. */
-    *ctxtPtr = (KiSKrnlFileEnumerationContext){
+    *ctxtPtr = (KiSFileEnumerationContext){
         .m_lastError    = KiErr_Ok,
         .m_isError      = KI_FALSE,
         .m_isInit       = KI_TRUE,
@@ -106,12 +106,12 @@ static KiEErrorCode KI_CALL KiInternal_KrnlFileEnumerationContextReset(
 
 /**
  */
-static KiTVoid KI_CALL KiInternal_KrnlFileEnumerationContextUninit(KiSKrnlFileEnumerationContext *ctxtPtr) {
+static KiTVoid KI_CALL KiInternal_FileEnumerationContextUninit(KiSFileEnumerationContext *ctxtPtr) {
     KI_ASSERT(ctxtPtr != nullptr, KiErr_InOutParameter);
 
     /* Destroy the current directory and the directory stack. */
     KiTSize nElem;
-    KiTVoid **elemPtr = KiKrnlGPArrayMap(ctxtPtr->mp_dirStack, 0, -1, &elemPtr, &nElem);
+    KiTVoid **elemPtr = KiMapArray(ctxtPtr->mp_dirStack, 0, -1, &elemPtr, &nElem);
     {
         if (elemPtr == nullptr)
             goto lbl_DESTROYSTRUCT;
@@ -126,38 +126,38 @@ static KiTVoid KI_CALL KiInternal_KrnlFileEnumerationContextUninit(KiSKrnlFileEn
 
             closedir((DIR *)elemPtr[i]);
         }
-        KiKrnlGPArrayDestroy(ctxtPtr->mp_dirStack);
+        KiDestroyArray(ctxtPtr->mp_dirStack);
     }
     
     /* Destroy the rest of the structure. */
 lbl_DESTROYSTRUCT:
     closedir(ctxtPtr->mp_currDirHnd);
 
-    KiKrnlStringDestroy(ctxtPtr->mp_currElem);
+    KiDestroyString(ctxtPtr->mp_currElem);
 }
 
 /**
  */
-static KiSKrnlFileEnumerationResult *KI_CALL KiInternal_KrnlFileEnumerationContextCreateResult(
-    KiSKrnlFileEnumerationContext const *ctxtPtr,
+static KiSFileEnumerationResult *KI_CALL KiInternal_FileEnumerationContextCreateResult(
+    KiSFileEnumerationContext const *ctxtPtr,
     KiEErrorCode *resErrCode
 ) {
     KI_ASSERT(ctxtPtr != nullptr,    KiErr_InParameter);
     KI_ASSERT(resErrCode != nullptr, KiErr_OutParameter);
 
     /* Allocate module result. */
-    KiSKrnlFileEnumerationResult *newRes = malloc(sizeof *newRes);
+    KiSFileEnumerationResult *newRes = malloc(sizeof *newRes);
     if (newRes != nullptr) {
         *resErrCode = KiErr_MemoryAllocation;
 
         return nullptr;
     }
 
-    KiSKrnlString *fullPath;
+    KiSString *fullPath;
     {
         /* Duplicate the full path. */
-        KiTChar      const *fullCPath = KiKrnlStringCStr(ctxtPtr->mp_currElem);
-        KiEErrorCode        errCode   = KiKrnlStringDuplicate(ctxtPtr->mp_currElem, &fullPath);
+        KiTChar      const *fullCPath = KiGetCString(ctxtPtr->mp_currElem);
+        KiEErrorCode        errCode   = KiDuplicateString(ctxtPtr->mp_currElem, &fullPath);
         if (errCode != KiErr_Ok) {
             free(newRes);
 
@@ -165,7 +165,7 @@ static KiSKrnlFileEnumerationResult *KI_CALL KiInternal_KrnlFileEnumerationConte
             return nullptr;
         }
         /* Construct. */
-        *newRes = (KiSKrnlFileEnumerationResult){
+        *newRes = (KiSFileEnumerationResult){
             .m_structSize    = sizeof *newRes,
             .m_resultIndex   = ctxtPtr->m_currResIndex,
             .mp_fullPath     = fullPath,
@@ -174,7 +174,7 @@ static KiSKrnlFileEnumerationResult *KI_CALL KiInternal_KrnlFileEnumerationConte
             .m_fileName      = KI_MAKE_STRING_VIEW(""),
             .m_fileExt       = KI_MAKE_STRING_VIEW("")
         };
-        KiKrnlSplitPath(fullCPath, &newRes->m_dirPath, &newRes->m_fileDirName, &newRes->m_fileName, &newRes->m_fileExt);
+        KiSplitPath(fullCPath, &newRes->m_dirPath, &newRes->m_fileDirName, &newRes->m_fileName, &newRes->m_fileExt);
     }
 
     /* All good. */
@@ -184,8 +184,8 @@ static KiSKrnlFileEnumerationResult *KI_CALL KiInternal_KrnlFileEnumerationConte
 
 /**
  */
-static KiSKrnlFileEnumerationResult KI_CALL *KiInternal_KrnlFileEnumerationContextYieldOne(
-    KiSKrnlFileEnumerationContext *ctxtPtr
+static KiSFileEnumerationResult KI_CALL *KiInternal_FileEnumerationContextYieldOne(
+    KiSFileEnumerationContext *ctxtPtr
 ) {
     KI_ASSERT(ctxtPtr != nullptr, KiErr_InOutParameter);
 
@@ -200,7 +200,7 @@ static KiSKrnlFileEnumerationResult KI_CALL *KiInternal_KrnlFileEnumerationConte
 
         if ((currRes = readdir(ctxtPtr->mp_currDirHnd)) != nullptr) {
             /* Push new component to stack. */
-            KiKrnlStringPushPathComponent(ctxtPtr->mp_currElem, currRes->d_name);
+            KiPushPathComponent(ctxtPtr->mp_currElem, '/', (KiTChar const *)currRes->d_name);
 
             switch (currRes->d_type) {
                 case DT_DIR:
@@ -208,19 +208,19 @@ static KiSKrnlFileEnumerationResult KI_CALL *KiInternal_KrnlFileEnumerationConte
                     {
                         /* Kiip '.' and '..' "directories". */
                         if (!strcmp(currRes->d_name, ".") || !strcmp(currRes->d_name, "..")) {
-                            KiKrnlStringPopPathComponent(ctxtPtr->mp_currElem);
+                            KiPopPathComponent(ctxtPtr->mp_currElem, '/');
 
                             continue;
                         }
 
                         /* Push current directory. Save it for later. */
-                        KiKrnlGPArrayPush(ctxtPtr->mp_dirStack, ctxtPtr->mp_currDirHnd);
-                        DIR *newDir = opendir(KiKrnlStringCStr(ctxtPtr->mp_currElem));
+                        KiPushToArray(ctxtPtr->mp_dirStack, ctxtPtr->mp_currDirHnd);
+                        DIR *newDir = opendir((char const *)KiGetCString(ctxtPtr->mp_currElem));
                         {
                             if (newDir == nullptr) {
-                                ctxtPtr->mp_currDirHnd = KiKrnlGPArrayPop(ctxtPtr->mp_dirStack);
+                                ctxtPtr->mp_currDirHnd = KiPopFromArray(ctxtPtr->mp_dirStack);
 
-                                errCode = KiKrnlErrnoToKiraErrorCode(errno);
+                                errCode = KiErrnoToKiraErrorCode(errno);
                                 goto lbl_ONERROR;
                             }
 
@@ -230,21 +230,20 @@ static KiSKrnlFileEnumerationResult KI_CALL *KiInternal_KrnlFileEnumerationConte
                     }
 
                     break;
-                case DT_REG:
+                case DT_REG: {
                     /* Get the result. */
-                    KiSKrnlFileEnumerationResult *newRes = KiInternal_KrnlFileEnumerationContextCreateResult(
-                        ctxtPtr,
-                        &errCode
-                    );
+                    KiSFileEnumerationResult *newRes = KiInternal_FileEnumerationContextCreateResult(ctxtPtr, &errCode);
                 
                     /*
                      * Yield module. Before we return, we pop the entity name because when we return, it should always
                      * contain a directory path.
                      */
-                    KiKrnlStringPopPathComponent(ctxtPtr->mp_currElem);
+                    KiPopPathComponent(ctxtPtr->mp_currElem, '/');
                     if (newRes == nullptr)
                         goto lbl_ONERROR;
+                    
                     return newRes;
+                }
                 case DT_LNK:
                     if (!ctxtPtr->m_enumProps.m_doWalkSymlinks)
                         break;
@@ -255,7 +254,7 @@ static KiSKrnlFileEnumerationResult KI_CALL *KiInternal_KrnlFileEnumerationConte
                     /*
                      * If it's some other weird abomination of filesystem entity, we simply revert the entity name push.
                      */
-                    KiKrnlStringPopPathComponent(ctxtPtr->mp_currElem);
+                    KiPopPathComponent(ctxtPtr->mp_currElem, '/');
             }
         } else {
             /*
@@ -263,8 +262,8 @@ static KiSKrnlFileEnumerationResult KI_CALL *KiInternal_KrnlFileEnumerationConte
              * fetch another one.
              */
             closedir(ctxtPtr->mp_currDirHnd);
-            KiKrnlStringPopPathComponent(ctxtPtr->mp_currElem);
-            ctxtPtr->mp_currDirHnd = KiKrnlGPArrayPop(ctxtPtr->mp_dirStack);
+            KiPopPathComponent(ctxtPtr->mp_currElem, '/');
+            ctxtPtr->mp_currDirHnd = KiPopFromArray(ctxtPtr->mp_dirStack);
 
             continue;
         }
@@ -280,18 +279,16 @@ lbl_ONERROR:
 /** \endcond */
 
 
-KiSKrnlFileEnumerationContext *KI_CALL KiKrnlFileEnumerationContextCreate(
-    KiSKrnlFileEnumerationProperties const *enumPropsPtr
-) {
+KiSFileEnumerationContext *KI_CALL KiCreateFEC(KiSFileEnumerationProperties const *enumPropsPtr) {
     KI_ASSERT(enumPropsPtr != nullptr, KiErr_InParameter);
 
     /* Allocate memory for the context. */
-    KiSKrnlFileEnumerationContext *ctxtPtr = malloc(sizeof *ctxtPtr);
+    KiSFileEnumerationContext *ctxtPtr = malloc(sizeof *ctxtPtr);
     if (ctxtPtr == nullptr)
         return nullptr;
         
     /* Prepare context for first use. */
-    KiEErrorCode errCode = KiInternal_KrnlFileEnumerationContextReset(ctxtPtr, enumPropsPtr);
+    KiEErrorCode errCode = KiInternal_FileEnumerationContextReset(ctxtPtr, enumPropsPtr);
     if (errCode != KiErr_Ok) {
         free(ctxtPtr);
 
@@ -301,28 +298,28 @@ KiSKrnlFileEnumerationContext *KI_CALL KiKrnlFileEnumerationContextCreate(
     return ctxtPtr;
 }
 
-KiTVoid KI_CALL KiKrnlFileEnumerationContextDestroy(KiSKrnlFileEnumerationContext *ctxtPtr) {
+KiTVoid KI_CALL KiDestroyFEC(KiSFileEnumerationContext *ctxtPtr) {
     if (ctxtPtr == nullptr)
         return;
 
     /* Uninit context. */
-    KiInternal_KrnlFileEnumerationContextUninit(ctxtPtr);
+    KiInternal_FileEnumerationContextUninit(ctxtPtr);
 
     /* Free structure. */
     free(ctxtPtr);
 }
 
-KiTVoid KI_CALL KiKrnlFileEnumerationContextReset(KiSKrnlFileEnumerationContext *ctxtPtr) {
+KiTVoid KI_CALL KiResetFEC(KiSFileEnumerationContext *ctxtPtr) {
     KI_ASSERT(ctxtPtr != nullptr, KiErr_InOutParameter);
 
     KiEErrorCode errCode;
-    auto oldProps = ctxtPtr->m_enumProps;
+    KiSFileEnumerationProperties oldProps = ctxtPtr->m_enumProps;
     {
         /* Uninitialize. This destroys the old state. */
-        KiInternal_KrnlFileEnumerationContextUninit(ctxtPtr);
+        KiInternal_FileEnumerationContextUninit(ctxtPtr);
 
         /* Initialize. This simply creates a new fresh state. */
-        errCode = KiInternal_KrnlFileEnumerationContextReset(ctxtPtr, &oldProps);
+        errCode = KiInternal_FileEnumerationContextReset(ctxtPtr, &oldProps);
     }
 
     /* If an error happened, set the flag. */
@@ -330,7 +327,7 @@ KiTVoid KI_CALL KiKrnlFileEnumerationContextReset(KiSKrnlFileEnumerationContext 
     ctxtPtr->m_lastError = errCode != KiErr_Ok ? errCode : ctxtPtr->m_lastError;
 }
 
-KiSKrnlFileEnumerationResult *KI_CALL KiKrnlFileEnumerationContextYield(KiSKrnlFileEnumerationContext *ctxtPtr) {
+KiSFileEnumerationResult *KI_CALL KiYieldFromFEC(KiSFileEnumerationContext *ctxtPtr) {
     KI_ASSERT(ctxtPtr != nullptr, KiErr_InOutParameter);
 
     /*
@@ -349,42 +346,41 @@ KiSKrnlFileEnumerationResult *KI_CALL KiKrnlFileEnumerationContextYield(KiSKrnlF
     }
 
     /* Yield one result. */
-    return KiInternal_KrnlFileEnumerationContextYieldOne(ctxtPtr);
+    return KiInternal_FileEnumerationContextYieldOne(ctxtPtr);
 }
 
-KiTVoid KI_CALL KiKrnlFileEnumerationContextDiscard(KiSKrnlFileEnumerationContext *ctxtPtr) {
+KiTVoid KI_CALL KiDiscardFECResult(KiSFileEnumerationContext *ctxtPtr) {
     KI_ASSERT(ctxtPtr != nullptr, KiErr_InOutParameter);
 
     /* Do nothing if error flag is set. */
     if (ctxtPtr->m_isError)
         return;
 
-    KiKrnlFileEnumerationContextDestroyResult(ctxtPtr->mp_currResPtr);
+    KiDestroyFECResult(ctxtPtr->mp_currResPtr);
 }
 
-KiSKrnlFileEnumerationProperties const *KI_CALL KiKrnlFileEnumerationContextGetProperties(
-    KiSKrnlFileEnumerationContext const *ctxtPtr
-) {
-    KI_ASSERT(ctxtPtr != nullptr, KiErr_InParameter);
-
-    return (KiSKrnlFileEnumerationProperties const *)&ctxtPtr->m_enumProps;
-}
-
-KiEErrorCode KI_CALL KiSKrnlFileEnumerationContextGetLastError(KiSKrnlFileEnumerationContext const *ctxtPtr) {
-    KI_ASSERT(ctxtPtr != nullptr, KiErr_InParameter);
-
-    return ctxtPtr->m_lastError;
-}
-
-KiTVoid KI_CALL KiKrnlFileEnumerationContextDestroyResult(KiSKrnlFileEnumerationResult *resPtr) {
+KiTVoid KI_CALL KiDestroyFECResult(KiSFileEnumerationResult *resPtr) {
     if (resPtr == nullptr)
         return;
 
     /* Only actually free the full path as the separated components are simply pointers into the full path string. */
-    KiKrnlStringDestroy(resPtr->mp_fullPath);
+    KiDestroyString(resPtr->mp_fullPath);
 
     /* Destroy container structure. */
     free(resPtr);
+}
+
+
+KiSFileEnumerationProperties const *KI_CALL KiGetFECProperties(KiSFileEnumerationContext const *ctxtPtr) {
+    KI_ASSERT(ctxtPtr != nullptr, KiErr_InParameter);
+
+    return (KiSFileEnumerationProperties const *)&ctxtPtr->m_enumProps;
+}
+
+KiEErrorCode KI_CALL KiGetFECLastError(KiSFileEnumerationContext const *ctxtPtr) {
+    KI_ASSERT(ctxtPtr != nullptr, KiErr_InParameter);
+
+    return ctxtPtr->m_lastError;
 }
 
 

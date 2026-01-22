@@ -24,14 +24,14 @@
 
 /**
  */
-KI_NATIVE typedef struct KiSKrnlHashtable KiSKrnlHashtable;
+KI_NATIVE typedef struct KiSHashtable KiSHashtable;
 
 /**
  */
-KI_NATIVE typedef KiTUint64 (KI_CALL *KiFKrnlHashtableHashFn)(KiTVoid const *keyPtr, KiTUint64 const hashSeed);
+KI_NATIVE typedef KiTUint64 (KI_CALL *KiFHashtableHash)(KiTVoid const *keyPtr, KiTUint64 const hashSeed);
 /**
  */
-KI_NATIVE typedef KiTBool   (KI_CALL *KiFKrnlHashtableKeyCmpFn)(KiTVoid const *lKeyPtr, KiTVoid const *rKeyPtr);
+KI_NATIVE typedef KiTBool   (KI_CALL *KiFHashtableKeyCmp)(KiTVoid const *lKeyPtr, KiTVoid const *rKeyPtr);
 /**
  */
 KI_NATIVE typedef KiTBool   (KI_CALL *KiFHashtableErasePred)(KiTVoid *keyPtr, KiTVoid *valPtr, KiTVoid *extraParam);
@@ -39,46 +39,36 @@ KI_NATIVE typedef KiTBool   (KI_CALL *KiFHashtableErasePred)(KiTVoid *keyPtr, Ki
 
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlHashtableCreate(
+KI_NATIVE extern KiEErrorCode KI_CALL KiCreateHashtable(
     KiTSize initCap,
-    KiFKrnlHashtableHashFn fnHash,
-    KiFKrnlHashtableKeyCmpFn fnKeyCmp,
-    KiSKrnlHashtable **resPtr
+    KiFHashtableHash fnHash,
+    KiFHashtableKeyCmp fnKeyCmp,
+    KiSHashtable **resPtr
 );
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlHashtableDestroy(KiSKrnlHashtable *htPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiDestroyHashtable(KiSHashtable *htPtr);
+
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlHashtableInsert(
-    KiSKrnlHashtable *htPtr,
-    KiTVoid const *keyPtr,
-    KiTVoid const *valPtr
-);
+KI_NATIVE extern KiEErrorCode KI_CALL KiInsertIntoHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr, KiTVoid const *valPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlHashtableErase(
-    KiSKrnlHashtable *htPtr,
+KI_NATIVE extern KiTVoid KI_CALL KiEraseFromHashtable(
+    KiSHashtable *htPtr,
     KiTVoid const *keyPtr,
     KiTVoid **dstKeyPtr,
     KiTVoid **dstValPtr
 );
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlHashtableEraseIf(
-    KiSKrnlHashtable *htPtr,
-    KiFHashtableErasePred fnPred,
-    KiTVoid *extraParam
-);
+KI_NATIVE extern KiTVoid KI_CALL KiEraseFromHashtableIf(KiSHashtable *htPtr, KiFHashtableErasePred fnPred, KiTVoid *extraParam);
+
 /**
  */
-KI_NATIVE extern KiTBool KI_CALL KiSKrnlHashtableContains(
-    KiSKrnlHashtable *htPtr,
-    KiTVoid const *kPtr,
-    KiTInt64 *iPtr
-);
+KI_NATIVE extern KiTBool KI_CALL KiIsInHashtable(KiSHashtable *htPtr, KiTVoid const *kPtr, KiTInt64 *iPtr);
 /**
  */
-KI_NATIVE extern KiTVoid *KI_CALL KiKrnlHashtableAt(KiSKrnlHashtable *htPtr, KiTVoid const *keyPtr);
+KI_NATIVE extern KiTVoid *KI_CALL KiGetFromHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr);
 
 

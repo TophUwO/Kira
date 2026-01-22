@@ -10,123 +10,190 @@
 
 /**
  * \file  string.c
- * \brief implements the kernel-level lightweight dynamic string type
+ * \brief implements the kernel-level lightweight dynamic string type, based on KiSBuffer
  */
 
 
 /* stdlib includes */
-#include <stdlib.h>
-
 #include <string.h>
 
 /* Kira includes */
-#include <kira/kernel/reg.h>
+#include <kira/dbg.h>
 
 #include <kira/kernel/int/string.h>
-
-#include <kira/dbg/dbg.h>
-
-
-struct KiSKrnlString {
-    KiTSize  m_strSize;
-    KiTSize  m_strCap;
-
-    KiTChar *mp_byteArrPtr;
-};
+#include <kira/kernel/int/buffer.h>
 
 
-KiEErrorCode KI_CALL KiKrnlStringCreate(KiTChar const *srcStr, KiSKrnlString **resPtr) {
-    KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
+KiEErrorCode KI_CALL KiCreateString(KiTChar const *srcStr, KiSString **resPtr) {
+    /* Create a new buffer holding the string. */
+    KiEErrorCode errCode = KiCreateBuffer(0, (KiSBuffer **)resPtr);
+    {
+        if (errCode != KiErr_Ok)
+            return errCode;
 
-    /* Allocate structure. */
-    *resPtr = malloc(sizeof **resPtr);
-    if (*resPtr == nullptr)
-        return KiErr_MemoryAllocation;
+        /* If the string is nullptr or empty, we leave the buffer uninitialized. */
+        if (srcStr != nullptr && *srcStr != '\0') {
+            KiEErrorCode errCode = KiWriteBufferData((KiSBuffer *)*resPtr, srcStr, strlen(srcStr) + 1);
 
-    /* Initialize with string if necessary. */
-    if (srcStr != nullptr && *srcStr != '\0') {
-        KiTSize const srcSize = strlen(srcStr);
-        {
-            /* Allocate string buffer. */
-            (*resPtr)->mp_byteArrPtr = malloc((srcSize + 1) * sizeof *(*resPtr)->mp_byteArrPtr);
-            if ((*resPtr)->mp_byteArrPtr == nullptr) {
-                free(*resPtr);
+            if (errCode != KiErr_Ok) {
+                KiDestroyBuffer((KiSBuffer *)*resPtr);
 
                 *resPtr = nullptr;
-                return KiErr_MemoryAllocation;
+                return errCode;
             }
-
-            /* Copy. */
-            memcpy_s((*resPtr)->mp_byteArrPtr, srcSize + 1, srcStr, srcSize + 1);
-            **resPtr = (KiSKrnlString){
-                .m_strSize     = srcSize,
-                .m_strCap      = srcSize + 1,
-                .mp_byteArrPtr = (*resPtr)->mp_byteArrPtr
-            };
         }
-
-        /* All good. */
-        return KiErr_Ok;
     }
 
-    /* Return empty string. */
-    **resPtr = (KiSKrnlString){
-        .m_strCap      = 0,
-        .m_strSize     = 0,
-        .mp_byteArrPtr = nullptr
-    };
+    /* All good. */
     return KiErr_Ok;
 }
 
-KiTVoid KI_CALL KiKrnlStringDestroy(KiSKrnlString *strPtr) {
+KiEErrorCode KI_CALL KiDuplicateString(KiSString const *srcPtr, KiSString **resPtr) {
+    KI_ASSERT(srcPtr != nullptr, KiErr_InParameter);
+
+    KiSBuffer *srcAsBuf  = (KiSBuffer *)srcPtr;
+    {
+        KiEErrorCode errCode = KiCreateBuffer(KiGetBufferSize((KiSBuffer *)srcPtr), (KiSBuffer **)resPtr);
+        if (errCode != KiErr_Ok)
+            return errCode;
+
+        errCode = KiWriteBufferData((KiSBuffer *)*resPtr, KiGetBufferPointer(srcAsBuf, 0), KiGetBufferSize(srcAsBuf));
+        if (errCode != KiErr_Ok) {
+            KiDestroyBuffer((KiSBuffer *)*resPtr);
+
+            *resPtr = nullptr;
+            return errCode;
+        }
+    }
+
+    /* All good. */
+    return KiErr_Ok;
+}
+
+KiTVoid KI_CALL KiDestroyString(KiSString *strPtr) {
     if (strPtr == nullptr)
         return;
 
-    free(strPtr->mp_byteArrPtr);
-    free(strPtr);
+    KiDestroyBuffer((KiSBuffer *)strPtr);
 }
 
-KiEErrorCode KI_CALL KiKrnlStringAssign(KiSKrnlString *strPtr, KiTChar const *srcPtr) {
-    
+KiTVoid KI_CALL KiClearString(KiSString *strPtr, KiTBool isSecure) {
+    KI_ASSERT(strPtr != nullptr, KiErr_InOutParameter);
+
+    /* Do not use KiFillBuffer() because it's simply too slow for this operation. */
+    if (isSecure) {
+        KiTSize const bufSize = KiGetBufferSize((KiSBuffer const *)strPtr);
+        
+        memset((KiTVoid *)KiGetBufferPointer((KiSBuffer const *)strPtr, 0), 0, bufSize);
+    } else
+        *(KiTChar *)KiGetBufferPointer((KiSBuffer const *)strPtr, 0) = '\0';
+
+    KiSeekBufferPosition((KiSBuffer *)strPtr, KI_SEEK_BEGIN);
 }
 
-KiEErrorCode KI_CALL KiKrnlStringDuplicate(KiSKrnlString const *srcPtr, KiSKrnlString **resPtr) {
+
+KiEErrorCode KI_CALL KiAssignToString(KiSString *strPtr, KiTChar const *srcPtr) {
+    KI_ASSERT(strPtr != nullptr, KiErr_InOutParameter);
     KI_ASSERT(srcPtr != nullptr, KiErr_InParameter);
-    KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
-    
-    return KiKrnlStringCreate(KiKrnlStringCStr(srcPtr), resPtr);
+
+    /* Seek to the beginning so that we start writing to the first byte of the buffer. */
+    KiSeekBufferPosition((KiSBuffer *)strPtr, KI_SEEK_BEGIN);
+
+    KiEErrorCode errCode = KiWriteBufferData((KiSBuffer *)strPtr, srcPtr, strlen(srcPtr) + 1);
+    {
+        if (errCode != KiErr_Ok)
+            return errCode;
+
+        /* Zero the remainder of the memory block currently allocated by the buffer. */
+        KiTOffset const currPos = KiGetBufferPosition((KiSBuffer const *)strPtr);
+        {
+            memset(
+                (KiTVoid *)KiGetBufferPointer((KiSBuffer const *)strPtr, currPos),
+                0,
+                KiGetBufferSize((KiSBuffer const *)strPtr) - currPos
+            );
+        }
+    }
+
+    /* All good. */
+    return KiErr_Ok;
 }
 
-KiEErrorCode KI_CALL KiKrnlStringConcat(KiSKrnlString *strPtr, KiTChar const *srcStr) {
+KiEErrorCode KI_CALL KiAppendToString(KiSString *strPtr, KiTChar const *srcStr) {
+    KI_ASSERT(strPtr != nullptr, KiErr_InOutParameter);
+    KI_ASSERT(srcStr != nullptr, KiErr_InParameter);
 
+    return KiWriteBufferData((KiSBuffer *)strPtr, srcStr, strlen(srcStr) + 1);
 }
 
-KiEErrorCode KI_CALL KiKrnlStringPushPathComponent(KiSKrnlString *strPtr, KiTChar const *pathCompPtr) {
+KiEErrorCode KI_CALL KiPushPathComponent(KiSString *strPtr, KiTChar pathSep, KiTChar const *pathCompPtr) {
+    KI_ASSERT(strPtr != nullptr,      KiErr_InOutParameter);
+    KI_ASSERT(pathCompPtr != nullptr, KiErr_InParameter);
 
+    KiTOffset const oldOff = KiGetBufferPosition((KiSBuffer const *)strPtr);
+    {
+        KiEErrorCode errCode = KiErr_Ok;
+        
+        /* Write separator. */
+        KiSeekBufferPosition((KiSBuffer *)strPtr, KI_MAX(0, oldOff - 1));
+        {
+            errCode = KiAppendToString(strPtr, (KiTChar const[2]){ pathSep, '\0' });
+
+            if (errCode != KiErr_Ok)
+                return errCode;
+        }
+        /*
+         * Because the separator was written as string, it also appended a NUL-terminator. This means we must overwrite
+         * it as well. Since the old offset effectively points to the byte after the old NUL-terminator and the old
+         * NUL-terminator has been overwritten by the separator, seeking to the old offset effectively places us right
+         * after the separator.
+         */
+        KiSeekBufferPosition((KiSBuffer *)strPtr, oldOff);
+
+        /* Finally write the path component. */
+        if ((errCode = KiAppendToString(strPtr, pathCompPtr)) != KiErr_Ok) {
+            /* We do not need to erase more because if KiAppendToString() fails, nothing has been written. */
+            *(KiTChar *)KiGetBufferPointer((KiSBuffer const *)strPtr, oldOff) = '\0';
+
+            KiSeekBufferPosition((KiSBuffer *)strPtr, oldOff);
+            return errCode;
+        }
+    }
+
+    /* All good. */
+    return KiErr_Ok;
 }
 
-KiTVoid KI_CALL KiKrnlStringPopPathComponent(KiSKrnlString *strPtr) {
+KiTVoid KI_CALL KiPopPathComponent(KiSString *strPtr, KiTChar pathSep) {
+    KI_ASSERT(strPtr != nullptr, KiErr_InOutParameter);
 
+    /* Find last separator. */
+    KiTVoid *lastSepPtr = strrchr(KiGetBufferPointer((KiSBuffer const *)strPtr, KI_SEEK_BEGIN), pathSep);
+    if (lastSepPtr == nullptr)
+        return;
+
+    /*
+     * Zero everything between the current offset and the position of the last separator. Lastly, seek to the new end of
+     * the string.
+     */
+    memset(lastSepPtr, 0, strlen(lastSepPtr));
+    KiSeekBufferPosition(
+        (KiSBuffer *)strPtr,
+        (KiTIntptr)lastSepPtr - (KiTIntptr)KiGetBufferPointer((KiSBuffer const *)strPtr, KI_SEEK_BEGIN)
+    );
 }
 
-KiTSize KI_CALL KiKrnlStringReplaceChar(KiSKrnlString *strPtr, KiTChar ch2Replace, KiTChar replaceWith) {
 
-}
-
-KiTChar const *KI_CALL KiKrnlStringCStr(KiSKrnlString const *strPtr) {
+KiTChar const *KI_CALL KiGetCString(KiSString const *strPtr) {
     KI_ASSERT(strPtr != nullptr, KiErr_InParameter);
 
-    return (KiTChar const *)strPtr->mp_byteArrPtr;
+    return KiGetBufferPointer((KiSBuffer const *)strPtr, 0);
 }
 
-KiTSize KI_CALL KiKrnlStringSize(KiSKrnlString const *strPtr) {
+KiTSize KI_CALL KiGetStringSize(KiSString const *strPtr) {
     KI_ASSERT(strPtr != nullptr, KiErr_InParameter);
 
-    return strPtr->m_strSize;
-}
-
-KiTChar const *KI_CALL KiKrnlStringFindChar(KiSKrnlString const *strPtr, KiTChar ch, KiTBool isRev) {
-
+    return KiGetBufferSize((KiSBuffer const *)strPtr);
 }
 
 

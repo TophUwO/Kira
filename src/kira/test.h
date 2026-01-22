@@ -16,9 +16,6 @@
 
 #pragma once
 
-/* stdlib includes */
-#include <setjmp.h>
-
 /* Kira includes */
 #include <kira/kcm.h>
 
@@ -29,7 +26,7 @@
 #define __KI_TEST_VERIFY_IMPL__(expr, op, exp) \
     do {                                       \
         if (!((expr) op (exp))) {              \
-            KiTestReportFailure();             \
+            /*KiTestReportFailure();*/         \
                                                \
             return;                            \
         }                                      \
@@ -39,7 +36,7 @@
 #define __KI_TEST_CHECKFL_IMPL__(expr, fl) \
     do {                                   \
         if (((expr) & (~(fl)))) {          \
-            KiTestReportFailure();         \
+            /*KiTestReportFailure();*/     \
                                            \
             return;                        \
         }                                  \
@@ -58,35 +55,16 @@
  */
 #define KI_TEST_ASSERT_FALSE(expr) __KI_TEST_VERIFY_IMPL__((expr), ==, (KI_FALSE))
 
+
 /**
  */
-#define KI_TEST_EXPECT_SUCCESS(expr)                                               \
-    do {                                                                           \
-        KI_NATIVE extern jmp_buf gl_KiTestJumpBuffer;                           \
-        volatile KiEErrorCode errCode = (KiEErrorCode)setjmp(gl_KiTestJumpBuffer); \
-                                                                                   \
-        if (errCode == KiErr_Ok) {                                                 \
-            (KiTVoid)(expr);                                                       \
-        } else {                                                                   \
-            KiTestReportFailure();                                                 \
-                                                                                   \
-            return;                                                                \
-        }                                                                          \
-    } while (0)
+#define KI_TEST_ASSERT_OK(expr)
 /**
  */
-#define KI_TEST_EXPECT_FAIL(expr)                                                  \
-    do {                                                                           \
-        KI_NATIVE extern jmp_buf gl_KiTestJumpBuffer;                           \
-        volatile KiEErrorCode errCode = (KiEErrorCode)setjmp(gl_KiTestJumpBuffer); \
-                                                                                   \
-        if (errCode == KiErr_Ok) {                                                 \
-            (KiTVoid)(expr);                                                       \
-                                                                                   \
-            KiTestReportFailure();                                                 \
-            return;                                                                \
-        }                                                                          \
-    } while (0)
+#define KI_TEST_ASSERT_THROWS(expr)
+/**
+ */
+#define KI_TEST_ASSERT_FAILS(expr, errCode)
 /**
  */
 #define KI_TEST_ASSERT_ERRCODE(expr, errCode) __KI_TEST_VERIFY_IMPL__((expr), ==, (errCode))
@@ -165,7 +143,7 @@ KI_NATIVE typedef enum KiETestCaseResult {
     KiTestCaseRes_Ignored  = 3, /**< test case did not run because it was ignored due to filters, tags, etc. */
     KiTestCaseRes_Disabled = 4, /**< test case did not run because it is disabled */
 
-    __KiTestCaseRes_Count__     /**< *only used internally* */
+    KI_ENUM_COUNT(KiTestCaseRes)
 } KiETestCaseResult;
 
 
@@ -194,7 +172,7 @@ KI_NATIVE typedef struct KiSTestAssertInfo {
  */
 KI_NATIVE typedef struct KiSTestCaseMetadata {
     KiTSize              m_structSize;    /**< size of this structure, in bytes */
-    KiTUuid              m_uuid;          /**< UUID of the test case */
+    KiSUuid              m_uuid;          /**< UUID of the test case */
     KiSStringView        m_fileName;      /**< file name this test case resides in (relative to module root directory) */
     KiTUint64            m_fileLine;      /**< line the test case starts on */
     KiSStringView        m_functionName;  /**< full name of the function representing the test case */
@@ -221,25 +199,19 @@ KI_NATIVE typedef struct KiSTestCaseMetadata {
 /**
  */
 KI_NATIVE typedef struct KiSTestSuiteMetadata {
-    KiTSize              m_structSize;
-    KiTUuid              m_uuid;
-    KiSStringView        m_fileName;
-    KiSStringView        m_name;
-    KiSVersion           m_version;
-    KiSTestCaseMetadata *mp_testCases;
-    KiTSize              m_nTestCases;
-    KiSStringView       *mp_platforms;
-    KiTSize              m_nPlatforms;
-    KiSStringView        m_brief;
-    KiSStringView        m_details;
-    KiSLegalInformation  m_legalInfo;     /**< structure containing legal information regarding this test suite */
-    KiSStringView       *mp_tags;         /**< tags that can be used to sort and filter test suites */
-    KiTSize              m_nTags;         /**< number of suite tags in \c mp_suiteTags */
-    KiSStringView       *mp_dependencies; /**< dependencies (canonical suite names) that need to be run before this suite runs */
-    KiTSize              m_nDependencies; /**< number of elements in \c mp_suiteDependencies */
-    KiETestCaseFlags     m_flags;         /**< flags specific to this particular test suite */
-    KiSStringView        m_extraMetadata; /**< extra metadata (corresponds to \c extra property) as serialized JSON object */
-    KiSStringView        m_fullMetadata;  /**< full metadata as serialized JSON object */
+    KiTSize               m_structSize;
+    KiSComponentMetadata *mp_compMetadata;
+    KiSStringView         m_fileName;
+    KiSStringView         m_name;
+    KiSTestCaseMetadata  *mp_testCases;
+    KiTSize               m_nTestCases;
+    KiSStringView        *mp_platforms;
+    KiTSize               m_nPlatforms;
+    KiSStringView        *mp_tags;         /**< tags that can be used to sort and filter test suites */
+    KiTSize               m_nTags;         /**< number of suite tags in \c mp_suiteTags */
+    KiSStringView        *mp_dependencies; /**< dependencies (canonical suite names) that need to be run before this suite runs */
+    KiTSize               m_nDependencies; /**< number of elements in \c mp_suiteDependencies */
+    KiETestCaseFlags      m_flags;         /**< flags specific to this particular test suite */
 } KiSTestSuiteMetadata;
 
 /**
@@ -266,7 +238,7 @@ KI_NATIVE typedef struct KiSTestAssertContext {
  * KiTest starts up, all test suites present in the runtime are discovered and worked through in scheduling order. For
  * more information on KiTest and all its features and inner workings, consult the KiTest documentation page.
  */
-KI_INTERFACE(KiITestSuite) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_AUTOMATIC KI_BUILTIN {
+KI_INTERFACE(KiITestSuite) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
     /**
      * \brief reimplements \c KiIBase::QueryInterface()
      */

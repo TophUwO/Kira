@@ -32,7 +32,7 @@ KI_NATIVE typedef struct KiSFileEnumerationContext KiSFileEnumerationContext;
 KI_NATIVE typedef struct KiSFileEnumerationResult {
     KiTSize        m_structSize;
     KiTInt32       m_resultIndex;
-    KiSKrnlString *mp_fullPath;
+    KiSString     *mp_fullPath;
     KiSStringView  m_dirPath;
     KiSStringView  m_fileDirName;
     KiSStringView  m_fileName;
@@ -53,31 +53,28 @@ KI_NATIVE typedef struct KiSFileEnumerationProperties {
 
 /**
  */
-KI_NATIVE extern KiSFileEnumerationContext *KI_CALL KiFileEnumerationContextCreate(
-    KiSFileEnumerationProperties const *enumPropsPtr
-);
+KI_NATIVE extern KiSFileEnumerationContext *KI_CALL KiCreateFEC(KiSFileEnumerationProperties const *enumPropsPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiFileEnumerationContextDestroy(KiSFileEnumerationContext *ctxtPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiDestroyFEC(KiSFileEnumerationContext *ctxtPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiFileEnumerationContextReset(KiSFileEnumerationContext *ctxtPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiResetFEC(KiSFileEnumerationContext *ctxtPtr);
 /**
  */
-KI_NATIVE extern KiSFileEnumerationResult *KI_CALL KiFileEnumerationContextYield(KiSFileEnumerationContext *ctxtPtr);
+KI_NATIVE extern KiSFileEnumerationResult *KI_CALL KiYieldFromFEC(KiSFileEnumerationContext *ctxtPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiFileEnumerationContextDiscard(KiSFileEnumerationContext *ctxtPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiDiscardFECResult(KiSFileEnumerationContext *ctxtPtr);
 /**
  */
-KI_NATIVE extern KiSFileEnumerationProperties const *KI_CALL KiFileEnumerationContextGetProperties(
-    KiSFileEnumerationContext const *ctxtPtr
-);
+KI_NATIVE extern KiTVoid KI_CALL KiDestroyFECResult(KiSFileEnumerationResult *resPtr);
+
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiSFileEnumerationContextGetLastError(KiSFileEnumerationContext const *ctxtPtr);
+KI_NATIVE extern KiSFileEnumerationProperties const *KI_CALL KiGetFECProperties(KiSFileEnumerationContext const *ctxtPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiFileEnumerationContextDestroyResult(KiSFileEnumerationResult *resPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiGetFECLastError(KiSFileEnumerationContext const *ctxtPtr);
 
 

@@ -9,56 +9,45 @@
  ****************************************************************************************************************/
 
 /**
- * \file  buffer.h
- * \brief defines the API for the general-purpose buffer object
+ * \file  unic.h
+ * \brief defines some helper routines for common Unicode- and UTF-8 operations
  */
 
 
-/* Shakai includes */
+#pragma once
+
+/* Kira includes */
 #include <kira/kcm.h>
 
 
 /**
  */
-#define KI_SEEK_BEGIN ((KiTOffset)(0))
+KI_NATIVE KI_API KiTBool KI_CALL KiIsUnicodeWhitespace(KiTUint32 codepoint);
 /**
  */
-#define KI_SEEK_END   ((KiTOffset)(-1))
-
-
-/** \cond */
-KI_NATIVE typedef struct KiSBuffer KiSBuffer;
-/** \endcond */
-
-
+KI_NATIVE KI_API KiTBool KI_CALL KiIsValidUnicodeCodepoint(KiTUint32 codepoint);
 /**
  */
-KI_NATIVE KiSBuffer *KI_CALL KiCreateBuffer(KiTSize initSize);
+KI_NATIVE KI_API KiTUint32 KI_CALL KiToUnicodeCodepointFromUtf8(KiTChar const *u8sPtr, KiTBool *errPtr);
 /**
  */
-KI_NATIVE KiTVoid KI_CALL KiDestroyBuffer(KiSBuffer *bufPtr);
+KI_NATIVE KI_API KiTBool KI_CALL KiIsValidUnicodeIdentifierStartCharacter(KiTUint32 codepoint);
 /**
  */
-KI_NATIVE KiEErrorCode KI_CALL KiReserveBuffer(KiSBuffer *bufPtr, KiTSize s);
-/**
- */
-KI_NATIVE KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize bufSize);
+KI_NATIVE KI_API KiTBool KI_CALL KiIsValidUnicodeIdentifierContinuationCharacter(KiTUint32 codepoint);
 
 /**
  */
-KI_NATIVE KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr, KiTSize s);
+KI_NATIVE KI_API KiTSize KI_CALL KiGetUtf8CharacterSize(KiTChar const *u8sPtr);
 /**
  */
-KI_NATIVE KiEErrorCode KI_CALL KiReadBufferData(KiSBuffer const *bufPtr, KiTVoid *dstBuf, KiTOffset off, KiTSize s);
+KI_NATIVE KI_API KiTBool KI_CALL KiIsUtf8StringValid(KiTChar const *u8sPtr);
 /**
  */
-KI_NATIVE KiTOffset KI_CALL KiSeekBufferPosition(KiSBuffer *bufPtr, KiTOffset off);
+KI_NATIVE KI_API KiTChar *KI_CALL KiNextUtf8Character(KiTChar const *u8sStr);
 
 /**
  */
-KI_NATIVE KiTOffset KI_CALL KiGetBufferPosition(KiSBuffer const *bufPtr);
-/**
- */
-KI_NATIVE KiTSize KI_CALL KiGetBufferSize(KiSBuffer const *bufPtr);
+KI_NATIVE KI_API KiEErrorCode KI_CALL KiReadAndNormalizeUtf8File(KiTChar const *filePath, KiTChar **resPtr);
 
 

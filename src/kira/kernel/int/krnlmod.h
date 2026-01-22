@@ -41,10 +41,10 @@
 /**
  */
 KI_NATIVE typedef struct KiSModuleInfo {
-    KiTSize       m_structSize;
-    KiTUuid       m_modUuid;
-    KiSStringView m_modId;
-    KiTFlags64    m_modFlags;
+    KiTSize              m_structSize;
+    KiSUuid       const *mp_modUuid;
+    KiSStringView const *mp_modId;
+    KiTFlags64           m_modFlags;
 
     KiEErrorCode (KI_CALL *mp_fnInit)(KiTVoid *extraParam);
     KiEErrorCode (KI_CALL *mp_fnUninit)(KiTVoid *extraParam);

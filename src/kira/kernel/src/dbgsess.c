@@ -9,8 +9,8 @@
  *****************************************************************************************************************/
 
 /**
- * \file  sess.c
- * \brief implements the debug session management routines
+ * \file  dbgsess.c
+ * \brief implements the debug-session management routines
  */
 
 
@@ -19,17 +19,19 @@
 
 /* Kira includes */
 #include <kira/kernel/dbg.h>
+#include <kira/kernel/except.h>
 
 
 /** \cond INTERNAL */
 /**
  */
-static KiSDebugOptions gl_DebugOptions = { .m_structSize = sizeof gl_DebugOptions };
+static KiSDebugOptions gl_DebugOptions;
 
 
 /**
  */
 static KiTVoid KI_CALL KiInternal_DbgOnAssertFailedHandler(KiSException const *excPtr, KiTVoid *extraParam) {
+    KI_ASSERT(excPtr != nullptr, KiErr_InParameter);
     KI_UNREFERENCED_PARAMETER(extraParam);
 
     KiDebugTerminateProcess((KiSDebugTerminationContext const *)excPtr->mp_excDataPtr);
@@ -37,29 +39,31 @@ static KiTVoid KI_CALL KiInternal_DbgOnAssertFailedHandler(KiSException const *e
 /** \endcond */
 
 
-KiTBool KI_CALL KiStartDebugSession(KiSDebugOptions const *dbgOpt) {
-    if (dbgOpt == nullptr)
-        return KI_FALSE;
-
+KiEErrorCode KI_CALL KiStartDebugSession(KiSDebugOptions const *dbgOpt) {
+    KI_ASSERT(dbgOpt != nullptr, KiErr_InParameter);
+    
     /* Reset debug options. */
     memset(&gl_DebugOptions, 0, sizeof gl_DebugOptions);
     /* Initialize debug options. */
-    memcpy_s(&gl_DebugOptions, gl_DebugOptions.m_structSize, dbgOpt, dbgOpt->m_structSize);
+    memcpy_s(&gl_DebugOptions, sizeof gl_DebugOptions, dbgOpt, dbgOpt->m_structSize);
 
     /* Intitialize debug subsystems. */
     KiTBool res = KI_TRUE;
     {
         /* Register our exception handler for assertions. */
         if (gl_DebugOptions.m_registerOnAssertHandler)
-            res = KiKrnlSetExceptionHandler(KiKrnlExcTy_AssertionFailed, &KiInternal_DbgOnAssertFailedHandler);
+            if (!KiSetExceptionHandler(KiExcTy_AssertionFailed, &KiInternal_DbgOnAssertFailedHandler))
+                return KiErr_IllegalSystemState;
     }
-    return res;
+
+    /* All good. */
+    return KiErr_Ok;
 }
 
 KiTVoid KI_CALL KiStopDebugSession(KiTVoid) {
     /* Unregister our exception handler for assertions. */
     if (gl_DebugOptions.m_registerOnAssertHandler)
-        KiKrnlSetExceptionHandler(KiKrnlExcTy_AssertionFailed, nullptr);
+        KiSetExceptionHandler(KiExcTy_AssertionFailed, nullptr);
 }
 
 KiSDebugOptions const *KI_CALL KiGetDebugOptions(KiTVoid) {

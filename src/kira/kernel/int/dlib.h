@@ -26,6 +26,7 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiLoadLibrary(KiTChar const *libPath, KiTD
 /**
  */
 KI_NATIVE extern KiEErrorCode KI_CALL KiUnloadLibrary(KiTDynLibHandle libHnd);
+
 /**
  */
 KI_NATIVE extern KiEErrorCode KI_CALL KiResolveSymbol(

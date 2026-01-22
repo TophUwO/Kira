@@ -15,11 +15,12 @@
 
 
 /* Kira includes */
+#include <kira/dbg.h>
+
 #include <kira/kernel/rt.h>
+#include <kira/kernel/dbg.h>
 
 #include <kira/kernel/int/krnlmod.h>
-
-#include <kira/dbg/dbg.h>
 
 
 /** \cond INTERNAL */
@@ -33,16 +34,15 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(DebugModuleControl)(KiTVoid *extra
          * \brief represents the default debug options in case no overriding debug options were passed by the launcher
          *        component
          */
-        static KiSDbgOptions constexpr gl_c_DefDbgOptions = {
+        static KiSDebugOptions constexpr gl_c_DefDbgOptions = {
             .m_structSize       = sizeof gl_c_DefDbgOptions,
             .m_useDetRng        = KI_TRUE,
-            .m_isAssertsEnabled = KI_TRUE,
-            .m_isBreakOnAssert  = KI_FALSE
+            .m_isAssertsEnabled = KI_TRUE
         };
 
-        KiSRuntimeSpecification const *rtSpecs = KiKrnlGetRuntimeSpecification();
+        KiSRuntimeSpecification const *rtSpecs = KiGetRuntimeSpecification();
         {
-            return KiDbgStartSession(rtSpecs->mp_dbgOpts != nullptr ? rtSpecs->mp_dbgOpts : &gl_c_DefDbgOptions);
+            return KiStartDebugSession(rtSpecs->mp_dbgOpts != nullptr ? rtSpecs->mp_dbgOpts : &gl_c_DefDbgOptions);
         }
 #else
     /* No operation. */
@@ -55,7 +55,7 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(DebugModuleControl)(KiTVoid *extra
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(DebugModuleControl)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    KiDbgStopSession();
+    KiStopDebugSession();
     return KiErr_Ok;
 }
 /** \endcond */
@@ -63,9 +63,9 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(DebugModuleControl)(KiTVoid *ext
 
 /** \cond */
 KI_KRNLMOD_DEFINE(DebugModuleControl) {
-    .m_structSize = sizeof(KiSKrnlModuleInfo),
-    .m_modUuid    = {},
-    .m_modId      = KI_MAKE_STRING_VIEW("debug module"),
+    .m_structSize = sizeof(KiSModuleInfo),
+    .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
+    .mp_modId     = &KI_MAKE_STRING_VIEW("debug module"),
     .m_modFlags   = 0,
 
     .mp_fnInit    = &KI_KRNLMOD_INITFN(DebugModuleControl),

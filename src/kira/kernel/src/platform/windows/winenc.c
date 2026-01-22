@@ -62,6 +62,8 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr) {
     /* All good. */
     return cvtRes;
 }
-#endif 
+
+
+#endif /* defined KI_PLATFORM_WINDOWS */
 
 

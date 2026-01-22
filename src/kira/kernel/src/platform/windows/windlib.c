@@ -45,11 +45,13 @@ KiTVoid KI_CALL KiPlatform_UnloadLibrary(KiTDynLibHandle libHandle) {
     FreeLibrary((HMODULE)libHandle);
 }
 
-KiTVoid *KI_CALL KiPlatform_ResolveSymbol(KiTDynLibHandle libHandle, KiTChar const *symName) {
+KiSFunctionHandle KI_CALL KiPlatform_ResolveSymbol(KiTDynLibHandle libHandle, KiTChar const *symName) {
     if (libHandle == nullptr)
-        return nullptr;
+        return (KiSFunctionHandle){ nullptr };
     
-    return GetProcAddress((HMODULE)libHandle, (LPCSTR)symName);
+    return (KiSFunctionHandle const){ 
+        .mp_fnPtr = (KiTVoid (KI_CALL *)(KiTVoid))GetProcAddress((HMODULE)libHandle, (LPCSTR)symName)
+    };
 }
 
 KiTBool KI_CALL KiPlatform_IsLibrary(KiTChar const *filePath) {

@@ -19,11 +19,11 @@
 #include <windows.h>
 
 /* Kira includes */
+#include <kira/dbg.h>
+
 #include <kira/kernel/reg.h>
 
 #include <kira/kernel/int/platform.h>
-
-#include <kira/dbg/dbg.h>
 
 
 KiTVoid KI_CALL KiPlatform_FreeString(KiTVoid *strPtr) {
@@ -71,7 +71,7 @@ KiEErrorCode KI_CALL KiPlatform_SetCurrentWorkingDirectory(KiTChar const *newWdP
     KiPlatform_FreeString((KiTVoid *)ntEncPath);
 
     return res == 0
-        ? KiKrnlNativeErrorCodeToKiraErrorCode((KiTInt32)GetLastError())
+        ? KiNativeErrorCodeToKiraErrorCode((KiTInt32)GetLastError())
         : KiErr_Ok
     ;
 }

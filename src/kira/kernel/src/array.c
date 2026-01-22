@@ -21,14 +21,12 @@
 #include <memory.h>
 
 /* Kira includes */
-#include <kira/def.h>
-#include <kira/error.h>
+#include <kira/dbg.h>
 
 #include <kira/kernel/reg.h>
 
-#include <kira/kernel/int/gparray.h>
+#include <kira/kernel/int/array.h>
 
-#include <kira/dbg/dbg.h>
 
 
 /** \cond INTERNAL */
@@ -42,7 +40,7 @@
 
 /**
  */
-struct KiSKrnlGPArray {
+struct KiSArray {
     KiTSize     m_elemCnt;
     KiTSize     m_elemCap;
     KiTIndex    m_firstEmpty;
@@ -51,7 +49,7 @@ struct KiSKrnlGPArray {
 };
 
 
-static KiTIndex KI_CALL KiInternal_KrnlGPArrayFindFirstEmpty(KiSKrnlGPArray const *arrPtr, KiTIndex stIdx) {
+static KiTIndex KI_CALL KiInternal_ArrayFindFirstEmpty(KiSArray const *arrPtr, KiTIndex stIdx) {
     KI_ASSERT(arrPtr != nullptr,                                KiErr_InParameter);
     KI_ASSERT(KI_INRANGE_INCL(stIdx, 0, arrPtr->m_elemCap - 1), KiErr_IndexError);
 
@@ -64,23 +62,23 @@ static KiTIndex KI_CALL KiInternal_KrnlGPArrayFindFirstEmpty(KiSKrnlGPArray cons
     return KI_KRNLGPARR_NONE;
 }
 
-static KiEErrorCode KI_CALL KiInternal_KrnlGPArrayResize(KiSKrnlGPArray *arrPtr, KiTSize newSize) {
+static KiEErrorCode KI_CALL KiInternal_ArrayResize(KiSArray *arrPtr, KiTSize newSize) {
     newSize = newSize == 0 ? KI_KRNLGPARR_DEFCAP : newSize;
 
     /* No free slot. Reallocate and then use the first slot after the currently last one. */
-    KiTVoid **newArr = malloc(sizeof **newArr * newSize);
+    KiTVoid **newArr = malloc(sizeof *newArr * newSize);
     {
         if (newArr == nullptr)
             return KiErr_MemoryAllocation;
 
-        memcpy_s(newArr, newSize * sizeof **newArr, arrPtr->mpp_elemArr, arrPtr->m_elemCap * sizeof **newArr);
-        memset(&newArr[arrPtr->m_elemCap], 0, sizeof **newArr * (newSize - arrPtr->m_elemCap));
+        memcpy_s(newArr, newSize * sizeof *newArr, arrPtr->mpp_elemArr, arrPtr->m_elemCap * sizeof *newArr);
+        memset(&newArr[arrPtr->m_elemCap], 0, sizeof *newArr * (newSize - arrPtr->m_elemCap));
     }
 
     /* Now destroy the old one. */
     free(arrPtr->mpp_elemArr);
     /* Update the structure. */
-    *arrPtr = (KiSKrnlGPArray){
+    *arrPtr = (KiSArray){
         .m_elemCnt    = arrPtr->m_elemCnt,
         .m_elemCap    = newSize,
         .m_firstEmpty = arrPtr->m_elemCap,
@@ -93,7 +91,7 @@ static KiEErrorCode KI_CALL KiInternal_KrnlGPArrayResize(KiSKrnlGPArray *arrPtr,
 /** \endcond */
 
 
-KiEErrorCode KI_CALL KiKrnlGPArrayCreate(KiSKrnlGPArray **resPtr) {
+KiEErrorCode KI_CALL KiCreateArray(KiSArray **resPtr) {
     KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
 
     /* Allocate memory for structure. */
@@ -102,7 +100,7 @@ KiEErrorCode KI_CALL KiKrnlGPArrayCreate(KiSKrnlGPArray **resPtr) {
         return KiErr_MemoryAllocation;
 
     /* Init state. */
-    **resPtr = (KiSKrnlGPArray){
+    **resPtr = (KiSArray const){
         .m_elemCnt    = 0,
         .m_elemCap    = 0,
         .m_firstEmpty = KI_KRNLGPARR_NONE,
@@ -111,7 +109,7 @@ KiEErrorCode KI_CALL KiKrnlGPArrayCreate(KiSKrnlGPArray **resPtr) {
     return KiErr_Ok;
 }
 
-KiTVoid KI_CALL KiKrnlGPArrayDestroy(KiSKrnlGPArray *arrPtr) {
+KiTVoid KI_CALL KiDestroyArray(KiSArray *arrPtr) {
     if (arrPtr == nullptr)
         return;
 
@@ -123,8 +121,8 @@ KiTVoid KI_CALL KiKrnlGPArrayDestroy(KiSKrnlGPArray *arrPtr) {
     free(arrPtr);
 }
 
-KiEErrorCode KI_CALL KiKrnlGPArrayInsert(
-    KiSKrnlGPArray *arrPtr,
+KiEErrorCode KI_CALL KiInsertIntoArray(
+    KiSArray *arrPtr,
     KiTVoid const *elemPtr,
     KiTIndex *insIdx
 ) {
@@ -134,7 +132,7 @@ KiEErrorCode KI_CALL KiKrnlGPArrayInsert(
 
     /* Find first free index. Resize if no free indices are available. */
     if (arrPtr->m_firstEmpty == KI_KRNLGPARR_NONE) {
-        KiEErrorCode errCode = KiInternal_KrnlGPArrayResize(arrPtr, arrPtr->m_elemCap << 1);
+        KiEErrorCode errCode = KiInternal_ArrayResize(arrPtr, arrPtr->m_elemCap << 1);
 
         if (errCode != KiErr_Ok)
             return errCode;
@@ -150,19 +148,19 @@ KiEErrorCode KI_CALL KiKrnlGPArrayInsert(
      * because our slot was guaranteed by the implementation to be the leftmost one that was free.
      */
     arrPtr->m_firstEmpty = arrPtr->m_elemCnt < arrPtr->m_elemCap
-        ? KiInternal_KrnlGPArrayFindFirstEmpty(arrPtr, *insIdx + 1)
+        ? KiInternal_ArrayFindFirstEmpty(arrPtr, *insIdx + 1)
         : KI_KRNLGPARR_NONE
     ;
     /* All good. */
     return KiErr_Ok;
 }
 
-KiTVoid *KI_CALL KiKrnlGPArrayErase(KiSKrnlGPArray *arrPtr, KiTIndex idx) {
+KiTVoid *KI_CALL KiEraseFromArray(KiSArray *arrPtr, KiTIndex idx) {
     KI_ASSERT(arrPtr != nullptr,                              KiErr_InOutParameter);
     KI_ASSERT(KI_INRANGE_INCL(idx, 0, arrPtr->m_elemCap - 1), KiErr_IndexError);
 
     /* Retrieve and erase slot. */
-    KiTVoid **slotAddr = KiKrnlGPArrayAt(arrPtr, idx), *resPtr = *slotAddr;
+    KiTVoid **slotAddr = KiGetArrayElementAt(arrPtr, idx), *resPtr = *slotAddr;
     *slotAddr = nullptr;
 
     /*
@@ -175,7 +173,7 @@ KiTVoid *KI_CALL KiKrnlGPArrayErase(KiSKrnlGPArray *arrPtr, KiTIndex idx) {
     return resPtr;
 }
 
-KiEErrorCode KI_CALL KiKrnlGPArrayPush(KiSKrnlGPArray *arrPtr, KiTVoid const *elemPtr) {
+KiEErrorCode KI_CALL KiPushToArray(KiSArray *arrPtr, KiTVoid const *elemPtr) {
     KI_ASSERT(arrPtr != nullptr,  KiErr_InOutParameter);
     KI_ASSERT(elemPtr != nullptr, KiErr_InParameter);
 
@@ -183,7 +181,7 @@ KiEErrorCode KI_CALL KiKrnlGPArrayPush(KiSKrnlGPArray *arrPtr, KiTVoid const *el
 
     /* Resize if the last slot is occupied. */
     if (arrPtr->mpp_elemArr[arrPtr->m_elemCap - 1] != nullptr) {
-        KiEErrorCode errCode = KiInternal_KrnlGPArrayResize(arrPtr, arrPtr->m_elemCap << 1);
+        KiEErrorCode errCode = KiInternal_ArrayResize(arrPtr, arrPtr->m_elemCap << 1);
 
         if (errCode != KiErr_Ok)
             return errCode;
@@ -198,17 +196,17 @@ KiEErrorCode KI_CALL KiKrnlGPArrayPush(KiSKrnlGPArray *arrPtr, KiTVoid const *el
     return KiErr_Ok;
 }
 
-KiTVoid *KI_CALL KiKrnlGPArrayPop(KiSKrnlGPArray *arrPtr) {
+KiTVoid *KI_CALL KiPopFromArray(KiSArray *arrPtr) {
     KI_ASSERT(arrPtr != nullptr, KiErr_InOutParameter);
 
     return arrPtr->m_elemCnt > 0 
-        ? KiKrnlGPArrayErase(arrPtr, arrPtr->m_elemCap - 1)
+        ? KiEraseFromArray(arrPtr, arrPtr->m_elemCap - 1)
         : nullptr
     ;
 }
 
-KiTVoid **KI_CALL KiKrnlGPArrayMap(
-    KiSKrnlGPArray const *arrPtr,
+KiTVoid **KI_CALL KiMapArray(
+    KiSArray const *arrPtr,
     KiTIndex offset,
     KiTSize count,
     KiTVoid ***beginPtr,
@@ -225,9 +223,12 @@ KiTVoid **KI_CALL KiKrnlGPArrayMap(
     return *beginPtr;
 }
 
-KiTVoid *KI_CALL KiKrnlGPArrayAt(KiSKrnlGPArray const *arrPtr, KiTIndex slIndex) {
-    KI_ASSERT(arrPtr != nullptr,                                  KiErr_InParameter);
-    KI_ASSERT(KI_INRANGE_INCL(slIndex, 0, arrPtr->m_elemCap - 1), KiErr_IndexError);
+KiTVoid *KI_CALL KiGetArrayElementAt(KiSArray const *arrPtr, KiTIndex slIndex) {
+    KI_ASSERT(arrPtr != nullptr,                                             KiErr_InParameter);
+    KI_ASSERT(KI_INRANGE_INCL(slIndex, 0, KI_MAX(0, arrPtr->m_elemCap - 1)), KiErr_IndexError);
+
+    if (arrPtr->mpp_elemArr == nullptr || slIndex >= arrPtr->m_elemCap)
+        return nullptr;
 
     return arrPtr->mpp_elemArr[slIndex];
 }

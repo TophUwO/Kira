@@ -31,14 +31,12 @@ KI_NATIVE KI_API KiEErrorCode KI_CALL KiLoadProfile(KiTChar const *profilePath);
 /**
  */
 KI_NATIVE KI_API KiTVoid KI_CALL KiUnloadProfile(KiTVoid);
+
 /**
  */
 KI_NATIVE KI_API KiSJson const *KI_CALL KiGetProfile(KiTVoid);
 /**
  */
 KI_NATIVE KI_API KiTChar const *KI_CALL KiGetCurrentProfilePath(KiTVoid);
-/**
- */
-KI_NATIVE KI_API KiTChar const *KI_CALL KiGetProfileDirectoryPath(KiTVoid);
 
 

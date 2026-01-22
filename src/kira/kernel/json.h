@@ -32,7 +32,7 @@ KI_NATIVE typedef struct KiSJson KiSJson;
 
 /**
  */
-KI_NATIVE typedef enum KiEJsonValueType : KiTUint32 {
+KI_NATIVE typedef enum KiEJsonValueType {
     KiJsonValTy_Invalid = 0,
     KiJsonValTy_Null    = 1,
     KiJsonValTy_Number  = 2,

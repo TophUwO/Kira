@@ -23,37 +23,58 @@
 /** \cond INTERNAL */
 /**
  */
-#define __KI_CONCAT2_IMPL__(a, b)      a##b
+#define __KI_CONCAT2_IMPL__(a, b)        a##b
 /**
  */
-#define __KI_CONCAT3_IMPL__(a, b, c)   __KI_CONCAT2_IMPL__(__KI_CONCAT2_IMPL__(a, b), c)
+#define __KI_CONCAT3_IMPL__(a, b, c)     __KI_CONCAT2_IMPL__(__KI_CONCAT2_IMPL__(a, b), c)
 /**
  */
-#define __KI_LINE_IMPL__               __LINE__
+#define __KI_LINE_IMPL__                 __LINE__
 /**
  */
-#define __KI_POW2_OR_IMPL__(x, n)      ((x) | ((x) >> (n)))
+#define __KI_POW2_OR_IMPL__(x, n)        ((x) | ((x) >> (n)))
 /**
  */
-#define __KI_NEXTPOWOF2_IMPL__(x)      (((x) <= 1ULL) ? 1ULL : \
-    (__KI_POW2_OR_IMPL__(                                      \
-        __KI_POW2_OR_IMPL__(                                   \
-            __KI_POW2_OR_IMPL__(                               \
-                __KI_POW2_OR_IMPL__(                           \
-                    __KI_POW2_OR_IMPL__(                       \
-                        __KI_POW2_OR_IMPL__(                   \
-                            (x) - 1ULL,                        \
-                        1),                                    \
-                    2),                                        \
-                4),                                            \
-            8),                                                \
-        16),                                                   \
+#define __KI_NEXTPOWOF2_IMPL__(x)        (((x) <= 1ULL) ? 1ULL : \
+    (__KI_POW2_OR_IMPL__(                                        \
+        __KI_POW2_OR_IMPL__(                                     \
+            __KI_POW2_OR_IMPL__(                                 \
+                __KI_POW2_OR_IMPL__(                             \
+                    __KI_POW2_OR_IMPL__(                         \
+                        __KI_POW2_OR_IMPL__(                     \
+                            (x) - 1ULL,                          \
+                        1),                                      \
+                    2),                                          \
+                4),                                              \
+            8),                                                  \
+        16),                                                     \
     32) + 1ULL))
 /**
  */
-#define __KI_TYPEOF_IMPL__(x)     \
-    (KiEVariantType)_Generic((x), \
-        default: 0                \
+#define __KI_MKARR_IMPL__(t, s, ...) ((t const[s]){ __VA_ARGS__ })
+/**
+ */
+#define __KI_TYPEOF_IMPL__(e)                \
+    _Generic((e),                            \
+        KiTInt8:        KiVarTy_Int8,        \
+        KiTUint8:       KiVarTy_Uint8,       \
+        KiTInt16:       KiVarTy_Int16,       \
+        KiTUint16:      KiVarTy_Uint16,      \
+        KiTInt32:       KiVarTy_Int32,       \
+        KiTUint32:      KiVarTy_Uint32,      \
+        KiTInt64:       KiVarTy_Int64,       \
+        KiTUint64:      KiVarTy_Uint64,      \
+        KiTFloat:       KiVarTy_Float,       \
+        KiTDouble:      KiVarTy_Double,      \
+        KiTLongDouble:  KiVarTy_LongDouble,  \
+        KiTChar *:      KiVarTy_RawString,   \
+        KiSStringView:  KiVarTy_StringView,  \
+        KiTVoid *:      KiVarTy_Pointer,     \
+        KiIBase *:      KiVarTy_Component,   \
+        KiSVersion:     KiVarTy_Version,     \
+        KiSStaticArray: KiVarTy_StaticArray, \
+        KiSArrayView:   KiVarTy_ArrayView,   \
+        default:        KiVarTy_Invalid      \
     )
 /** \endcond */
 
@@ -120,7 +141,7 @@
         KiTByte __forcesize_##n[n];                                                                               \
         struct __VA_ARGS__;                                                                                       \
                                                                                                                   \
-        static_assert(                                                                                            \
+        _Static_assert(                                                                                           \
             sizeof(struct __VA_ARGS__) <= n,                                                                      \
             "Size requirement of " #n " bytes cannot be satisfied. Payload is larger than " #n " bytes in total." \
         );                                                                                                        \
@@ -136,10 +157,10 @@
 
 /**
  */
-#define KI_MIN(x, y)                   ((typeof (x))((x) > (y) ? (y) : (x)))
+#define KI_MIN(x, y)                   ((x) > (y) ? (y) : (x))
 /**
  */
-#define KI_MAX(x, y)                   ((typeof (x))((x) < (y) ? (y) : (x)))
+#define KI_MAX(x, y)                   ((x) < (y) ? (y) : (x))
 /**
  */
 #define KI_CLAMP(val, min, max)        (KI_MIN(KI_MAX(val, min), max))
@@ -173,34 +194,75 @@
 
 /**
  */
-#define KI_ISPOWEROFTWO(x)             ((KiTBool)(((x) != 0) && (((x) & ((x) - 1)) == 0)))
+#define KI_BITMASK(...)                                                                                                     \
+    ((KiTUint64 const){                                                                                                     \
+          __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[0]  <<  0 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[1]  <<  1 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[2]  <<  2 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[3]  <<  3 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[4]  <<  4 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[5]  <<  5 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[6]  <<  6 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[7]  <<  7 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[8]  <<  8 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[9]  <<  9 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[10] << 10 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[11] << 11 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[12] << 12 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[13] << 13 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[14] << 14 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[15] << 15 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[16] << 16 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[17] << 17 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[18] << 18 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[19] << 19 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[20] << 20 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[21] << 21 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[22] << 22 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[23] << 23 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[24] << 24 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[25] << 25 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[26] << 26 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[27] << 27 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[28] << 28 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[29] << 29 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[30] << 30 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[31] << 31 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[32] << 32 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[33] << 33 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[34] << 34 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[35] << 35 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[36] << 36 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[37] << 37 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[38] << 38 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[39] << 39 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[40] << 40 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[41] << 41 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[42] << 42 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[43] << 43 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[44] << 44 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[45] << 45 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[46] << 46 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[47] << 47 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[48] << 48 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[49] << 49 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[50] << 50 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[51] << 51 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[52] << 52 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[53] << 53 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[54] << 54 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[55] << 55 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[56] << 56 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[57] << 57 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[58] << 58 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[59] << 59 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[60] << 60 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[61] << 61 \
+        | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[62] << 62 | __KI_MKARR_IMPL__(KiTUint64, 64, __VA_ARGS__)[63] << 63 \
+    })
 /**
  */
-#define KI_P2LOG2(x)                                     \
-    ( (KiTInt32 const[]){                                \
-        0,  1, 48,  2, 57, 49, 28,  3,                   \
-       61, 58, 50, 42, 38, 29, 17,  4,                   \
-       62, 55, 59, 36, 53, 51, 43, 22,                   \
-       45, 39, 33, 30, 24, 18, 12,  5,                   \
-       63, 47, 56, 27, 60, 41, 37, 16,                   \
-       54, 35, 52, 21, 44, 32, 23, 11,                   \
-       46, 26, 40, 15, 34, 20, 31, 10,                   \
-       25, 14, 19,  9, 13,  8,  7,  6                    \
-    }[(((KiTUint64)(x)) * 0x03f79d71b4cb0a89ULL) >> 58])
+#define KI_ISPOWEROFTWO(x)             ((KiTBool)(((x) != 0) && (((x) & ((x) - 1)) == 0)))
+/**
+ * \brief taken from https://www.chessprogramming.org/De_Bruijn_Sequence_Generator
+ */
+#define KI_P2LOG2(x)                                   \
+    ((KiTInt32 const[64]){                             \
+        0,  1,  2, 53,  3,  7, 54, 27,                 \
+        4, 38, 41,  8, 34, 55, 48, 28,                 \
+       62,  5, 39, 46, 44, 42, 22,  9,                 \
+       24, 35, 59, 56, 49, 18, 29, 11,                 \
+       63, 52,  6, 26, 37, 40, 33, 47,                 \
+       61, 45, 43, 21, 23, 58, 17, 10,                 \
+       51, 25, 36, 32, 60, 20, 57, 16,                 \
+       50, 31, 19, 15, 30, 14, 13, 12                  \
+    }[((KiTUint64)(x)) * 0x022fdd63cc95386dULL >> 58])
 
 /**
  */
 #define KI_VERIFY_LUT(l, s)                                                     \
-    static_assert(                                                              \
+    _Static_assert(                                                             \
         KI_COUNTOF(l) == (KiTSize)(s),                                          \
-        "Kismatch between actual and required size of lookup table \"" #l "\"." \
-    );
+        "Mismatch between actual and required size of lookup table \"" #l "\"." \
+    )
 /**
  */
-#define KI_ENUM_LAST(n, prev) n = (1 << (KI_P2LOG2(prev) + 1))
+#define KI_VERIFY_TYPE(t1, t2)                                                                                    \
+    _Static_assert(sizeof(t1) == sizeof(t2),     "Size of types \"" #t1 "\" and \"" #t2 "\" must be equal.");     \
+    _Static_assert(_Alignof(t1) == _Alignof(t2), "Alignment of types \"" #t1 "\" and \"" #t2 "\" must be equal.")
+
 /**
  */
-#define KI_ENUM_COUNT(n)      n
+#define KI_ENUM_COUNT(pre) __##pre##_Count__
 
 
 /**
@@ -269,6 +331,32 @@ KI_NATIVE typedef struct KiSStaticArray {
     }
 
 
+/** 
+ */
+KI_NATIVE typedef struct KiSUuid {
+    KI_UNION(
+        KI_STRUCT(
+            KiTUint32 m_fPart;
+            KiTUint16 m_sPart;
+            KiTUint16 m_tPart;
+            KiTUint64 m_qPart;
+        );
+
+        KiTByte m_bytes[16];
+    );
+} KiSUuid;
+
+/**
+ */
+#define KI_MAKE_UUID(f, s, t, q) \
+    (KiSUuid const){             \
+        .m_fPart = (KiTUint32)f, \
+        .m_sPart = (KiTUint16)s, \
+        .m_tPart = (KiTUint16)t, \
+        .m_qPart = (KiTUint64)q  \
+    }
+
+
 /**
  */
 KI_NATIVE typedef struct KiSVersion {
@@ -289,7 +377,7 @@ KI_NATIVE typedef struct KiSVersion {
 #define KI_MAKE_VERSION(ma, mi, pa, rev)    \
     (KiSVersion const){                     \
         .m_verMajor    = ((KiTUint16)(ma)), \
-        .m_verKinor    = ((KiTUint16)(mi)), \
+        .m_verMinor    = ((KiTUint16)(mi)), \
         .m_verPatch    = ((KiTUint16)(pa)), \
         .m_verRevision = ((KiTUint16)(rev)) \
     }
@@ -309,26 +397,8 @@ KI_NATIVE typedef struct KiSVersion {
 
 
 /**
- * \struct KiSLegalInformation
- * \brief  represents the Kira metadata legal information structure
- *
- * Many entities in Kira can have metadata attached to them, namely \c Interfaces, \c Components, \c Modules,
- * <tt>Test Suites</tt> and <tt>Test Cases</tt>. All of them can contain information regarding the author and legal
- * constraints when using the entity. This structure models the default Kira legal information object.
  */
-KI_NATIVE typedef struct KiSLegalInformation {
-    KiTSize       m_structSize; /**< size of this structure, in bytes */
-    KiSStringView m_author;     /**< author identification (name, etc.) */
-    KiSStringView m_contact;    /**< author contact information */
-    KiSStringView m_license;    /**< license string identifier */
-    KiSStringView m_copyright;  /**< copyright string */
-    KiSStringView m_comment;    /**< optional comment regarding legal use */
-} KiSLegalInformation;
-
-
-/**
- */
-KI_NATIVE typedef enum KiENumericRangeType : KiTUint32 {
+KI_NATIVE typedef enum KiENumericRangeType {
     KiRgTy_Invalid  = 0,
     
     KiRgTy_Signed   = 1,
@@ -360,18 +430,18 @@ KI_NATIVE typedef struct KiSNumericRange {
 
 /**
  */
-#define KI_MAKE_NUMERIC_RANGE(min, max)                                                                          \
-    _Generic((min),                                                                                              \
-        KiTInt8:   (KiSNumericRange){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
-        KiTInt16:  (KiSNumericRange){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
-        KiTInt32:  (KiSNumericRange){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
-        KiTInt64:  (KiSNumericRange){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
-        KiTUint8:  (KiSNumericRange){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
-        KiTUint16: (KiSNumericRange){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
-        KiTUint32: (KiSNumericRange){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
-        KiTUint64: (KiSNumericRange){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
-        KiTFloat:  (KiSNumericRange){ .m_type = KiRgTy_Float,    .m_min.m_fVal = (min), .m_max.m_fVal = (max) }, \
-        KiTDouble: (KiSNumericRange){ .m_type = KiRgTy_Float,    .m_min.m_fVal = (min), .m_max.m_fVal = (max) }  \
+#define KI_MAKE_NUMERIC_RANGE(min, max)                                                                                \
+    _Generic((min),                                                                                                    \
+        KiTInt8:   (KiSNumericRange const){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
+        KiTInt16:  (KiSNumericRange const){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
+        KiTInt32:  (KiSNumericRange const){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
+        KiTInt64:  (KiSNumericRange const){ .m_type = KiRgTy_Signed,   .m_min.m_iVal = (min), .m_max.m_iVal = (max) }, \
+        KiTUint8:  (KiSNumericRange const){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
+        KiTUint16: (KiSNumericRange const){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
+        KiTUint32: (KiSNumericRange const){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
+        KiTUint64: (KiSNumericRange const){ .m_type = KiRgTy_Unsigned, .m_min.m_uVal = (min), .m_max.m_uVal = (max) }, \
+        KiTFloat:  (KiSNumericRange const){ .m_type = KiRgTy_Float,    .m_min.m_fVal = (min), .m_max.m_fVal = (max) }, \
+        KiTDouble: (KiSNumericRange const){ .m_type = KiRgTy_Float,    .m_min.m_fVal = (min), .m_max.m_fVal = (max) }  \
     )
 
 
@@ -403,14 +473,14 @@ KI_NATIVE typedef struct KiSNumericRange {
 #define KI_VARIANT_SET(var, val) KiSetVariant(var, __KI_TYPEOF_IMPL__(val), val)
 
 /** \cond */
-KI_NATIVE typedef struct KiIBase                  KiIBase;
-KI_NATIVE typedef enum   KiEErrorCode : KiTUint32 KiEErrorCode; 
+KI_NATIVE typedef struct KiIBase KiIBase;
 /** \endcond */
 
 /**
  */
 KI_NATIVE typedef enum KiEVariantType {
-    KiVarTy_Null = 0,
+    KiVarTy_Null    = 0,
+    KiVarTy_Invalid = 1,
 
     KiVarTy_Other,
     KiVarTy_Boolean,
@@ -471,5 +541,15 @@ KI_NATIVE KI_API KiTVoid KI_CALL KiGetVariant(KiSVariant *varPtr, KiTVoid *resPt
 /**
  */
 KI_NATIVE KI_API KiTVoid KI_CALL KiSetVariant(KiSVariant *varPtr, KiEVariantType varType, ...);
+
+
+/**
+ */
+KI_NATIVE typedef struct KiSFunctionHandle {
+    KI_UNION(
+        KiTVoid (KI_CALL *mp_fnPtr)(KiTVoid);
+        KiTVoid *mp_rawPtr;
+    );
+} KiSFunctionHandle;
 
 

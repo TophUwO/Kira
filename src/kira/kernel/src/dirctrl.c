@@ -19,6 +19,8 @@
 #include <string.h>
 
 /* Kira includes */
+#include <kira/dbg.h>
+
 #include <kira/kernel/dir.h>
 #include <kira/kernel/reg.h>
 
@@ -26,20 +28,19 @@
 #include <kira/kernel/int/krnlmod.h>
 #include <kira/kernel/int/platform.h>
 
-#include <kira/dbg/dbg.h>
-
 
 /** \cond INTERNAL */
 /**
  */
-KI_NATIVE typedef struct KiSKrnlSystemDirectoryState {
-    KiSKrnlString *mp_defWd;
-    KiSKrnlString *mp_currWd;
-    KiSKrnlString *mp_appRootDir;
-} KiSKrnlSystemDirectoryState;
+KI_NATIVE typedef struct KiSSystemDirectoryState {
+    KiSString *mp_defWd;
+    KiSString *mp_currWd;
+    KiSString *mp_appRootDir;
+} KiSSystemDirectoryState;
+
 /**
  */
-static KiSKrnlSystemDirectoryState gl_SysDirState = {};
+static KiSSystemDirectoryState gl_SysDirState;
 
 
 /**
@@ -54,14 +55,13 @@ KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(SystemDirectoryControl)(KiTVoid *extraPar
     KiTChar const *currCwd = KiPlatform_GetCurrentWorkingDirectory();
     {
         /* Get cwd. */
-        KiEErrorCode errCode = KiKrnlStringCreate(currCwd, &gl_SysDirState.mp_currWd);
+        KiEErrorCode errCode = KiCreateString(currCwd, &gl_SysDirState.mp_currWd);
         if (errCode != KiErr_Ok)
             return errCode;
 
         /* Copy it into the default wd. */
-        errCode = KiKrnlStringDuplicate(gl_SysDirState.mp_currWd, &gl_SysDirState.mp_defWd);
-        if (errCode != KiErr_Ok) {
-            KiKrnlStringDestroy(gl_SysDirState.mp_currWd);
+        if ((errCode = KiDuplicateString(gl_SysDirState.mp_currWd, &gl_SysDirState.mp_defWd)) != KiErr_Ok) {
+            KiDestroyString(gl_SysDirState.mp_currWd);
 
             KiPlatform_FreeString((KiTChar *)currCwd);
             return errCode;
@@ -72,11 +72,10 @@ KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(SystemDirectoryControl)(KiTVoid *extraPar
     /* Initialize the application root directory. */
     KiTChar const *appDir = KiPlatform_GetApplicationRootDirectory();
     {
-        KiEErrorCode errCode = KiKrnlStringCreate(appDir, &gl_SysDirState.mp_appRootDir);
-
+        KiEErrorCode errCode = KiCreateString(appDir, &gl_SysDirState.mp_appRootDir);
         if (errCode != KiErr_Ok) {
-            KiKrnlStringDestroy(gl_SysDirState.mp_currWd);
-            KiKrnlStringDestroy(gl_SysDirState.mp_defWd);
+            KiDestroyString(gl_SysDirState.mp_currWd);
+            KiDestroyString(gl_SysDirState.mp_defWd);
 
             KiPlatform_FreeString((KiTChar *)appDir);
             return errCode;
@@ -94,26 +93,26 @@ KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(SystemDirectoryControl)(KiTVoid *extraP
     KI_UNREFERENCED_PARAMETER(extraParam);
 
     /* Restore the default working directory. */
-    KiKrnlSetWorkingDirectory(KiKrnlStringCStr(gl_SysDirState.mp_defWd));
+    KiSetWorkingDirectory(KiGetCString(gl_SysDirState.mp_defWd));
 
     /* Destroy all of them. */
-    KiKrnlStringDestroy(gl_SysDirState.mp_appRootDir);
-    KiKrnlStringDestroy(gl_SysDirState.mp_currWd);
-    KiKrnlStringDestroy(gl_SysDirState.mp_defWd);
+    KiDestroyString(gl_SysDirState.mp_appRootDir);
+    KiDestroyString(gl_SysDirState.mp_currWd);
+    KiDestroyString(gl_SysDirState.mp_defWd);
     return KiErr_Ok;
 }
 /** \endcond */
 
 
-KiTChar const *KI_CALL KiKrnlGetApplicationRootDirectory(KiTVoid) {
-    return KiKrnlStringCStr(gl_SysDirState.mp_appRootDir);
+KiTChar const *KI_CALL KiGetApplicationRootDirectory(KiTVoid) {
+    return KiGetCString(gl_SysDirState.mp_appRootDir);
 }
 
-KiTChar const *KI_CALL KiKrnlGetWorkingDirectory(KiTVoid) {
-    return KiKrnlStringCStr(gl_SysDirState.mp_currWd);
+KiTChar const *KI_CALL KiGetWorkingDirectory(KiTVoid) {
+    return KiGetCString(gl_SysDirState.mp_currWd);
 }
 
-KiEErrorCode KI_CALL KiKrnlSetWorkingDirectory(KiTChar const *newWorkingDir) {
+KiEErrorCode KI_CALL KiSetWorkingDirectory(KiTChar const *newWorkingDir) {
     KI_ASSERT(newWorkingDir != nullptr, KiErr_InParameter);
     KI_ASSERT(*newWorkingDir != '\0',   KiErr_InParameter);
 
@@ -123,13 +122,13 @@ KiEErrorCode KI_CALL KiKrnlSetWorkingDirectory(KiTChar const *newWorkingDir) {
         return errCode;
 
     /* Overwrite the cached string. */
-    errCode = KiKrnlStringAssign(gl_SysDirState.mp_currWd, newWorkingDir);
+    errCode = KiAssignToString(gl_SysDirState.mp_currWd, newWorkingDir);
     if (errCode != KiErr_Ok) {
         /*
          * Because we failed to overwrite the cache string, we must restore the working directory. When
          * KiKrnlStringAssign() fails, the old string will still be valid. We can use this to restore it.
          */
-        KiPlatform_SetCurrentWorkingDirectory(KiKrnlStringCStr(gl_SysDirState.mp_currWd));
+        KiPlatform_SetCurrentWorkingDirectory(KiGetCString(gl_SysDirState.mp_currWd));
 
         return errCode;
     }
@@ -138,13 +137,13 @@ KiEErrorCode KI_CALL KiKrnlSetWorkingDirectory(KiTChar const *newWorkingDir) {
     return KiErr_Ok;
 }
 
-KiTVoid KI_CALL KiKrnlNativeSeparatorsToKiraSeparators(KiTChar *pathStr) {
+KiTVoid KI_CALL KiNativeSeparatorsToKiraSeparators(KiTChar *pathStr) {
     KI_ASSERT(pathStr != nullptr, KiErr_InOutParameter);
 
-    return KiPlatform_CanonicalizeSeparators(pathStr);
+    KiPlatform_CanonicalizeSeparators(pathStr);
 }
 
-KiTVoid KI_CALL KiKrnlSplitPath(
+KiTVoid KI_CALL KiSplitPath(
     KiTChar const *fullPathStr,
     KiSStringView *dirViewPtr, 
     KiSStringView *dirNameViewPtr,
@@ -166,9 +165,9 @@ KiTVoid KI_CALL KiKrnlSplitPath(
 
 /** \cond */
 KI_KRNLMOD_DEFINE(SystemDirectoryControl) {
-    .m_structSize = sizeof(KiSKrnlModuleInfo),
-    .m_modUuid    = { },
-    .m_modId      = KI_MAKE_STRING_VIEW("system directory control"),
+    .m_structSize = sizeof(KiSModuleInfo),
+    .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
+    .mp_modId     = &KI_MAKE_STRING_VIEW("system directory control"),
     .m_modFlags   = 0,
 
     .mp_fnInit    = &KI_KRNLMOD_INITFN(SystemDirectoryControl),

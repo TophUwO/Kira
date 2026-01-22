@@ -22,7 +22,7 @@
 
 /**
  */
-KI_NATIVE KI_API KiTBool KI_CALL KiStartDebugSession(KiSDebugOptions const *dbgOpt);
+KI_NATIVE KI_API KiEErrorCode KI_CALL KiStartDebugSession(KiSDebugOptions const *dbgOpt);
 /** 
  */
 KI_NATIVE KI_API KiTVoid KI_CALL KiStopDebugSession(KiTVoid);

@@ -15,7 +15,7 @@
 
 
 /* Kira includes */
-#include <kira/cmdl.h>
+#include <kira/env.h>
 
 #include <kira/kernel/rt.h>
 
@@ -26,7 +26,7 @@ KiEErrorCode KI_CALL CheckDigestSize(KiSCommandLineArgument const *aPtr, KiSVari
     KiSStaticArray const arr = KI_MAKE_STATIC_ARRAY((KiTInt64 []){ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 });
     if (vPtr->m_type != KiVarTy_Int64) {
         // Return 'KiErr_InvalidArgType' if the argument type is incorrect.
-        return KiErr_InvalidArgType;
+        return KiErr_CmdlInvalidArgType;
     }
 
     // Check if the parsed value (vPtr) is in this array.
@@ -37,7 +37,7 @@ KiEErrorCode KI_CALL CheckDigestSize(KiSCommandLineArgument const *aPtr, KiSVari
         }
     
     // Return 'KiErr_InvalidArgValue' if the parsed value is not valid.
-    return KiErr_InvalidArgValue;
+    return KiErr_CmdlInvalidArgValue;
 }
 
 KiTVoid KI_CALL ProcDigestSize(KiSCommandLineArgument const *aPtr, KiSVariant *vPtr) {
@@ -51,11 +51,10 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
     KI_DESC    "example command line schema implementing a single devtool for generating hashes and uuids",
     KI_PREFIX  "-/",
     KI_SEP     "=:",
-    KI_HELPFMT KiHelpFmt_Option,
 
-    KI_ARGUMENTS({
+    KI_ARGUMENTS {
         // global optional arguments
-        KI_ARGUMENT { KI_TYPE KiArgTy_Integer, KI_SPEC "--verbose;v", KI_DESC "enable verbose mode",      KI_FLAGS KiArgFl_Countable },
+        KI_ARGUMENT { KI_TYPE KiArgTy_Integer, KI_SPEC "int --verbose;v", KI_DESC "enable verbose mode",      KI_FLAGS KiArgFl_Countable },
         KI_ARGUMENT { KI_TYPE KiArgTy_Bool,    KI_SPEC "--copy;c",    KI_DESC "copy result to clipboard", KI_FLAGS KiArgFl_Switch    },
         
         // sub-commands
@@ -64,56 +63,52 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
             KI_DESC "generate SHA-512 hash of any input string",
             
             // arguments specific to the 'hash' sub-command
-            KI_ARGUMENTS({
+            KI_ARGUMENTS {
                 KI_ARGUMENT { KI_TYPE KiArgTy_String, KI_SPEC "input", KI_DESC "the input string", KI_FLAGS KiArgFl_Required },
                 KI_ARGUMENT {
                     KI_TYPE    KiArgTy_Integer,
-                    KI_SPEC    "--size;s",
+                    KI_SPEC    "[--size, -s]",
                     KI_DESC    "size of digest to return",
                     KI_CHECK   CheckDigestSize,
                     KI_PROC    ProcDigestSize,
-                    KI_DEFAULT KI_INT(512),
-                    KI_METAVAR "SIZE"
+                    KI_DEFAULT KI_INT(512)
                 }
-            })
+            }
         },
         KI_SUBCOMMAND {
             KI_SPEC  "uuid",
             KI_DESC  "generate version-4 UUIDs",
-            KI_FLAGS KiArgFl_NoHelp | KiArgFl_Deprecated,
-            
-            // no arguments
-            KI_ARGUMENTS({})
+            KI_FLAGS KiArgFl_NoHelp | KiArgFl_Deprecated
         },
         KI_SUBCOMMAND {
             KI_SPEC "range",
             KI_DESC "checks a numeric range for validity",
             
-            KI_ARGUMENTS({
+            KI_ARGUMENTS {
                 KI_ARGUMENT {
                     KI_TYPE    KiArgTy_NumericRange,
                     KI_SPEC    "in",
                     KI_DESC    "input range",
                     KI_FLAGS   KiArgFl_Optional,
-                    KI_DEFAULT KI_RANGE(1.0, 2.0)
+                    KI_DEFAULT KI_RANGEF(1.0, 2.0)
                 },
                 KI_ARGUMENT {
                     KI_TYPE    KiArgTy_Float,
                     KI_SPEC    "x",
                     KI_DESC    "example float value",
                     KI_DEFAULT KI_FLOAT(0.0f),
-                    KI_BOUNDS  (-2.f, 2.f)
+                    KI_BOUNDS  KI_RANGEF(-1e100, 1e100)
                 },
                 KI_ARGUMENT {
                     KI_TYPE    KiArgTy_String,
-                    KI_SPEC    "--output-fmt{};o",
+                    KI_SPEC    "string [--output-fmt(out), -o]=FMT",
                     KI_DESC    "output string format",
-                    KI_DEFAULT KI_STRING("blake"),
-                    KI_ENUM    ({ KI_STRING("sha1"), KI_STRING("sha256"), KI_STRING("sha384"), KI_STRING("blake3") })
+                    KI_DEFAULT KI_STRING("blake3"),
+                    KI_CHOICES { KI_STRING("sha1"), KI_STRING("sha256"), KI_STRING("sha384"), KI_STRING("blake3") }
                 }
-            })
+            }
         }
-    })
+    }
 };
 
 
@@ -121,9 +116,6 @@ static KI_COMMANDLINE(gl_c_MultiFunction) {
  */
 int main(int argc, char **argv, char **envp) {
     KiSReturnState retState;
-
-    KiParseCommandLine(&gl_c_MultiFunction, argc, argv);
-    return 0;
 
     /*
      * Since we want to support a full application restart without actually restarting, we want to check whether we need
@@ -136,29 +128,29 @@ int main(int argc, char **argv, char **envp) {
             .m_wantsRestart = KI_FALSE
         };
 
-        ///* Start kernel. This loads the kernel and all modules. */
-        //KiEErrorCode errCode = KiStartup(&(KiSRuntimeSpecification const){
-        //    .m_structSize = sizeof(KiSRuntimeSpecification),
-        //    .m_argc       = argc,
-        //    .mpp_argv     = argv,
-        //    .mpp_envp     = envp,
-        //    .mp_dbgOpts   = nullptr
-        //});
-        //if (errCode != KiErr_Ok) {
-        //    retState.m_errCode = errCode;
-//
-        //    KiShutdown();
-        //    break;
-        //}
-//
-        ///*
-        // * Start main-loop and run application. If the error code is KiErr_Ok and the restart flag is set to KI_TRUE,
-        // * we will soft-'restart' the application.
-        // */
-        //KiRun(&retState);
-//
-        ///* Shutdown kernel. This also unloads all modules. */
-        //KiShutdown();
+        /* Start kernel. This loads the kernel and all modules. */
+        KiEErrorCode errCode = KiStartup(&(KiSRuntimeSpecification const){
+           .m_structSize = sizeof(KiSRuntimeSpecification),
+           .m_argc       = argc,
+           .mpp_argv     = argv,
+           .mpp_envp     = envp,
+           .mp_dbgOpts   = nullptr
+        });
+        if (errCode != KiErr_Ok) {
+           retState.m_errCode = errCode;
+
+           KiShutdown();
+           break;
+        }
+
+        /*
+        * Start main-loop and run application. If the error code is KiErr_Ok and the restart flag is set to KI_TRUE,
+        * we will soft-'restart' the application.
+        */
+        KiRun(&retState);
+
+        /* Shutdown kernel. This also unloads all modules. */
+        KiShutdown();
     } while (retState.m_wantsRestart && retState.m_errCode == KiErr_Ok);
 
     return (int)retState.m_errCode;

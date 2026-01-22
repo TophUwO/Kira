@@ -43,6 +43,9 @@
 #include <float.h>
 #include <math.h>
 
+/* Kira includes */
+#include <kira/def.h>
+
 #if defined(_MSC_VER)
 #pragma warning (pop)
 #endif
@@ -56,12 +59,16 @@
 #ifdef true
 #undef true
 #endif
-#define true ((cJSON_bool)1)
+#if (!defined KI_STD_C23)
+    #define true ((cJSON_bool)1)
+#endif
 
 #ifdef false
 #undef false
 #endif
-#define false ((cJSON_bool)0)
+#if (!defined KI_STD_C23)
+    #define false ((cJSON_bool)0)
+#endif
 
 static unsigned char* cJSONUtils_strdup(const unsigned char* const string)
 {

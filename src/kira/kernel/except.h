@@ -10,7 +10,7 @@
 
 /**
  * \file  except.h
- * \brief defines the public API for the Kira kernel exception system
+ * \brief defines the private API for the Kira kernel exception system
  *
  * The Kira kernel exception system is a small component inside the kernel that allows the application to throw an
  * exception that is then handled by the kernel in a certain way. For example, this can be used to implement runtime
@@ -21,40 +21,7 @@
 #pragma once
 
 /* Kira includes */
-#include <kira/def.h>
-
-#include <kira/kernel/error.h>
-
-
-/** \cond */
-KI_NATIVE typedef struct KiSException KiSException;
-/** \endcond */
-
-
-/**
- */
-KI_NATIVE typedef KiTVoid (KI_CALL *KiFExceptionHandler)(KiSException const *excPtr, KiTVoid *extraParam);
-
-
-/**
- */
-KI_NATIVE typedef enum KiEExceptionType {
-    KiExcTy_Invalid         = 0,
-
-    KiExcTy_AssertionFailed = 1,
-
-    __KiExcTy_Count__
-} KiEExceptionType;
-
-
-/**
- */
-KI_NATIVE typedef struct KiSException {
-    KiTSize           m_structSize;
-    KiEExceptionType  m_excType;
-    KiTVoid          *mp_excDataPtr;
-    KiTSize           m_excDataSize;
-} KiSException;
+#include <kira/dbg.h>
 
 
 /**

@@ -9,8 +9,8 @@
  *****************************************************************************************************************/
 
 /**
- * \file  dir.h
- * \brief defines the public API for application directory control
+ * \file  string.h
+ * \brief defines the API for a kernel-level lightweight dynamic string type
  */
 
 
@@ -18,16 +18,46 @@
 
 /* Kira includes */
 #include <kira/def.h>
-#include <kira/util.h>
 
 #include <kira/kernel/error.h>
 
 
 /**
  */
-KI_NATIVE KI_API KiEErrorCode KI_CALL KiKrnlGetCommandLineArgument(KiTChar const *keyStr, KiSStringView *dstPtr);
+KI_NATIVE typedef struct KiSString KiSString;
+
+
 /**
  */
-KI_NATIVE KI_API KiEErrorCode KI_CALL KiKrnlGetEnvironmentVariable(KiTChar const *varName, KiSStringView *dstPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiCreateString(KiTChar const *srcStr, KiSString **resPtr);
+/**
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiDuplicateString(KiSString const *srcPtr, KiSString **resPtr);
+/**
+ */
+KI_NATIVE extern KiTVoid KI_CALL KiDestroyString(KiSString *strPtr);
+/**
+ */
+KI_NATIVE extern KiTVoid KI_CALL KiClearString(KiSString *strPtr, KiTBool isSecure);
+
+/**
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiAssignToString(KiSString *strPtr, KiTChar const *srcPtr);
+/**
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiAppendToString(KiSString *strPtr, KiTChar const *srcStr);
+/**
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiPushPathComponent(KiSString *strPtr, KiTChar pathSep, KiTChar const *pathCompPtr);
+/**
+ */
+KI_NATIVE extern KiTVoid KI_CALL KiPopPathComponent(KiSString *strPtr, KiTChar pathSep);
+
+/**
+ */
+KI_NATIVE extern KiTChar const *KI_CALL KiGetCString(KiSString const *strPtr);
+/**
+ */
+KI_NATIVE extern KiTSize KI_CALL KiGetStringSize(KiSString const *strPtr);
 
 

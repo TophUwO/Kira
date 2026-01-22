@@ -25,26 +25,26 @@
 
 /**
  */
-KI_NATIVE typedef struct KiSKrnlRWLock KiSKrnlRWLock;
+KI_NATIVE typedef KiTIntptr KiTRWLockHandle;
 
 
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlRWLockCreate(KiSKrnlRWLock **resPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiCreateRWLock(KiTRWLockHandle *resPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlRWLockDestroy(KiSKrnlRWLock *rwLockPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiDestroyRWLock(KiTRWLockHandle *rwLockPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlRWLockAcquireRead(KiSKrnlRWLock *rwLockPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiAcquireRead(KiTRWLockHandle *rwLockPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlRWLockReleaseRead(KiSKrnlRWLock *rwLockPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiReleaseRead(KiTRWLockHandle *rwLockPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlRWLockAcquireWrite(KiSKrnlRWLock *rwLockPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiAcquireWrite(KiTRWLockHandle *rwLockPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlRWLockReleaseWrite(KiSKrnlRWLock *rwLockPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiReleaseWrite(KiTRWLockHandle *rwLockPtr);
 
 

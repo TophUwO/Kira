@@ -19,13 +19,14 @@
 #include <stdlib.h>
 
 /* Kira includes */
-#include <kira/kernel/reg.h>
+#include <kira/dbg.h>
 
-#include <kira/dbg/dbg.h>
+#include <kira/kernel/reg.h>
 
 #include <kira/kernel/int/htable.h>
 
 
+/** \cond INTERNAL */
 /**
  */
 #define KI_KRNLHT_EMPTY   ((KiTVoid *)nullptr)
@@ -40,34 +41,39 @@
 #define KI_KRNLHT_MAXLF   ((KiTFloat)(0.75f))
 
 
-KI_NATIVE typedef struct KiSKrnlHashtable {
-    KiTSize                  m_elemCount;
-    KiTSize                  m_elemCap;
-    KiTUint64                m_hashSeed;
-    KiFKrnlHashtableHashFn   mp_fnHash;
-    KiFKrnlHashtableKeyCmpFn mp_fnKeyCmp;
+/**
+ */
+KI_NATIVE typedef struct KiSHashtableKVTuple {
+    KiTVoid   const *mp_key;
+    KiTUint64        m_keyHash;
+    KiTUint64        m_wealth;
+    KiTVoid   const *mp_value;
+} KiSHashtableKVTuple;
 
-    struct {
-        KiTVoid   const *mp_key;
-        KiTUint64        m_keyHash;
-        KiTUint64        m_wealth;
-        KiTVoid   const *mp_value;
-    } *mp_tupleArr;
-} KiSKrnlHashtable;
+/**
+ */
+KI_NATIVE struct KiSHashtable {
+    KiTSize              m_elemCount;
+    KiTSize              m_elemCap;
+    KiTUint64            m_hashSeed;
+    KiFHashtableHash     mp_fnHash;
+    KiFHashtableKeyCmp   mp_fnKeyCmp;
+    KiSHashtableKVTuple *mp_tupleArr;
+};
 
 
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_KrnlHashtableInsertWithoutResize(
-    KiSKrnlHashtable *htState,
+static KiEErrorCode KI_CALL KiInternal_HashtableInsertWithoutResize(
+    KiSHashtable *htState,
     KiTVoid const *kPtr,
     KiTVoid const *vPtr
 ) {
-    if (htState == nullptr) return KiErr_InOutParameter;
-    if (kPtr == nullptr)    return KiErr_InParameter;
+    KI_ASSERT(htState != nullptr, KiErr_InOutParameter);
+    KI_ASSERT(kPtr != nullptr,    KiErr_InParameter);
     
     /* Insert element. */
-    auto tmpVal = (typeof(*htState->mp_tupleArr)){
+    KiSHashtableKVTuple tmpVal = (KiSHashtableKVTuple const){
         .mp_key    = (KiTChar *)kPtr,
         .m_keyHash = (*htState->mp_fnHash)(kPtr, htState->m_hashSeed),
         .m_wealth  = 0,
@@ -75,11 +81,11 @@ static KiEErrorCode KI_CALL KiInternal_KrnlHashtableInsertWithoutResize(
     };
     /* Search for a spot to insert the element in. */
     for (KiTSize i = tmpVal.m_keyHash % htState->m_elemCap, currWealth = 0, j = 0; j < htState->m_elemCap;) {
-        auto *const it = &htState->mp_tupleArr[i];
+        KiSHashtableKVTuple *const it = &htState->mp_tupleArr[i];
 
         /* Found free slot. Insert and return. */
         if (it->mp_key == KI_KRNLHT_EMPTY || it->mp_key == KI_KRNLHT_DELETED) {
-            *it = (typeof(*it)){
+            *it = (KiSHashtableKVTuple const){
                 .mp_key    = tmpVal.mp_key,
                 .m_keyHash = tmpVal.m_keyHash,
                 .m_wealth  = currWealth,
@@ -96,11 +102,11 @@ static KiEErrorCode KI_CALL KiInternal_KrnlHashtableInsertWithoutResize(
          * Otherwise, swap and continue with the new element.
          */
         if (currWealth > it->m_wealth) {
-            auto tmpVal2   = *it;
-            auto oldWealth = it->m_wealth;
+            KiSHashtableKVTuple tmpVal2   = *it;
+            KiTUint64           oldWealth = it->m_wealth;
 
             /* Insert. */
-            *it = (typeof(*it)) {
+            *it = (KiSHashtableKVTuple const) {
                 .mp_key    = tmpVal.mp_key,
                 .m_keyHash = tmpVal.m_keyHash,
                 .m_wealth  = currWealth,
@@ -124,21 +130,19 @@ static KiEErrorCode KI_CALL KiInternal_KrnlHashtableInsertWithoutResize(
 
 /**
  */
-static KiEErrorCode KI_CALL KiInternal_KrnlHashtableResize(KiSKrnlHashtable *htState, KiTSize newCap) {
-    if (htState == nullptr)
-        return KiErr_OutptrParameter;
-    if (newCap * KI_KRNLHT_MAXLF <= htState->m_elemCount)
-        return KiErr_InParameter;
+static KiEErrorCode KI_CALL KiInternal_HashtableResize(KiSHashtable *htState, KiTSize newCap) {
+    KI_ASSERT(htState != nullptr,                              KiErr_InOutParameter);
+    KI_ASSERT(newCap * KI_KRNLHT_MAXLF > htState->m_elemCount, KiErr_InParameter);
 
     /* Create a new hashtable with the new properties. */
-    KiSKrnlHashtable *newHt;
-    KiEErrorCode errCode = KiKrnlHashtableCreate(newCap, htState->mp_fnHash, htState->mp_fnKeyCmp, &newHt);
+    KiSHashtable *newHt;
+    KiEErrorCode errCode = KiCreateHashtable(newCap, htState->mp_fnHash, htState->mp_fnKeyCmp, &newHt);
     if (errCode != KiErr_Ok)
         return errCode;
 
     /* Insert all elements from the old hashtable into the new hashtable. */
     for (KiTSize i = 0, j = 0; j < htState->m_elemCount; i++) {
-        auto const *const it = &htState->mp_tupleArr[i];
+        KiSHashtableKVTuple const *const it = &htState->mp_tupleArr[i];
 
         /* Kiip empty slots. */
         if (it->mp_key == KI_KRNLHT_EMPTY || it->mp_key == KI_KRNLHT_DELETED)
@@ -148,7 +152,7 @@ static KiEErrorCode KI_CALL KiInternal_KrnlHashtableResize(KiSKrnlHashtable *htS
          * Insert tuple into new hashtable. This should never fail because the hashtable is definitely large enough and
          * even below the maximum allowed load factor.
          */
-        KiInternal_KrnlHashtableInsertWithoutResize(newHt, it->mp_key, it->mp_value);
+        KiInternal_HashtableInsertWithoutResize(newHt, it->mp_key, it->mp_value);
         ++j;
     }
 
@@ -164,15 +168,16 @@ static KiEErrorCode KI_CALL KiInternal_KrnlHashtableResize(KiSKrnlHashtable *htS
     /* All good. */
     return KiErr_Ok;
 }
+/** \endcond */
 
 
 /**
  */
-KiEErrorCode KI_CALL KrnlHashtableCreate(
+KiEErrorCode KI_CALL KiCreateHashtable(
     KiTSize initCap,
-    KiFKrnlHashtableHashFn fnHash,
-    KiFKrnlHashtableKeyCmpFn fnKeyCmp,
-    KiSKrnlHashtable **resPtr
+    KiFHashtableHash fnHash,
+    KiFHashtableKeyCmp fnKeyCmp,
+    KiSHashtable **resPtr
 ) {
     /**
      */
@@ -187,7 +192,7 @@ KiEErrorCode KI_CALL KrnlHashtableCreate(
         return KiErr_MemoryAllocation;
 
     /* Allocate initial array. */
-    typeof((*resPtr)->mp_tupleArr) initArr = calloc(1, sizeof *initArr * initCap);
+    KiSHashtableKVTuple *initArr = calloc(1, sizeof *initArr * initCap);
     if (initArr == nullptr) {
         free(*resPtr);
 
@@ -195,7 +200,7 @@ KiEErrorCode KI_CALL KrnlHashtableCreate(
     }
  
     /* Init structure. */
-    **resPtr = (KiSKrnlHashtable){
+    **resPtr = (KiSHashtable){
         .m_elemCount = 0,
         .m_elemCap   = initCap,
         .m_hashSeed  = KiVirtual_KrnlHtGetRandomSeed(),
@@ -208,7 +213,7 @@ KiEErrorCode KI_CALL KrnlHashtableCreate(
 
 /**
  */
-KiTVoid KI_CALL KiKrnlHashtableDestroy(KiSKrnlHashtable *htPtr) {
+KiTVoid KI_CALL KiDestroyHashtable(KiSHashtable *htPtr) {
     if (htPtr == nullptr)
         return;
 
@@ -222,28 +227,28 @@ KiTVoid KI_CALL KiKrnlHashtableDestroy(KiSKrnlHashtable *htPtr) {
 
 /**
  */
-KiEErrorCode KI_CALL KiKrnlHashtableInsert(KiSKrnlHashtable *htPtr, KiTVoid const *keyPtr, KiTVoid const *valPtr) {
+KiEErrorCode KI_CALL KiInsertIntoHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr, KiTVoid const *valPtr) {
     if (htPtr == nullptr)  return KiErr_InOutParameter;
     if (keyPtr == nullptr) return KiErr_InParameter;
 
     /* If key exists, cannot add again. */
-    if (KiSKrnlHashtableContains(htPtr, keyPtr, KI_DONTCARE(KiTInt64)))
+    if (KiIsInHashtable(htPtr, keyPtr, KI_DONTCARE(KiTInt64)))
         return KiErr_ItemAlreadyExists;
 
     /* Resize if needed. */
     if ((KiTFloat)(htPtr->m_elemCount + 1) / (KiTFloat)htPtr->m_elemCap >= KI_KRNLHT_MAXLF) {
-        KiEErrorCode errCode = KiInternal_KrnlHashtableResize(htPtr, htPtr->m_elemCap * 2);
+        KiEErrorCode errCode = KiInternal_HashtableResize(htPtr, htPtr->m_elemCap * 2);
 
         if (errCode != KiErr_Ok)
             return errCode;
     }
     /* Insert element. */
-    return KiInternal_KrnlHashtableInsertWithoutResize(htPtr, keyPtr, valPtr);
+    return KiInternal_HashtableInsertWithoutResize(htPtr, keyPtr, valPtr);
 }
 
 /**
  */
-KiTBool KI_CALL KiSKrnlHashtableContains(KiSKrnlHashtable *htPtr, KiTVoid const *kPtr, KiTInt64 *iPtr) {
+KiTBool KI_CALL KiIsInHashtable(KiSHashtable *htPtr, KiTVoid const *kPtr, KiTInt64 *iPtr) {
     if (htPtr == nullptr || kPtr == nullptr || iPtr == nullptr)
         return KI_FALSE;
 
@@ -252,7 +257,7 @@ KiTBool KI_CALL KiSKrnlHashtableContains(KiSKrnlHashtable *htPtr, KiTVoid const 
     {
         /* Try to find element. */
         for (KiTSize i = keyHash % htPtr->m_elemCap, j = 0; j < htPtr->m_elemCap; j++) {
-            auto const *const it = &htPtr->mp_tupleArr[i];
+            KiSHashtableKVTuple const *const it = &htPtr->mp_tupleArr[i];
 
             /*
              * Check for empty slot or if the current occupant's "wealth" (i.e., the key's probe distance) is lower than
@@ -291,8 +296,8 @@ lbl_NOTFOUND:
 
 /**
  */
-KiTVoid KI_CALL KiKrnlHashtableErase(
-    KiSKrnlHashtable *htPtr,
+KiTVoid KI_CALL KiEraseFromHashtable(
+    KiSHashtable *htPtr,
     KiTVoid const *keyPtr,
     KiTVoid **dstKeyPtr,
     KiTVoid **dstValPtr
@@ -302,7 +307,7 @@ KiTVoid KI_CALL KiKrnlHashtableErase(
 
     /* Locate key. */
     KiTInt64 locIdx;
-    if (!KiSKrnlHashtableContains(htPtr, keyPtr, &locIdx)) {
+    if (!KiIsInHashtable(htPtr, keyPtr, &locIdx)) {
         *dstKeyPtr = *dstValPtr = nullptr;
 
         return;
@@ -312,7 +317,7 @@ KiTVoid KI_CALL KiKrnlHashtableErase(
      * Found the tuple that is to be removed. Remove it. Place tombstone (i.e., KI_KRNLHT_DELETED.) The hashtable does
      * not take ownership of the key and the value, so it does not take care of freeing the resourced used by them.
      */
-    auto *const it = &htPtr->mp_tupleArr[locIdx];
+    KiSHashtableKVTuple *const it = &htPtr->mp_tupleArr[locIdx];
     {
         /* Decrease count. */
         --htPtr->m_elemCount;
@@ -322,7 +327,7 @@ KiTVoid KI_CALL KiKrnlHashtableErase(
         *dstValPtr = (KiTVoid *)it->mp_value;
 
         /* Overwrite the slots. */
-        *it = (typeof(*it)){
+        *it = (KiSHashtableKVTuple const){
             .mp_key    = KI_KRNLHT_DELETED,
             .m_keyHash = 0,
             .m_wealth  = 0,
@@ -331,13 +336,13 @@ KiTVoid KI_CALL KiKrnlHashtableErase(
     }
 }
 
-KiTVoid KI_CALL KiKrnlHashtableEraseIf(KiSKrnlHashtable *htPtr, KiFHashtableErasePred fnPred, KiTVoid *extraParam) {
+KiTVoid KI_CALL KiEraseFromHashtableIf(KiSHashtable *htPtr, KiFHashtableErasePred fnPred, KiTVoid *extraParam) {
     KI_ASSERT(htPtr != nullptr,  KiErr_InOutParameter);
     KI_ASSERT(fnPred != nullptr, KiErr_CallbackParameter);
 
     KiTSize nDel = 0;
     for (KiTSize i = 0, j = 0; j < htPtr->m_elemCount; i++) {
-        auto *const it = &htPtr->mp_tupleArr[i];
+        KiSHashtableKVTuple *const it = &htPtr->mp_tupleArr[i];
         if (it->mp_key == KI_KRNLHT_EMPTY || it->mp_key == KI_KRNLHT_DELETED)
             continue;
 
@@ -348,7 +353,7 @@ KiTVoid KI_CALL KiKrnlHashtableEraseIf(KiSKrnlHashtable *htPtr, KiFHashtableEras
              * clear the slot and decrement the element count. In order not to interfere with the iteration procedure,
              * we subtract the total number of entries erased.
              */
-            *it = (typeof(*it)){
+            *it = (KiSHashtableKVTuple const){
                 .mp_key    = KI_KRNLHT_DELETED,
                 .m_keyHash = 0,
                 .m_wealth  = 0,
@@ -366,13 +371,13 @@ KiTVoid KI_CALL KiKrnlHashtableEraseIf(KiSKrnlHashtable *htPtr, KiFHashtableEras
 
 /**
  */
-KiTVoid *KI_CALL KiKrnlHashtableAt(KiSKrnlHashtable *htPtr, KiTVoid const *keyPtr) {
+KiTVoid *KI_CALL KiGetFromHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr) {
     KI_ASSERT(htPtr != nullptr,  KiErr_InOutParameter);
     KI_ASSERT(keyPtr != nullptr, KiErr_InParameter);
 
     /* Find element. */
     KiTInt64 elemIdx;
-    if (!KiSKrnlHashtableContains(htPtr, keyPtr, &elemIdx))
+    if (!KiIsInHashtable(htPtr, keyPtr, &elemIdx))
         return nullptr;
 
     /* Found element. Return value. */

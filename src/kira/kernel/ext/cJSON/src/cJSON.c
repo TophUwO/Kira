@@ -45,6 +45,9 @@
 #include <ctype.h>
 #include <float.h>
 
+/* Kira includes */
+#include <kira/def.h>
+
 #ifdef ENABLE_LOCALES
 #include <locale.h>
 #endif
@@ -62,12 +65,16 @@
 #ifdef true
 #undef true
 #endif
-#define true ((cJSON_bool)1)
+#if (!defined KI_STD_C23)
+    #define true ((cJSON_bool)1)
+#endif
 
 #ifdef false
 #undef false
 #endif
-#define false ((cJSON_bool)0)
+#if (!defined KI_STD_C23)
+    #define false ((cJSON_bool)0)
+#endif
 
 /* define isnan and isinf for ANSI C, if in C99 or above, isnan and isinf has been defined in math.h */
 #ifndef isinf

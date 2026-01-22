@@ -26,7 +26,7 @@ KiEErrorCode KI_CALL KiPlatform_VirtualReserve(KiTVoid *stAddr, KiTSize reqSz, K
     KI_ASSERT(reqSz > 0,         KiErr_InParameter);
     KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
 
-    return VirtualAlloc(stAddr, reqSz, MEM_RESERVE, 0) != nullptr
+    return (*resPtr = VirtualAlloc(stAddr, reqSz, MEM_RESERVE, PAGE_READWRITE)) != nullptr
         ? KiErr_Ok
         : KiErr_VirtualReserve
     ;
@@ -37,7 +37,7 @@ KiEErrorCode KI_CALL KiPlatform_VirtualCommit(KiTVoid *stAddr, KiTSize reqSz, Ki
     KI_ASSERT(reqSz > 0,         KiErr_InParameter);
     KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
 
-    return VirtualAlloc(stAddr, reqSz, MEM_COMMIT, PAGE_READWRITE) != nullptr
+    return (*resPtr = VirtualAlloc(stAddr, reqSz, MEM_COMMIT, PAGE_READWRITE)) != nullptr
         ? KiErr_Ok
         : KiErr_VirtualCommit
     ;
@@ -71,6 +71,8 @@ KiTSize KI_CALL KiPlatform_VirtualGetPageSize(KiTVoid) {
 
     return (KiTSize)si.dwPageSize;
 }
-#endif /* KI_PLATFORM_WINDOWS */
+
+
+#endif /* defined KI_PLATFORM_WINDOWS */
 
 

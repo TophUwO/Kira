@@ -1,5 +1,5 @@
 /*****************************************************************************************************************
- * Kira - cross-platform 2-D role-playing game (RPG) game engine for desktop and mobile, and console platforms *
+ * Kira - cross-platform 2-D role-playing game (RPG) game engine for desktop and mobile, and console platforms   *
  *                                                                                                               *
  * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                   *
  *                                                                                                               *
@@ -21,7 +21,7 @@
 #include <stdatomic.h>
 
 /* Kira includes */
-#include <kira/kernel/dbg.h>
+#include <kira/dbg.h>
 
 #include <kira/kernel/int/platform.h>
 
@@ -29,7 +29,7 @@
 /** \cond INTERNAL */
 /**
  */
-static KiTChar constexpr gl_c_ErrorMsgFormat[] = 
+static KiTChar const **gl_c_ErrorMsgFormat = &(KiTChar const *){
     "A debug error occurred and the application was forced to halt:\n\n"
     "  Expr:\t%s\n"
     "  Code:\t%s (%u)\n"
@@ -40,18 +40,18 @@ static KiTChar constexpr gl_c_ErrorMsgFormat[] =
     "%s\n\n"
     "This error signifies abnormal program termination. Please contact the responsible developer, providing the "
     "details shown by this error message."
-;
+};
 
 
 /**
  */
-static KiTVoid KI_CALL KiDbg_Internal_FormatMessage(KiSDebugTerminationContext const *termCtxt, KiTChar **bufPtr) {
-    if (termCtxt == nullptr || bufPtr == nullptr) {
-        if (bufPtr != nullptr)
-            *bufPtr = nullptr;
+static KiTChar *KI_CALL Internal_FormatMessage(KiSDebugTerminationContext const *termCtxt) {
+    KI_ASSERT(termCtxt != nullptr, KiErr_InParameter);
 
-        return;
-    }
+    /* Query error stringifications. */
+    KiSStringView const *codeStr  = KiQueryErrorString(termCtxt->m_errorCode);
+    KiSStringView const *briefStr = KiQueryErrorBrief(termCtxt->m_errorCode);
+    KiSStringView const *detStr   = KiQueryErrorDetails(termCtxt->m_errorCode);
 
     /* Compute required size. */
     KiTSize reqSize = 0;
@@ -59,58 +59,59 @@ static KiTVoid KI_CALL KiDbg_Internal_FormatMessage(KiSDebugTerminationContext c
         reqSize = (KiTSize)snprintf(
             nullptr,
             0,
-            gl_c_ErrorMsgFormat,
+            *gl_c_ErrorMsgFormat,
             termCtxt->m_failedExpr.mp_strPtr,
-            termCtxt->mp_errStr->mp_strPtr,
+            codeStr->mp_strPtr,
             termCtxt->m_errorCode,
-            termCtxt->mp_errBrief->mp_strPtr,
+            briefStr->mp_strPtr,
             termCtxt->m_filePath.mp_strPtr,
             termCtxt->m_fileLine,
             termCtxt->m_fnName.mp_strPtr,
-            termCtxt->mp_errDetails->mp_strPtr
+            detStr->mp_strPtr
         );
 
         /* Append terminating 'NUL'. */
         ++reqSize;
     }
 
-    /* Allocate buffer. */
-    *bufPtr = nullptr;
+    KiTChar *bufPtr = nullptr;
     {
-        *bufPtr = calloc(1, reqSize * sizeof **bufPtr);
+        if ((bufPtr = calloc(1, reqSize * sizeof *bufPtr)) == nullptr)
+            return nullptr;
 
-        if (*bufPtr == nullptr)
-            return;
+        snprintf(
+            bufPtr,
+            reqSize,
+            *gl_c_ErrorMsgFormat,
+            termCtxt->m_failedExpr.mp_strPtr,
+            codeStr->mp_strPtr,
+            termCtxt->m_errorCode,
+            briefStr->mp_strPtr,
+            termCtxt->m_filePath.mp_strPtr,
+            termCtxt->m_fileLine,
+            termCtxt->m_fnName.mp_strPtr,
+            detStr->mp_strPtr
+        );
     }
 
-    /* Format the error message so it looks good in a message box and acceptable in a terminal. */
-    snprintf(
-        *bufPtr,
-        reqSize,
-        gl_c_ErrorMsgFormat,
-        termCtxt->m_failedExpr.mp_strPtr,
-        termCtxt->mp_errStr->mp_strPtr,
-        termCtxt->m_errorCode,
-        termCtxt->mp_errBrief->mp_strPtr,
-        termCtxt->m_filePath.mp_strPtr,
-        termCtxt->m_fileLine,
-        termCtxt->m_fnName.mp_strPtr,
-        termCtxt->mp_errDetails->mp_strPtr
-    );
+    return bufPtr;
 }
 /** \endcond */
 
 
-KI_NORETURN KiTVoid KI_CALL KiDbgTerminateProcess(KiSDebugTerminationContext const *termCtxt) {
-    static _Atomic KiTBool gl_actFlag;
+KI_NORETURN KiTVoid KI_CALL KiDebugTerminateProcess(KiSDebugTerminationContext const *termCtxt) {
+    KI_ASSERT(termCtxt != nullptr, KiErr_InParameter);
+
+    /** \cond */
+    static _Atomic(KiTInt32) gl_actFlag;
+    /** \endcond */
 
     if (atomic_fetch_or(&gl_actFlag, KI_TRUE) == KI_FALSE) {
         /* Format the error message. */
-        KiTChar *msgBufPtr;
-        KiDbg_Internal_FormatMessage(termCtxt, &msgBufPtr);
+        KiTChar *msgBufPtr = Internal_FormatMessage(termCtxt);
         {
             /* Print error message or show message box or call the Oracle of Delphi for advice. */
-            KiPlatform_DbgNotify(
+            KiPlatform_Notify(
                 msgBufPtr != nullptr
                     ? msgBufPtr
                     : "****\n\nThere was a problem formatting the message buffer. \n\n****",
@@ -119,8 +120,8 @@ KI_NORETURN KiTVoid KI_CALL KiDbgTerminateProcess(KiSDebugTerminationContext con
         }
         free(msgBufPtr);
 
-        /* Actually exit. This does not return. */
-        KiPlatform_DbgExit(termCtxt->m_errorCode);
+        /* Actually exit. This call does not return. */
+        KiPlatform_Exit(termCtxt->m_errorCode);
     }
 
     /*

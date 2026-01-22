@@ -16,7 +16,8 @@ list(APPEND KI_SOURCES "src/main.c")
 # The core module is the only module that is statically linked into the runtime because it contains the code that
 # handles dynamic library loading.
 add_executable(kira ${KI_SOURCES})
+
 set_target_properties(kira PROPERTIES OUTPUT_NAME "kira")
-target_link_libraries(kira PRIVATE kicommon)
+target_link_libraries(kira PRIVATE kikrnl)
 
 

@@ -80,6 +80,7 @@
     KI_NATIVE typedef struct iId iId;                              \
     KI_NATIVE struct iId { struct __##iId##_VTable__ const *VT; }; \
     KI_NATIVE struct __##iId##_VTable__
+
 /**
  * \def   KI_COMPONENT(clsName)
  * \brief introduces a Kira component definition
@@ -96,26 +97,6 @@
 #define KI_COMPONENT(compName)        \
     typedef struct compName compName; \
     struct compName
-
-/**
- * \def   KI_CONTAINEROF(comp, iface)
- * \brief retrieve the component's base address in order to access its internal state, etc.
- * \param comp name of the component, unescaped, in its <em>canonical name</em>; e.g., \c KiCHashtable
- * \param iface name of the interface the current method belongs to, unescaped, in its <em>canonical name</em>; e.g.,
- *              \c KiIBase
- * \note  The return value is casted to the pointer-type of \c comp, so you can use the \c auto keyword (provided you
- *        are in C23 mode) to set the type of your \c this pointer, e.g.:
- *        \code{.cpp}
- *            auto *this = KI_CONTAINEROF(KiCExample, KiICurrentInterface);
- *            ...
- *            // Can now use internal state of "KiCExample".
- *            this->mp_vecObj ...
- *        \endcode
- */
-#define KI_CONTAINEROF(comp, iface) ((struct comp *)(                                        \
-        ((KiTByte *)((struct iface *)(self))) - KI_OFFSETOF(comp, KI_CONCAT2(iface, _Iface)) \
-    ))
-
 /**
  * \defgroup KiPPAnnos KiPP Component Annotations
  * \brief    contains annotations for use inside the <tt>KI_COMPONENT(...) { ... }</tt> definition
@@ -127,7 +108,9 @@
  * 
  * This macro is useful when creating components that implement interfaces.
  */
-#define KI_IMPLEMENTS(iId) struct iId KI_CONCAT2(iId, _Iface)
+#define KI_IMPLEMENTS(iId)                \
+    struct iId KI_CONCAT2(iId, _Iface);   \
+    KiSUuid const *KI_CONCAT2(iId, _Iid)
 /**
  * \def   KI_REQUIRES(iId) [X]*
  * \brief declares that the component this directive resides in depends on the interface named \c iId on the terms
@@ -157,7 +140,7 @@
         struct iId                 *KI_CONCAT2(iId, _Inst); \
         struct KiIComponentFactory *KI_CONCAT2(iId, _Fac);  \
     );                                                      \
-    KiSResolvedRequirement *KI_CONCAT2(iId, _Req);
+    KiSResolvedRequirement const *KI_CONCAT2(iId, _Req);
 
 /**
  * \def   KI_SINGLETON
@@ -188,6 +171,9 @@
  */
 #define KI_TRANSIENT
 /**
+ */
+#define KI_INSTANCE
+/**
  * \def   KI_OPTIONAL
  * \brief annotation picked up by \c KiPP denoting an interface requirement as 'optional', that is, the component
  *        requiring it can do without and is able to detect the presence of the requirement whenever it's needed
@@ -213,6 +199,11 @@
  * \note  Like all annotations, they must appear after <tt>KI_REQUIRES(...)</tt>.
  */
 #define KI_SUBSYSTEM
+
+/**
+ */
+#define KI_NAMED(ifaceName)
+
 
 /**
  * \def   KI_PUBLIC
@@ -251,10 +242,30 @@
 #define KI_AUXILIARY
 /**
  */
-#define KI_AUTOMATIC
+#define KI_BUILTIN
 /**
  */
-#define KI_BUILTIN
+#define KI_DEPRECATED
+/**
+ */
+#define KI_REMOVED
+
+/**
+ */
+#define KI_EXTENDS(...)
+/**
+ */
+#define KI_EXCLUDES(...)
+/**
+ */
+#define KI_INCLUDES(...)
+/**
+ */
+#define KI_INCLUDES_ANY(...)
+/**
+ */
+#define KI_INCLUDES_ONE(...)
+
 /**
  * \def   KI_BASE(iface)
  * \brief injects the methods of \c KiIBase; you can use this as a convenience macro
@@ -266,20 +277,26 @@
         KiTInt32 (KI_CALL *Release)(iface *self);                                                  \
         KiSMetaComponent *(KI_CALL *GetMetaComponent)(iface *self);                                \
     );
-/**
- */
-#define KI_EXTENDS(...)
 /** @} */
 
-/** \defgroup KiSigSl Signals-and-slots macros */
-/** @{ */
 /**
+ * \def   KI_CONTAINEROF(comp, iface)
+ * \brief retrieve the component's base address in order to access its internal state, etc.
+ * \param comp name of the component, unescaped, in its <em>canonical name</em>; e.g., \c KiCHashtable
+ * \param iface name of the interface the current method belongs to, unescaped, in its <em>canonical name</em>; e.g.,
+ *              \c KiIBase
+ * \note  The return value is casted to the pointer-type of \c comp, so you can use the \c auto keyword (provided you
+ *        are in C23 mode) to set the type of your \c this pointer, e.g.:
+ *        \code{.cpp}
+ *            auto *this = KI_CONTAINEROF(KiCExample, KiICurrentInterface);
+ *            ...
+ *            // Can now use internal state of "KiCExample".
+ *            this->mp_vecObj ...
+ *        \endcode
  */
-#define KI_SIGNAL(name) ((KiTChar const *)(#name))
-/**
- */
-#define KI_SLOT(name)   ((KiTChar const *)(#name))
-/** @} */
+#define KI_CONTAINEROF(comp, iface) ((struct comp *)(                                        \
+        ((KiTByte *)((struct iface *)(self))) - KI_OFFSETOF(comp, KI_CONCAT2(iface, _Iface)) \
+    ))
 
 
 /** \cond */
@@ -295,9 +312,6 @@ KI_NATIVE typedef struct KiSMetaComponent    KiSMetaComponent;
  * \brief   special type for reference count of KiOM objects
  */
 KI_NATIVE typedef _Atomic(KiTInt32) KiTRefCount;
-/**
- */
-KI_NATIVE typedef KiTByte           KiTUuid[16];
 
 /**
  * \typedef KiFQueryModule
@@ -325,7 +339,7 @@ KI_NATIVE typedef KiSBuildInformation const *(KI_CALL *KiFGetBuildInformation)(K
  * \enum  KiEModuleFlags
  * \brief represents miscellaneous KiOM module flags
  */
-KI_NATIVE typedef enum KiEModuleFlags : KiTFlags64 {
+KI_NATIVE typedef enum KiEModuleFlags {
     KiMdFl_Disabled = 1 << 0, /**< whether or not the module is disabled or not (will not be loaded if disabled) */
     KiMdFl_Autogen  = 1 << 1  /**< whether or not KiPP was invoked for this module */
 } KiEModuleFlags;
@@ -334,7 +348,7 @@ KI_NATIVE typedef enum KiEModuleFlags : KiTFlags64 {
  * \enum  KiEComponentFlags
  * \brief represents miscellaneous KiOM component flags
  */
-KI_NATIVE typedef enum KiEComponentFlags : KiTFlags64 {
+KI_NATIVE typedef enum KiEComponentFlags {
     KiClsFl_Disabled  = 1 << 0, /**< whether or not the component is disabled (will not be loaded if disabled) */
     KiClsFl_Autogen   = 1 << 1, /**< whether or not KiPP was invoked for this component */
     KiClsFl_HotReload = 1 << 2, /**< whether or not the component can be hot-reloaded */
@@ -343,7 +357,7 @@ KI_NATIVE typedef enum KiEComponentFlags : KiTFlags64 {
 
 /**
  */
-KI_NATIVE typedef enum KiERequiredInterfaceFlags : KiTFlags64 {
+KI_NATIVE typedef enum KiERequiredInterfaceFlags {
     KiReqFl_Singleton = 1 << 0,
     KiReqFl_Transient = 1 << 1,
     KiReqFl_Optional  = 1 << 2
@@ -351,7 +365,7 @@ KI_NATIVE typedef enum KiERequiredInterfaceFlags : KiTFlags64 {
 
 /**
  */
-KI_NATIVE typedef enum KiEProvidedInterfaceFlags : KiTFlags64 {
+KI_NATIVE typedef enum KiEProvidedInterfaceFlags {
     KiProvFl_Normal  = 1 << 0,
     KiProvFl_Public  = 1 << 1,
     KiProvFl_Private = 1 << 2,
@@ -388,7 +402,7 @@ KI_NATIVE typedef enum KiEProvidedInterfaceFlags : KiTFlags64 {
  *        i.e., \c KiErr_UnsupportedUsageCtxt. However, this kind of undermines the principle of context-agnosticity and
  *        should thus only be used if necessary for reasons like performance or semantic usefulness.
  */
-KI_NATIVE typedef enum KiEInstanceScope : KiTUint32 {
+KI_NATIVE typedef enum KiEInstanceScope {
     KiInstSc_None,         /**< no/invalid instance context */
     KiInstSc_Singleton,    /**< singleton; global instance */
     KiInstSc_Transient,    /**< transient; mutiple instances possible */
@@ -399,19 +413,32 @@ KI_NATIVE typedef enum KiEInstanceScope : KiTUint32 {
 
 /**
  */
-KI_NATIVE typedef enum KiEInterfaceFlags : KiTFlags32 {
-    KiIfaceFl_None      = 0,
+KI_NATIVE typedef enum KiEInterfaceFlags {
+    KiIfaceFl_None       = 0,
 
-    KiIfaceFl_Automatic = (1 << 0),
-    KiIfaceFl_Auxiliary = (1 << 1)
+    KiIfaceFl_Autogen    = (1 << 0),
+    KiIfaceFl_Auxiliary  = (1 << 1),
+    KiIfaceFl_Deprecated = (1 << 2),
+    KiIfaceFl_Removed    = (1 << 3)
 } KiEInterfaceFlags;
+
+/**
+ */
+KI_NATIVE typedef enum KiEEndianness {
+    KiEnd_Unknown,
+
+    KiEnd_Little,
+    KiEnd_Big,
+
+    KI_ENUM_COUNT(KiEnd)
+} KiEEndianness;
 
 /**
  * \enum  KiEErrorCode
  * \brief represents numeric error codes used by Kira
  */
-KI_NATIVE typedef enum KiEErrorCode : KiTUint32 {
-    KiErr_Ok                = 0xFFFF0000, /**< no error */
+KI_NATIVE typedef enum KiEErrorCode {
+    KiErr_Ok                = 0x7FFF0000, /**< no error */
     KiErr_Unknown,                        /**< unknown error condition */
     KiErr_NoOperation,                    /**< function did nothing */
     KiErr_ManuallyAborted,                /**< operation was manually aborted by user or callback */
@@ -423,6 +450,7 @@ KI_NATIVE typedef enum KiEErrorCode : KiTUint32 {
     KiErr_CallbackParameter,
     KiErr_InptrParameter,
     KiErr_OutptrParameter,
+    KiErr_InOutptrParameter,
     KiErr_SelfParameter,
     KiErr_KiOMComponentParameter,
     KiErr_EnumParameter,
@@ -454,6 +482,7 @@ KI_NATIVE typedef enum KiEErrorCode : KiTUint32 {
     KiErr_InsufficientFilePerms,
     KiErr_EntityIsADirectory,
     KiErr_EntityIsNotADirectory,
+    KiErr_IOError,
     KiErr_EncodingError,
     KiErr_LoadJsonDocument,
     KiErr_IllegalSystemState,
@@ -467,35 +496,43 @@ KI_NATIVE typedef enum KiEErrorCode : KiTUint32 {
     KiErr_VirtualUncommit,
     KiErr_VirtualFree,
     KiErr_ReqPropNotProvided,
-    KiErr_InvalidArgType,
-    KiErr_InvalidArgValue,
     KiErr_InvalidFlagCombination,
     KiErr_TypeMismatch,
+    KiErr_ExpectedSpecEnd,
+    KiErr_UnexpectedSpecToken,
+    KiErr_SpecIdentLimitExceeded,
+    KiErr_SpecTokenSizeError,
+    KiErr_MissingSpecToken,
 
-    __KiErr_Count__                 /**< used only internally */
+    KiErr_CmdlUnexpectedToken,
+    KiErr_CmdlMissingParen,
+    KiErr_CmdlMissingBlock,
+    KiErr_CmdlExpectedSpecEnd,
+    KiErr_CmdlInvalidFlagCombination,
+    KiErr_CmdlRequiredPropNotProvided,
+    KiErr_CmdlInvalidArgType,
+    KiErr_CmdlInvalidArgValue,
+
+    KI_ENUM_COUNT(KiErr)
 } KiEErrorCode;
 
-/**
- */
-KI_NATIVE typedef enum : KiTUint64 {
-    KiNotTy_Unknown  = 0x0c8321ef0cd43ee9,
-    KiNotTy_Reserved = 0x462363c3dbd8d0fb,
-    KiNotTy_Deleted  = 0x236bc88a6ede1f23
-} KiENotificationType;
 
 /**
+ * \struct KiSLegalInformation
+ * \brief  represents the Kira metadata legal information structure
+ *
+ * Many entities in Kira can have metadata attached to them, namely \c Interfaces, \c Components, \c Modules,
+ * <tt>Test Suites</tt> and <tt>Test Cases</tt>. All of them can contain information regarding the author and legal
+ * constraints when using the entity. This structure models the default Kira legal information object.
  */
-KI_NATIVE typedef enum KiEConnectionType : KiTUint16 {
-    KiConnTy_Unknown    = 0,
-    KiConnTy_Auto       = 1,
-    KiConnTy_Direct     = 2,
-    KiConnTy_Queued     = 3,
-
-    KiConnTy_Unique     = 1 << 13,
-    KiConnTy_Blocking   = 1 << 14,
-    KiConnTy_SingleShot = 1 << 15
-} KiEConnectionType;
-
+KI_NATIVE typedef struct KiSLegalInformation {
+    KiTSize       m_structSize; /**< size of this structure, in bytes */
+    KiSStringView m_author;     /**< author identification (name, etc.) */
+    KiSStringView m_contact;    /**< author contact information */
+    KiSStringView m_license;    /**< license string identifier */
+    KiSStringView m_copyright;  /**< copyright string */
+    KiSStringView m_comment;    /**< optional comment regarding legal use */
+} KiSLegalInformation;
 
 /**
  */
@@ -525,6 +562,7 @@ KI_NATIVE typedef struct KiSBuildInformation {
     KiSStringView         m_buildFlags;         /**< compiler flags used to build the target */
     KiSStringView         m_archId;             /**< architecture ID (e.g., x64-86, armv7, ...) */
     KiTUint64             m_bitness;            /**< bitness of the architecture, i.e., 32 or 64 */
+    KiEEndianness         m_endianness;         /**< endianness of the target platform */
     KiSStringView         m_stdVer;             /**< version of the C/C++ standard */
     KiSStringView         m_hostPlatform;       /**< platform the target was built \e on */
     KiSStringView         m_hostPlatformVer;    /**< string representing the host platform's version */
@@ -544,8 +582,8 @@ KI_NATIVE typedef struct KiSBuildInformation {
  */
 KI_NATIVE typedef struct KiSResolvedRequirement {
     KiTSize        m_structSize; /**< size of this structure, in bytes */
-    KiTChar const *mp_ifaceName; /**< canonical name of the interface */
-    KiTChar const *mp_compName;  /**< canonical name of the component */
+    KiSUuid const *mp_iid;       /**< canonical name of the interface */
+    KiSUuid const *mp_cid;       /**< canonical name of the component */
 } KiSResolvedRequirement;
 
 /**
@@ -573,6 +611,7 @@ KI_NATIVE typedef struct KiSRequiredInterface {
 KI_NATIVE typedef struct KiSInterfaceMethodParameter {
     KiTSize       m_structSize;
     KiTIndex      m_idx;
+    KiTBool       m_isPointer;
     KiTSize       m_paramSize;
     KiTSize       m_paramTypeSize;
     KiSStringView m_type;
@@ -595,7 +634,7 @@ KI_NATIVE typedef struct KiSInterfaceMethod {
  */
 KI_NATIVE typedef struct KiSModuleMetadata {
     KiTSize             m_structSize;       /**< size of this structure, in bytes */
-    KiTUuid             m_uuid;             /**< universally unique identifier (UUID) of the module */
+    KiSUuid             m_uuid;             /**< universally unique identifier (UUID) of the module */
     KiSStringView       m_name;             /**< canonical name of the module, e.g., \c random */
     KiSStringView       m_shortName;        /**< short name of the module, e.g., \c RND */
     KiSStringView       m_brief;            /**< brief module description */
@@ -618,7 +657,7 @@ KI_NATIVE typedef struct KiSModuleMetadata {
  */
 KI_NATIVE typedef struct KiSInterfaceMetadata {
     KiTSize              m_structSize;    /**< size of this structure, in bytes */
-    KiTUuid              m_uuid;          /**< interface UUID */
+    KiSUuid              m_uuid;          /**< interface UUID */
     KiSStringView        m_name;          /**< \e canonical interface name (i.e., what's put into <tt>KI_INTERFACE(...)</tt>) */
     KiSStringView        m_displayName;   /**< opt. name for display purposes */
     KiSStringView        m_shortName;     /**< opt. short identifier */
@@ -641,7 +680,7 @@ KI_NATIVE typedef struct KiSInterfaceMetadata {
  */
 KI_NATIVE typedef struct KiSComponentMetadata {
     KiTSize               m_structSize;    /**< size of this structure, in bytes */
-    KiTUuid               m_compUuid;      /**< universally unique identifier (UUID) of the component */
+    KiSUuid               m_compUuid;      /**< universally unique identifier (UUID) of the component */
     KiSStringView         m_canonicalName; /**< canonical name of the KiOM component, e.g., \c KiCModuleLoader */
     KiSStringView         m_displayName;   /**< display name of the KiOM component, e.g., \c ModuleLoader */
     KiSStringView         m_shortName;     /**< short name of the KiOM component, e.g., \c MDL */
@@ -682,7 +721,7 @@ KI_NATIVE typedef struct KiSComponentControlContext {
  * but the basic lifetime management functionality. All objects must directly or indirectly derive from this interface.
  * However, there is no hard requirement as to whether or not the component actually implements reference-counting.
  */
-KI_INTERFACE(KiIBase) KI_AUXILIARY KI_AUTOMATIC KI_BUILTIN {
+KI_INTERFACE(KiIBase) KI_AUXILIARY KI_BUILTIN {
     KI_METADATA(
         "uuid":    "af8192f6-d8fc-4522-947a-a143b6361c81",
         "name":    "KiIBase",
@@ -835,7 +874,8 @@ KI_INTERFACE(KiIComponentFactory) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
      */
     KiEErrorCode (KI_CALL *CreateComponent)(
         KiIComponentFactory *self,
-        KiSResolvedRequirement const *reqPtr,
+        KiSUuid const *cid,
+        KiSUuid const *iid,
         KiTVoid *extraParam,
         KiIBase **resPtr
     );
@@ -939,31 +979,5 @@ KI_INTERFACE(KiIErrorStringifier) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
      */
     KiSStringView const *(KI_CALL *QueryErrorDetails)(KiIErrorStringifier *self, KiEErrorCode errorCode);
 };
-
-
-/**
- */
-KI_NATIVE KI_API KiTVoid KI_CALL KiConnect(
-    KiTVoid *sndRef,
-    KiENotificationType notId,
-    KiTVoid *recvRef,
-    KiTChar const *cbId,
-    KiEConnectionType connTy
-);
-/**
- */
-KI_NATIVE KI_API KiTVoid KI_CALL KiDisconnect(
-    KiTVoid *sndRef,
-    KiENotificationType nId,
-    KiTVoid *recvRef,
-    KiTChar const *cbId
-);
-/**
- */
-KI_NATIVE KI_API KiTVoid KI_CALL KiNotify(KiTVoid *sndRef, KiENotificationType nTy, KiTVoid *dPtr, KiTSize dSizeBytes);
-
-/**
- */
-KI_NATIVE KI_API KiTVoid KI_CALL KiMoveToThread(KiTVoid *instRef, KiTThreadId newThreadId);
 
 

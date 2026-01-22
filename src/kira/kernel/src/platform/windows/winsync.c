@@ -10,14 +10,13 @@
 
 /**
  * \file  winsync.c
- * \brief implements the kernel-level synchronization primitives for the Kicrosoft Windows(R) platform
+ * \brief implements the kernel-level synchronization primitives for the Microsoft Windows(R) platform
  */
 #if (defined KI_PLATFORM_WINDOWS)
 
 
 /* Windows includes */
 #include <windows.h>
-#include <synchapi.h>
 
 /* Kira includes */
 #include <kira/def.h>
@@ -28,56 +27,52 @@
 #include <kira/kernel/int/sync.h>
 
 
-/**
+/*
+ * This code relies on the fact that an SRWLOCK is just a number the size of a pointer. This is unlikely to ever change,
+ * but better be safe than sorry.
  */
-struct KiSKrnlRWLock {
-    SRWLOCK m_rwLock; /**< internal rw-lock type */
-};
+KI_VERIFY_TYPE(SRWLOCK, KiTRWLockHandle);
 
-KiEErrorCode KI_CALL KiVirtual_KrnlRWLockCreate(KiSKrnlRWLock **resPtr) {
+
+KiEErrorCode KI_CALL KiVirtual_RWLockCreate(KiTRWLockHandle *resPtr) {
     KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
 
-    /* Allocate memory. */
-    *resPtr = malloc(sizeof **resPtr);
-    if (*resPtr == nullptr)
-        return KiErr_MemoryAllocation;
-
     /* Initialize state. */
-    InitializeSRWLock(&(*resPtr)->m_rwLock);
+    InitializeSRWLock((SRWLOCK *)resPtr);
 
     /* All good. */
     return KiErr_Ok;
 }
 
-KiTVoid KI_CALL KiVirtual_KrnlRWLockDestroy(KiSKrnlRWLock *rwLockPtr) {
+KiTVoid KI_CALL KiVirtual_RWLockDestroy(KiTRWLockHandle *rwLockPtr) {
     KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
 
-    /* Only free the struct as we don't need to explicitly destroy the SRWLOCK. */
-    free(rwLockPtr);
+    /* Stub because we don't need to explicitly destroy the SRWLOCK. */
+    return;
 }
 
-KiTVoid KI_CALL KiVirtual_KrnlRWLockAcquireRead(KiSKrnlRWLock *rwLockPtr) {
+KiTVoid KI_CALL KiVirtual_RWLockAcquireRead(KiTRWLockHandle *rwLockPtr) {
     KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
 
-    AcquireSRWLockShared(&rwLockPtr->m_rwLock);
+    AcquireSRWLockShared((SRWLOCK *)rwLockPtr);
 }
 
-KiTVoid KI_CALL KiVirtual_KrnlRWLockReleaseRead(KiSKrnlRWLock *rwLockPtr) {
+KiTVoid KI_CALL KiVirtual_RWLockReleaseRead(KiTRWLockHandle *rwLockPtr) {
     KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
 
-    ReleaseSRWLockShared(&rwLockPtr->m_rwLock);
+    ReleaseSRWLockShared((SRWLOCK *)rwLockPtr);
 }
 
-KiTVoid KI_CALL KiVirtual_KrnlRWLockAcquireWrite(KiSKrnlRWLock *rwLockPtr) {
+KiTVoid KI_CALL KiVirtual_RWLockAcquireWrite(KiTRWLockHandle *rwLockPtr) {
     KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
 
-    AcquireSRWLockExclusive(&rwLockPtr->m_rwLock);
+    AcquireSRWLockExclusive((SRWLOCK *)rwLockPtr);
 }
 
-KiTVoid KI_CALL KiVirtual_KrnlRWLockReleaseWrite(KiSKrnlRWLock *rwLockPtr) {
+KiTVoid KI_CALL KiVirtual_RWLockReleaseWrite(KiTRWLockHandle *rwLockPtr) {
     KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
 
-    ReleaseSRWLockExclusive(&rwLockPtr->m_rwLock);
+    ReleaseSRWLockExclusive((SRWLOCK *)rwLockPtr);
 }
 
 

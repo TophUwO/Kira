@@ -9,27 +9,36 @@
  *****************************************************************************************************************/
 
 /**
- * \file  evq.h
- * \brief defines the public API for the Kira event queue
- *
- * The Kira event queue is used by the OS to supply the application with system messages as well as by kernel
- * services to communicate with each other. It can also be used by the client to pass around any type of data in a
- * thread-safe way. It is recommended, if your application implements one, that a client-defined thread pool
- * (e.g., a job queue) uses this queue to transfer data.
+ * \file  winterm.c
+ * \brief implements functions for the debug termination service specific to the Windows(R) platform
  */
+#if (defined KI_PLATFORM_WINDOWS)
 
+
+/* Windows includes */
+#include <windows.h>
 
 /* Kira includes */
-#include <kira/kcm.h>
+#include <kira/kernel/dbg.h>
+
+#include <kira/kernel/int/platform.h>
 
 
-/** \cond */
-KI_NATIVE typedef struct KiSEvent KiSEvent;
+/** \cond INTERNAL */
+KiTVoid KI_CALL KiPlatform_Notify(KiTChar const *mBuf, KiSDebugTerminationContext const *tCtxt) {
+    WCHAR *tmpBuf = KiPlatform_CreateFromKiraEncoding(mBuf);
+
+    MessageBoxW(nullptr, tmpBuf, u"Debug Error", MB_OK);
+
+    KiPlatform_FreeString(tmpBuf);
+}
+
+KI_NORETURN KiTVoid KI_CALL KiPlatform_Exit(KiEErrorCode errCode) {
+    ExitProcess((UINT)errCode);
+}
 /** \endcond */
 
 
-/**
- */
-KI_NATIVE KI_API KiTVoid KI_CALL KiPostThreadEvent(KiTThreadId thrId, KiSEvent *eventPtr);
+#endif /* defined KI_PLATFORM_WINDOWS */
 
 

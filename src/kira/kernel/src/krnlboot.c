@@ -18,71 +18,71 @@
 /* Kira includes */
 #include <kira/kernel/reg.h>
 
-#include <kira/kernel/int/krnlboot.h>
 #include <kira/kernel/int/krnlmod.h>
 
 
 /** \cond INTERNAL */
-KI_KRNLMOD_IMPORT(Registry);
+/** \cond */
+//KI_KRNLMOD_IMPORT(Registry);
 KI_KRNLMOD_IMPORT(ErrorStringificationService);
 KI_KRNLMOD_IMPORT(SystemDirectoryControl);
 KI_KRNLMOD_IMPORT(PoolAllocator);
 KI_KRNLMOD_IMPORT(ProfileManagement);
 KI_KRNLMOD_IMPORT(ExceptionHandlingSystem);
 KI_KRNLMOD_IMPORT(DebugModuleControl);
+/** \endcond */
 
 
 /**
  */
-static KiSKrnlModuleInfo const *gl_c_SystemControlTable[] = {
+static KiSModuleInfo const *const gl_c_ModuleInitTable[] = {
     &KI_KRNLMOD_IDENTIFY(ErrorStringificationService),
     &KI_KRNLMOD_IDENTIFY(ExceptionHandlingSystem),
     &KI_KRNLMOD_IDENTIFY(DebugModuleControl),
     &KI_KRNLMOD_IDENTIFY(SystemDirectoryControl),
-    &KI_KRNLMOD_IDENTIFY(Registry),
-    &KI_KRNLMOD_IDENTIFY(PoolAllocator),
+    //&KI_KRNLMOD_IDENTIFY(Registry),
+    //&KI_KRNLMOD_IDENTIFY(PoolAllocator),
     &KI_KRNLMOD_IDENTIFY(ProfileManagement)
 };
 
+/**
+ */
 static KiTIndex gl_InitIndex = -1;
 /** \endcond */
 
 
-KiEErrorCode KI_CALL KiKrnlStartSystems(KiTVoid) {
-    /* Go through all the kernel-level systems and start them up. */
-    for (KiTIndex i = 0; i < (KiTIndex)KI_COUNTOF(gl_c_SystemControlTable); i++) {
-        auto const *const currSysEntry = gl_c_SystemControlTable[i];
+KiEErrorCode KI_CALL KiStartKernelModules(KiTVoid) {
+    for (KiTIndex i = 0; i < (KiTIndex)KI_COUNTOF(gl_c_ModuleInitTable); i++) {
+        KiSModuleInfo const *const currModEntry = gl_c_ModuleInitTable[i];
 
-        /* Initialize the system. */
-        KiEErrorCode errCode = (*currSysEntry->mp_fnInit)(nullptr);
+        /* Initialize the module. */
+        KiEErrorCode errCode = (*currModEntry->mp_fnInit)(nullptr);
         if (errCode != KiErr_Ok) {
+            /** \cond */
+            KI_NATIVE extern KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid);
+            /** \endcond */
+
             /*
-             * If this fails, we uninitialize all systems that have been initialized already. We do not need to
+             * If this fails, we uninitialize all modules that have been initialized already. We do not need to
              * uninitialize the system that failed because the initialization callback must guarantee to rollback
              * partial initialization in case of a failure.
              */
-            KiKrnlShutdownSystems();
+            KiShutdownKernelModules();
 
             return errCode;
         }
 
-        /*
-         * Increment the current initialization index. This is needed so that we know which systems we have already
-         * initialized and can be safely uninitialized if the initialization routine fails.
-         */
         ++gl_InitIndex;
     }
 
-    /* Initialized all kernel-level systems. All good. */
     return KiErr_Ok;
 }
 
-KiEErrorCode KI_CALL KiKrnlShutdownSystems(KiTVoid) {
-    /* Uninitalize all systems that have already been initialized. */
+KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid) {
+    /* Uninitalize all modules that have already been initialized. */
     for (KiTIndex i = gl_InitIndex; i >= 0; i--) {
-        auto const *const currSysEntry = gl_c_SystemControlTable[i];
+        KiSModuleInfo const *const currSysEntry = gl_c_ModuleInitTable[i];
 
-        /* Uninitialize the system. */
         (*currSysEntry->mp_fnUninit)(nullptr);
     }
 

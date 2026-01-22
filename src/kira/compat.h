@@ -31,7 +31,7 @@
     #define KI_STD_C11
 #else
     /* We need to at least have C11 support for Kira to work. */
-    #error Kira requires full C11 compiler support. Use, e.g., -std=c11 or change to a newer toolset. 
+    #error Kira requires full C11 compiler support. Use, e.g., -std=c11, or change to a newer toolset. 
 #endif
 
 /* What if some poor soul still uses a compiler incompliant with C23? Shame on them, obviously. */
@@ -45,10 +45,8 @@
 #endif
 
 /* We need to also fix static assertions if not done by the platform itself. */
-#if (!defined KI_STD_C23)
-    #if (!defined static_assert)
-        #define static_assert _Static_assert
-    #endif
+#if (defined KI_STD_C23)
+    #define _Static_assert static_assert
 #endif
 /** \endcond */
 

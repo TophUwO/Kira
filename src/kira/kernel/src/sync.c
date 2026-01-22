@@ -16,51 +16,38 @@
 
 
 /* Kira includes */
-#include <kira/error.h>
+#include <kira/dbg.h>
 
 #include <kira/kernel/reg.h>
 
 #include <kira/kernel/int/sync.h>
 #include <kira/kernel/int/platform.h>
 
-#include <kira/dbg/dbg.h>
 
-
-KiEErrorCode KI_CALL KiKrnlRWLockCreate(KiSKrnlRWLock **resPtr) {
+KiEErrorCode KI_CALL KiCreateRWLock(KiTRWLockHandle *resPtr) {
     KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
 
-    return KiVirtual_KrnlRWLockCreate(resPtr);
+    return KiVirtual_RWLockCreate(resPtr);
 }
 
-KiTVoid KI_CALL KiKrnlRWLockDestroy(KiSKrnlRWLock *rwLockPtr) {
-    if (rwLockPtr == nullptr)
-        return;
-
-    KiVirtual_KrnlRWLockDestroy(rwLockPtr);
+KiTVoid KI_CALL KiDestroyRWLock(KiTRWLockHandle *rwLockPtr) {
+    KiVirtual_RWLockDestroy(rwLockPtr);
 }
 
-KiTVoid KI_CALL KiKrnlRWLockAcquireRead(KiSKrnlRWLock *rwLockPtr) {
-    KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
-
-    KiVirtual_KrnlRWLockAcquireRead(rwLockPtr);
+KiTVoid KI_CALL KiAcquireRead(KiTRWLockHandle *rwLockPtr) {
+    KiVirtual_RWLockAcquireRead(rwLockPtr);
 }
 
-KiTVoid KI_CALL KiKrnlRWLockReleaseRead(KiSKrnlRWLock *rwLockPtr) {
-    KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
-
-    KiVirtual_KrnlRWLockReleaseRead(rwLockPtr);
+KiTVoid KI_CALL KiReleaseRead(KiTRWLockHandle *rwLockPtr) {
+    KiVirtual_RWLockReleaseRead(rwLockPtr);
 }
 
-KiTVoid KI_CALL KiKrnlRWLockAcquireWrite(KiSKrnlRWLock *rwLockPtr) {
-    KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
-
-    KiVirtual_KrnlRWLockAcquireWrite(rwLockPtr);
+KiTVoid KI_CALL KiAcquireWrite(KiTRWLockHandle *rwLockPtr) {
+    KiVirtual_RWLockAcquireWrite(rwLockPtr);
 }
 
-KiTVoid KI_CALL KiKrnlRWLockReleaseWrite(KiSKrnlRWLock *rwLockPtr) {
-    KI_ASSERT(rwLockPtr != nullptr, KiErr_InOutParameter);
-
-    KiVirtual_KrnlRWLockReleaseWrite(rwLockPtr);
+KiTVoid KI_CALL KiReleaseWrite(KiTRWLockHandle *rwLockPtr) {
+    KiVirtual_RWLockReleaseWrite(rwLockPtr);
 }
 
 

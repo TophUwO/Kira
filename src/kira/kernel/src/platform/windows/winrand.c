@@ -22,7 +22,8 @@
 /* Kira includes */
 #include <kira/def.h>
 
-/* Static library bindings. */
+
+/* static library bindings */
 #pragma comment (lib, "crypt32.lib")
 
 

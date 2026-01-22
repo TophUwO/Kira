@@ -9,15 +9,15 @@
  *****************************************************************************************************************/
 
 /**
- * \file  gparray.h
+ * \file  array.h
  * \brief defines the API for the kernel-level general-purpose array; can be used as a <em>slot vector</em> or a LIFO
  *        queue (stack)
  *
- * The general-purpose array can be used as a <em>LIFO queue</em> or a <em>slot vector</em>. A <em>slot vector</em> is a
- * data-structure that behaves like a normal vector (i.e., comparable to <tt>std::vector</tt>) except for the insertion
- * and erasure behavior. When a an element is inserted or erased, the subsequent elements are not shifted, leading to an
- * empty slot. If a new element is now inserted, it can be inserted into this empty slot, either by directly specifying
- * an index or by simply searching for the first free slot.
+ * The general-purpose array can be used as a <em>LIFO queue</em> (i.e., a <em>stack</em>) or a <em>slot vector</em>. A
+ * <em>slot vector</em> is a data-structure that behaves like a normal vector (i.e., comparable to <tt>std::vector</tt>)
+ * except for the insertion and erasure behavior. When a an element is inserted or erased, the subsequent elements are
+ * not shifted, leading to an empty slot. If a new element is now inserted, it can be inserted into this empty slot,
+ * either by directly specifying an index or by simply searching for the first free slot.
  */
 
 
@@ -31,35 +31,33 @@
 
 /**
  */
-KI_NATIVE typedef struct KiSKrnlGPArray KiSKrnlGPArray;
+KI_NATIVE typedef struct KiSArray KiSArray;
 
 
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlGPArrayCreate(KiSKrnlGPArray **resPtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiCreateArray(KiSArray **resPtr);
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiKrnlGPArrayDestroy(KiSKrnlGPArray *arrPtr);
+KI_NATIVE extern KiTVoid KI_CALL KiDestroyArray(KiSArray *arrPtr);
+
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlGPArrayInsert(
-    KiSKrnlGPArray *arrPtr,
-    KiTVoid const *ePtr,
-    KiTIndex *insIdx
-);
+KI_NATIVE extern KiEErrorCode KI_CALL KiInsertIntoArray(KiSArray *arrPtr, KiTVoid const *elemPtr, KiTIndex *insIdx);
 /**
  */
-KI_NATIVE extern KiTVoid *KI_CALL KiKrnlGPArrayErase(KiSKrnlGPArray *arrPtr, KiTIndex idx);
+KI_NATIVE extern KiTVoid *KI_CALL KiEraseFromArray(KiSArray *arrPtr, KiTIndex idx);
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiKrnlGPArrayPush(KiSKrnlGPArray *arrPtr, KiTVoid const *ePtr);
+KI_NATIVE extern KiEErrorCode KI_CALL KiPushToArray(KiSArray *arrPtr, KiTVoid const *elemPtr);
 /**
  */
-KI_NATIVE extern KiTVoid *KI_CALL KiKrnlGPArrayPop(KiSKrnlGPArray *arrPtr);
+KI_NATIVE extern KiTVoid *KI_CALL KiPopFromArray(KiSArray *arrPtr);
+
 /**
  */
-KI_NATIVE extern KiTVoid **KI_CALL KiKrnlGPArrayMap(
-    KiSKrnlGPArray const *arrPtr,
+KI_NATIVE extern KiTVoid **KI_CALL KiMapArray(
+    KiSArray const *arrPtr,
     KiTIndex offset,
     KiTSize count,
     KiTVoid ***beginPtr,
@@ -67,6 +65,6 @@ KI_NATIVE extern KiTVoid **KI_CALL KiKrnlGPArrayMap(
 );
 /**
  */
-KI_NATIVE extern KiTVoid *KI_CALL KiKrnlGPArrayAt(KiSKrnlGPArray const *arrPtr, KiTIndex slIndex);
+KI_NATIVE extern KiTVoid *KI_CALL KiGetArrayElementAt(KiSArray const *arrPtr, KiTIndex slIndex);
 
 

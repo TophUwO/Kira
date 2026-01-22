@@ -16,29 +16,25 @@
 
 
 /* Kira includes */
-#include <kira/error.h>
 #include <kira/util.h>
+#include <kira/dbg.h>
+#include <kira/test.h>
 
 #include <kira/kernel/rt.h>
-
-#include <kira/dbg/dbg.h>
-
-#include <kira/test/test.h>
 
 
 KiTInt8 KI_CALL KiKrnlCompareVersions(KiSVersion const *lVerPtr, KiSVersion const *rVerPtr) {
     KI_ASSERT(lVerPtr != nullptr, KiErr_InParameter);
     KI_ASSERT(rVerPtr != nullptr, KiErr_InParameter);
 
-    /* Of course, if the entities are literally the same, their version values are equal. */
+    /* Of course, if the objects are literally the same, their version values are equal. */
     if (lVerPtr == rVerPtr)
         return 0;
 
-    /* Pack them into one number that can be easily compared. */
-    auto lvNum = KI_PACK16x4(lVerPtr->m_verMajor, lVerPtr->m_verKinor, lVerPtr->m_verPatch, lVerPtr->m_verRevision);
-    auto rvNum = KI_PACK16x4(rVerPtr->m_verMajor, rVerPtr->m_verKinor, rVerPtr->m_verPatch, rVerPtr->m_verRevision);
+    KiTUint64 lvNum = KI_PACK16x4(lVerPtr->m_verMajor, lVerPtr->m_verMinor, lVerPtr->m_verPatch, lVerPtr->m_verRevision);
+    KiTUint64 rvNum = KI_PACK16x4(rVerPtr->m_verMajor, rVerPtr->m_verMinor, rVerPtr->m_verPatch, rVerPtr->m_verRevision);
     {
-        /* Now, simply compare the numbers. */
+        /* Only one of the expressions can be true so it's either 1 or -1 or 0 if both are false. */
         return (lvNum > rvNum) - (lvNum < rvNum);
     }
 
@@ -47,7 +43,7 @@ KiTInt8 KI_CALL KiKrnlCompareVersions(KiSVersion const *lVerPtr, KiSVersion cons
      * However, this should not actually ever be a problem unless KiSVersion is redefined to be larger or of greater
      * alignment than 64 bits.
      */
-    static_assert(
+    _Static_assert(
         sizeof(KiSVersion) == sizeof(KiTUint64) && _Alignof(KiSVersion) <= _Alignof(KiTUint64),
         "\"KiSVersion\" must fit into one \"KiTUint64\" and have an alignment requirement lower than or equal to that "
         "of \"KiTUint64\"."
@@ -78,7 +74,7 @@ KiTBool KI_CALL KiKrnlIsVersionInRange(
 /**
  */
 KI_COMPONENT(KiCVersionTester) KI_TEST {
-    KI_TEST_METADATA(
+    KI_METADATA(
         "uuid":      "d64268b4-8f30-4739-bb4f-c1713ce97d09",
         "version":   [1, 0, 0, 1],
         "brief":     "tests the version comparison routines",
@@ -94,15 +90,13 @@ KI_COMPONENT(KiCVersionTester) KI_TEST {
         }
     )
     KI_IMPLEMENTS(KiITestSuite) KI_PUBLIC;
-
-    KiTRefCount m_refCount; /**< reference count */
 };
 
 
 /**
  */
 KiTVoid KI_CALL KiCVersionTester_TestNullVersion(KiTVoid) KI_TEST {
-    KI_TEST_METADATA(
+    KI_METADATA(
         "uuid":    "eb1921c4-f258-4b9e-99a6-958fb07cc893",
         "version": [1, 0, 0, 1],
         "brief":   "tests whether invalid parameters are handled properly",
@@ -111,15 +105,15 @@ KiTVoid KI_CALL KiCVersionTester_TestNullVersion(KiTVoid) KI_TEST {
         }
     )
 
-    KI_TEST_EXPECT_FAIL(KiKrnlCompareVersions(nullptr, &KI_MAKE_VERSION(28, 02, 2001, 1708)));
-    KI_TEST_EXPECT_FAIL(KiKrnlCompareVersions(&KI_MAKE_VERSION(28, 02, 2001, 1708), nullptr));
-    KI_TEST_EXPECT_FAIL(KiKrnlCompareVersions(nullptr, nullptr));
+    KI_TEST_ASSERT_THROWS(KiKrnlCompareVersions(nullptr, &KI_MAKE_VERSION(28, 02, 2001, 1708)));
+    KI_TEST_ASSERT_THROWS(KiKrnlCompareVersions(&KI_MAKE_VERSION(28, 02, 2001, 1708), nullptr));
+    KI_TEST_ASSERT_THROWS(KiKrnlCompareVersions(nullptr, nullptr));
 }
 
 /**
  */
 KiTVoid KI_CALL KiCVersionTester_TestEqualVersions(KiTVoid) KI_TEST {
-    KI_TEST_METADATA(
+    KI_METADATA(
         "uuid":      "1713d1a2-ce13-4959-8687-28f6eee38ef2",
         "version":   [1, 0, 0, 1],
         "brief":     "tests whether the routines can detect equal version numbers properly",
@@ -140,7 +134,7 @@ KiTVoid KI_CALL KiCVersionTester_TestEqualVersions(KiTVoid) KI_TEST {
 /**
  */
 KiTVoid KI_CALL KiCVersionTester_TestDistinctVersions(KiTVoid) KI_TEST {
-    KI_TEST_METADATA(
+    KI_METADATA(
         "uuid":      "ee469482-7e12-4b67-b2c8-f58d6e0f1e7d",
         "version":   [1, 0, 0, 1],
         "brief":     "tests whether distinct versions are detected as such",
@@ -160,7 +154,7 @@ KiTVoid KI_CALL KiCVersionTester_TestDistinctVersions(KiTVoid) KI_TEST {
 /**
  */
 KiTVoid KI_CALL KiCVersionTester_TestVersionRanges(KiTVoid) KI_TEST {
-    KI_TEST_METADATA(
+    KI_METADATA(
         "uuid":      "daaa71ac-4cec-47b1-b343-20cd5e821fae",
         "version":   [1, 0, 0, 1],
         "brief":     "tests whether version ranges are working",

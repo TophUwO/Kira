@@ -22,19 +22,19 @@
 
 /**
  */
-KI_NATIVE KI_API KiTChar const *KI_CALL KiKrnlGetApplicationRootDirectory(KiTVoid);
+KI_NATIVE KI_API KiTChar const *KI_CALL KiGetApplicationRootDirectory(KiTVoid);
 /**
  */
-KI_NATIVE KI_API KiTChar const *KI_CALL KiKrnlGetWorkingDirectory(KiTVoid);
+KI_NATIVE KI_API KiTChar const *KI_CALL KiGetWorkingDirectory(KiTVoid);
 /**
  */
-KI_NATIVE KI_API KiEErrorCode KI_CALL KiKrnlSetWorkingDirectory(KiTChar const *newWorkingDir);
+KI_NATIVE KI_API KiEErrorCode KI_CALL KiSetWorkingDirectory(KiTChar const *newWorkingDir);
 /**
  */
-KI_NATIVE KI_API KiTVoid KI_CALL KiKrnlNativeSeparatorsToKiraSeparators(KiTChar *pathStr);
+KI_NATIVE KI_API KiTVoid KI_CALL KiNativeSeparatorsToKiraSeparators(KiTChar *pathStr);
 /**
  */
-KI_NATIVE KI_API KiTVoid KI_CALL KiKrnlSplitPath(
+KI_NATIVE KI_API KiTVoid KI_CALL KiSplitPath(
     KiTChar const *fullPathStr,
     KiSStringView *dirViewPtr, 
     KiSStringView *dirNameViewPtr,

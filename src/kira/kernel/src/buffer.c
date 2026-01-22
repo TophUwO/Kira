@@ -15,13 +15,16 @@
 
 
 /* stdlib includes */
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
 #include <string.h>
 
-/* Shakai includes */
+/* Kira includes */
 #include <kira/dbg.h>
 
-#include <kira/common/buffer.h>
+#include <kira/kernel/int/buffer.h>
 
 
 /** \cond INTERNAL */
@@ -37,12 +40,16 @@ struct KiSBuffer {
 /**
  */
 static KiTBool inline KI_CALL KiInternal_BufferNeedsResize(KiSBuffer const *bufPtr, KiTSize reqSpace) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InParameter);
+
     return (KiTSize)bufPtr->m_off + reqSpace > bufPtr->m_size;
 }
 
 /**
  */
 static KiTSize inline KI_CALL KiInternal_BufferComputeNewSize(KiSBuffer const *bufPtr, KiTSize reqSpace) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InParameter);
+
     if ((KiTSize)bufPtr->m_off + reqSpace <= bufPtr->m_size)
         return bufPtr->m_size;
 
@@ -51,10 +58,9 @@ static KiTSize inline KI_CALL KiInternal_BufferComputeNewSize(KiSBuffer const *b
 /** \endcond */
 
 
-KiSBuffer *KI_CALL KiCreateBuffer(KiTSize initSize) {
-    KiSBuffer *bufObj = calloc(1, sizeof *bufObj);
-    if (bufObj == nullptr)
-        return nullptr;
+KiEErrorCode KI_CALL KiCreateBuffer(KiTSize initSize, KiSBuffer **resPtr) {
+    if ((*resPtr = calloc(1, sizeof **resPtr)) == nullptr)
+        return KiErr_MemoryAllocation;
 
     /*
      * If initSize is not 0, we also allocate the internal buffer. Otherwise, we simply leave it at zero (guaranteed by
@@ -63,19 +69,21 @@ KiSBuffer *KI_CALL KiCreateBuffer(KiTSize initSize) {
     if (initSize > 0 && initSize <= (KiTSize)KI_OFFSET_MAX) {
         KiTVoid *intBuf = malloc(initSize);
         if (intBuf == nullptr) {
-            free(bufObj);
+            free(*resPtr);
 
-            return nullptr;
+            *resPtr = nullptr;
+            return KiErr_MemoryAllocation;
         }
 
-        *bufObj = (KiSBuffer){
+        **resPtr = (KiSBuffer){
             .m_size    = initSize,
             .m_off     = 0,
             .mp_buffer = intBuf
         };
     }
 
-    return bufObj;
+    /* All good. */
+    return KiErr_Ok;
 }
 
 KiTVoid KI_CALL KiDestroyBuffer(KiSBuffer *bufPtr) {
@@ -87,6 +95,11 @@ KiTVoid KI_CALL KiDestroyBuffer(KiSBuffer *bufPtr) {
 }
 
 KiEErrorCode KI_CALL KiReserveBuffer(KiSBuffer *bufPtr, KiTSize s) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
+
+    if (s == 0)
+        return KiErr_Ok;
+
     KiTSize const newSize = bufPtr->m_size + s;
     {
         KiTVoid *newBuf = realloc(bufPtr->mp_buffer, newSize);
@@ -101,15 +114,32 @@ KiEErrorCode KI_CALL KiReserveBuffer(KiSBuffer *bufPtr, KiTSize s) {
 }
 
 KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize bufSize) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
+    KI_ASSERT(srcBuf != nullptr, KiErr_InParameter);
+    KI_ASSERT(bufSize > 0,       KiErr_InParameter);
+
     KiTSize const writeCount = bufPtr->m_size / bufSize;
     {
         for (KiTSize i = 0; i < writeCount; i++)
             memcpy((KiTByte *)bufPtr->mp_buffer + i * bufSize, srcBuf, bufSize);
     }
+
+    /* Write the remainder. */
+    memcpy(
+        (KiTByte *)bufPtr->mp_buffer + (bufPtr->m_size - bufPtr->m_size % bufSize),
+        0,
+        bufPtr->m_size % bufSize
+    );
 }
 
 
 KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr, KiTSize s) {
+    KI_ASSERT(bufPtr != nullptr,  KiErr_InOutParameter);
+    KI_ASSERT(dataPtr != nullptr, KiErr_InParameter);
+
+    if (s == 0)
+        return KiErr_Ok;
+    
     if (KiInternal_BufferNeedsResize(bufPtr, s)) {
         /* Compute new buffer size. */
         KiTSize const newSize = KiInternal_BufferComputeNewSize(bufPtr, s);
@@ -133,15 +163,60 @@ KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr
     return KiErr_Ok;
 }
 
+KiEErrorCode KI_CALL KiWriteStringToBuffer(KiSBuffer *bufPtr, KiTChar const *fmtStr, ...) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
+    KI_ASSERT(fmtStr != nullptr, KiErr_InParameter);
+
+    /* Make space for the string if needed. */
+    KiTInt32 reqSize = 0;
+
+    va_list vlArgs;
+    va_start(vlArgs, fmtStr);
+    {
+        reqSize = vsnprintf(nullptr, 0, fmtStr, vlArgs);
+        if (reqSize < 0) {
+            va_end(vlArgs);
+            
+            return KiErr_EncodingError;
+        }
+        ++reqSize;
+
+        KiEErrorCode errCode = KiReserveBuffer(bufPtr, KI_MAX(0, bufPtr->m_off + reqSize - (KiTOffset)bufPtr->m_size));
+        if (errCode != KiErr_Ok) {
+            va_end(vlArgs);
+
+            return errCode;
+        }
+    }
+    va_end(vlArgs);
+
+    /* Write the string. We will have enough space in the buffer. */
+    va_start(vlArgs, fmtStr);
+    {
+        vsnprintf((KiTChar *)bufPtr->mp_buffer + bufPtr->m_off, reqSize, fmtStr, vlArgs);
+
+        /* Write NUL-terminator and update offset. */
+        ((KiTChar *)bufPtr->mp_buffer)[bufPtr->m_off + reqSize - 1] = '\0';
+        KiSeekBufferPosition(bufPtr, bufPtr->m_off + reqSize);
+    }
+    va_end(vlArgs);
+
+    /* All good. */
+    return KiErr_Ok;
+}
+
 KiEErrorCode KI_CALL KiReadBufferData(KiSBuffer const *bufPtr, KiTVoid *dstBuf, KiTOffset off, KiTSize s) {
-    if (off + s > bufPtr->m_size)
-        return KiErr_RangeError;
+    KI_ASSERT(bufPtr != nullptr,         KiErr_InParameter);
+    KI_ASSERT(dstBuf != nullptr,         KiErr_OutParameter);
+    KI_ASSERT(off + s <= bufPtr->m_size, KiErr_RangeError);
 
     memcpy(dstBuf, (KiTByte const *)bufPtr->mp_buffer + off, s);
     return KiErr_Ok;
 }
 
 KiTOffset KI_CALL KiSeekBufferPosition(KiSBuffer *bufPtr, KiTOffset off) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
+
     KiTOffset const oldOff = bufPtr->m_off;
     {
         bufPtr->m_off = KI_MAX(off == KI_SEEK_END ? (KiTOffset)bufPtr->m_size : off, 0);
@@ -152,16 +227,20 @@ KiTOffset KI_CALL KiSeekBufferPosition(KiSBuffer *bufPtr, KiTOffset off) {
 
 
 KiTOffset KI_CALL KiGetBufferPosition(KiSBuffer const *bufPtr) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InParameter);
+
     return bufPtr->m_off;
 }
 
 KiTSize KI_CALL KiGetBufferSize(KiSBuffer const *bufPtr) {
+    KI_ASSERT(bufPtr != nullptr, KiErr_InParameter);
+
     return bufPtr->m_size;
 }
 
 KiTVoid const *KI_CALL KiGetBufferPointer(KiSBuffer const *bufPtr, KiTOffset off) {
-    if (bufPtr->m_size <= off)
-        return nullptr;
+    KI_ASSERT(bufPtr != nullptr,    KiErr_InParameter);
+    KI_ASSERT(bufPtr->m_size > off, KiErr_InParameter);
 
     return (KiTByte *)bufPtr->mp_buffer + off;
 }

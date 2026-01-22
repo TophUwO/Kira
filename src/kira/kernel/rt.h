@@ -23,25 +23,10 @@
 #include <kira/kernel/json.h>
 
 
-/**
- */
-KI_NATIVE typedef enum KiERuntimeMode : KiTUint32 {
-    KiRtMode_None = 0,
+/** \cond */
+KI_NATIVE typedef struct KiSReturnState KiSReturnState;
+/** \endcond */
 
-    KiRtMode_Wait = 1,
-    KiRtMode_Poll = 2,
-
-    __KiRtMode_Count__
-} KiERuntimeMode;
-
-
-/**
- */
-KI_NATIVE typedef struct KiSReturnState {
-    KiTSize      m_structSize;
-    KiEErrorCode m_errCode;
-    KiTBool      m_wantsRestart;
-} KiSReturnState;
 
 /**
  */
@@ -73,10 +58,13 @@ KI_NATIVE KI_API KiTVoid KI_CALL KiRestart(KiEErrorCode errCode);
 
 /**
  */
+KI_NATIVE KI_API KiSReturnState *KI_CALL KiGetReturnState(KiTVoid);
+/**
+ */
 KI_NATIVE KI_API KiSRuntimeSpecification const *KI_CALL KiGetRuntimeSpecification(KiTVoid);
 /**
  */
-KI_NATIVE KI_API KiSJson const *KI_CALL KiGetRuntimeConfig(KiTVoid);
+KI_NATIVE KI_API KiSJson const *KI_CALL KiGetRuntimeConfiuration(KiTVoid);
 
 /**
  */

@@ -34,7 +34,7 @@ KI_NATIVE typedef KiIStaticResourceLocator *(KI_CALL *KiFQueryStaticResourceLoca
  */
 KI_NATIVE typedef struct KiSStaticResourceMetadata {
     KiTSize       m_structSize;
-    KiTUuid       m_uuid;
+    KiSUuid       m_uuid;
     KiSStringView m_path;
     KiSStringView m_prefix;
     KiSStringView m_name;
@@ -55,36 +55,26 @@ KI_NATIVE typedef struct KiSStaticResourceMetadata {
 /**
  */
 KI_INTERFACE(KiIStaticResource) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
-    /**
-     */
-    KiEErrorCode (KI_CALL *QueryInterface)(KiIStaticResource *self, KiTChar const *iId, KiTVoid **resPtr);
-    /**
-     */
-    KiTInt32 (KI_CALL *Acquire)(KiIStaticResource *self);
-    /**
-     */
-    KiTInt32 (KI_CALL *Release)(KiIStaticResource *self);
+    KI_METADATA(
+
+    )
+    KI_BASE(KiIStaticResource)
 
     /**
      */
     KiSStaticResourceMetadata const *(KI_CALL *GetMetadata)(KiIStaticResource *self);
     /**
      */
-    KiTVoid const *(KI_CALL *GetPointer)(KiIStaticResource *self);
+    KiTByte const *(KI_CALL *GetPointer)(KiIStaticResource *self);
 };
 
 /**
  */
 KI_INTERFACE(KiIStaticResourceLocator) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
-    /**
-     */
-    KiEErrorCode (KI_CALL *QueryInterface)(KiIStaticResourceLocator *self, KiTChar const *iId, KiTVoid **resPtr);
-    /**
-     */
-    KiTInt32 (KI_CALL *Acquire)(KiIStaticResourceLocator *self);
-    /**
-     */
-    KiTInt32 (KI_CALL *Release)(KiIStaticResourceLocator *self);
+    KI_METADATA(
+        
+    )
+    KI_BASE(KiIStaticResourceLocator)
 
     /**
      */

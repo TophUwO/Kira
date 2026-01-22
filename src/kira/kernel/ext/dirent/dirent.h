@@ -1,5 +1,5 @@
 /*
- * Dirent interface for Kicrosoft Visual Studio
+ * Dirent interface for Microsoft Visual Studio
  *
  * Copyright (C) 1998-2019 Toni Ronkko
  * This file is part of dirent.  Dirent may be freely distributed
