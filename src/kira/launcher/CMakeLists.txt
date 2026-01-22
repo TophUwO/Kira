@@ -8,8 +8,7 @@
 # *     https://www.apache.org/licenses/LICENSE-2.0                                                                  *
 # ********************************************************************************************************************
 
-
-# Enumerate all common sources. 
+ 
 list(APPEND KI_SOURCES "src/main.c")
 
 # Set the target.

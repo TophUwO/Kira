@@ -178,7 +178,7 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
          * \brief represents the default debug options in case no overriding debug options were passed by the launcher
          *        component
          */
-        static KiSDebugOptions constexpr gl_c_DefDbgOptions = {
+        static KiSDebugOptions const gl_c_DefDbgOptions = {
             .m_structSize       = sizeof gl_c_DefDbgOptions,
             .m_useDetRng        = KI_TRUE,
             .m_isAssertsEnabled = KI_TRUE
@@ -257,7 +257,6 @@ KiTVoid KI_CALL KiQuit(KiEErrorCode errCode) {
     *krnlRetState = (KiSReturnState){
         .m_structSize   = sizeof *krnlRetState,
         .m_errCode      = errCode,
-        .m_isRunning    = KI_FALSE,
         .m_wantsRestart = KI_FALSE
     };
 }
@@ -268,7 +267,6 @@ KiTVoid KI_CALL KiRestart(KiEErrorCode errCode) {
     *krnlRetState = (KiSReturnState){
         .m_structSize   = sizeof *krnlRetState,
         .m_errCode      = errCode,
-        .m_isRunning    = KI_FALSE,
         .m_wantsRestart = KI_TRUE
     };
 }

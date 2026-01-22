@@ -19,13 +19,9 @@
 /* Kira includes */
 #include <kira/kcm.h>
 #include <kira/dbg.h>
+#include <kira/app.h>
 
 #include <kira/kernel/json.h>
-
-
-/** \cond */
-KI_NATIVE typedef struct KiSReturnState KiSReturnState;
-/** \endcond */
 
 
 /**
