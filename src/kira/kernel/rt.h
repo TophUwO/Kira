@@ -36,7 +36,6 @@ KI_NATIVE typedef struct KiSRuntimeSpecification {
     char            **mpp_argv;
     char            **mpp_envp;
     KiSDebugOptions  *mp_dbgOpts;
-    KiERuntimeMode    m_rtMode;
 } KiSRuntimeSpecification;
 
 
