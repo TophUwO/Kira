@@ -52,49 +52,15 @@ static KiSKernelState gl_KernelState = { 0 };
 
 /**
  */
-static KiSString *KI_CALL KiInternal_GetApplicationRootDirectoryAsString(KiTVoid) { 
-    KiSString *resPtr = nullptr;
-    {
-        /* Create string. */
-        KiEErrorCode errCode = KiCreateString(nullptr, &resPtr);
-        if (errCode != KiErr_Ok)
-            return nullptr;
-
-        /* Get runtime directory. */
-        KiTChar const *rootDir = KiPlatform_GetApplicationRootDirectory();
-        {
-            if (rootDir == nullptr) {
-                KiDestroyString(resPtr);
-
-                return nullptr;
-            }
-
-            /* Copy into mutable string. */
-            if ((errCode = KiAssignToString(resPtr, rootDir)) != KiErr_Ok) {
-                KiDestroyString(resPtr);
-
-                KiPlatform_FreeString((KiTChar *)rootDir);
-                return nullptr;
-            }
-        }
-        KiPlatform_FreeString((KiTChar *)rootDir);
-    }
-
-    /* All good. */
-    return resPtr;
-}
-
-/**
- */
 static KiEErrorCode KI_CALL KiInternal_KrnlLoadRtConfig(KiTVoid) {
-    KiSString *configFilePath = KiInternal_GetApplicationRootDirectoryAsString();
+    KiSString *configFilePath;
     {
-        if (configFilePath == nullptr)
-            return KiErr_GetSystemPath;
+        KiEErrorCode errCode = KiCreateStringApplicationRootDir(&configFilePath);
+        if (errCode != KiErr_Ok)
+            return errCode;
 
         /* Push file name. */
-        KiEErrorCode errCode = KiPushPathComponent(configFilePath, '/', "launch.json");
-        if (errCode != KiErr_Ok) {
+        if ((errCode = KiPushPathComponent(configFilePath, '/', "conf/launch.json")) != KiErr_Ok) {
             KiDestroyString(configFilePath);
 
             return errCode;
@@ -124,14 +90,14 @@ static KiSString *KI_CALL KiInternal_KrnlPickProfile(KiTVoid) {
         return nullptr;
 
     /* (1) Get the root directory for profile picking. */
-    KiSString *profileDir = KiInternal_GetApplicationRootDirectoryAsString();
+    KiSString *profileDir;
     {
-        if (profileDir != nullptr)
+        KiEErrorCode errCode = KiCreateStringApplicationRootDir(&profileDir);
+        if (errCode != KiErr_Ok)
             return nullptr;
 
         /* Append relative profile path. */
-        KiEErrorCode errCode = KiPushPathComponent(profileDir, '/', attrQuery[0].mp_strValue);
-        if (errCode != KiErr_Ok) {
+        if ((errCode = KiPushPathComponent(profileDir, '/', attrQuery[0].mp_strValue)) != KiErr_Ok) {
             KiDestroyString(profileDir);
 
             return nullptr;

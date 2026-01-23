@@ -32,6 +32,9 @@ KI_NATIVE typedef struct KiSString KiSString;
 KI_NATIVE extern KiEErrorCode KI_CALL KiCreateString(KiTChar const *srcStr, KiSString **resPtr);
 /**
  */
+KI_NATIVE extern KiEErrorCode KI_CALL KiCreateStringApplicationRootDir(KiSString **resPtr);
+/**
+ */
 KI_NATIVE extern KiEErrorCode KI_CALL KiDuplicateString(KiSString const *srcPtr, KiSString **resPtr);
 /**
  */

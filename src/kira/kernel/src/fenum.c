@@ -30,7 +30,6 @@
 #include <kira/dbg.h>
 
 #include <kira/kernel/reg.h>
-#include <kira/kernel/dir.h>
 
 #include <kira/kernel/int/fenum.h>
 #include <kira/kernel/int/string.h>
@@ -174,7 +173,7 @@ static KiSFileEnumerationResult *KI_CALL KiInternal_FileEnumerationContextCreate
             .m_fileName      = KI_MAKE_STRING_VIEW(""),
             .m_fileExt       = KI_MAKE_STRING_VIEW("")
         };
-        KiSplitPath(fullCPath, &newRes->m_dirPath, &newRes->m_fileDirName, &newRes->m_fileName, &newRes->m_fileExt);
+        //KiSplitPath(fullCPath, &newRes->m_dirPath, &newRes->m_fileDirName, &newRes->m_fileName, &newRes->m_fileExt);
     }
 
     /* All good. */

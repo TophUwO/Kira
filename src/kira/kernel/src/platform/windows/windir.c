@@ -26,6 +26,12 @@
 #include <kira/kernel/int/platform.h>
 
 
+KiTChar *KI_CALL KiPlatform_AllocateString(KiTSize sizeInBytes) {
+    KI_ASSERT(sizeInBytes > 0, KiErr_InParameter);
+
+    return (KiTChar *)malloc(sizeInBytes);
+}
+
 KiTVoid KI_CALL KiPlatform_FreeString(KiTVoid *strPtr) {
     if (strPtr == nullptr)
         return;
@@ -47,7 +53,7 @@ KiTChar *KI_CALL KiPlatform_GetCurrentWorkingDirectory(KiTVoid) {
         GetCurrentDirectoryW(reqSize, tmpBuf);
 
         /* Convert to native Kira encoding. */
-        resPtr = KiPlatform_CreateFromNativeEncoding(tmpBuf);
+        resPtr = KiPlatform_CreateFromNativeEncoding(tmpBuf, KI_DONTCARE(KiTSize));
         free(tmpBuf);
     }
 
@@ -60,7 +66,7 @@ KiEErrorCode KI_CALL KiPlatform_SetCurrentWorkingDirectory(KiTChar const *newWdP
 
     /* Convert to native encoding. */
     BOOL res;
-    KiTVoid const *ntEncPath = KiPlatform_CreateFromKiraEncoding(newWdPath);
+    KiTVoid const *ntEncPath = KiPlatform_CreateFromKiraEncoding(newWdPath, KI_DONTCARE(KiTSize));
     {
         if (ntEncPath == nullptr)
             return KiErr_EncodingError;
@@ -76,32 +82,40 @@ KiEErrorCode KI_CALL KiPlatform_SetCurrentWorkingDirectory(KiTChar const *newWdP
     ;
 }
 
-KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTVoid) {
+KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize *sizePtr, KiTSize *lenPtr) {
+    KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
+    KI_ASSERT(lenPtr != nullptr,  KiErr_OutParameter);
+
+    SetLastError(0);
     /*
      * Get the required size for the file name. This is a horrifyingly shitty trick to get a dynamically sized buffer
      * with the module file name on Windows ... the GetModuleFileName*()-API is just such bullshit.
      */
-    DWORD  reqSize = MAX_PATH;
-    WCHAR *pathBuf = nullptr;
+    DWORD  reqSize   = MAX_PATH;
+    DWORD  writtenCh = 0;
+    DWORD  errCode   = 0;
+    WCHAR *pathBuf   = nullptr;
     do {
         /* Allocate a buffer. */
-        pathBuf = malloc(sizeof *pathBuf * reqSize);
+        pathBuf = (WCHAR *)KiPlatform_AllocateString(sizeof *pathBuf * reqSize);
         if (pathBuf == nullptr)
             return nullptr;
 
         /* Check if the buffer is wide enough for the entire path to fit in there. */
-        DWORD const writtenCh = GetModuleFileNameW(nullptr, pathBuf, reqSize);
-        if (writtenCh == 0) {
-            free(pathBuf);
+        writtenCh = GetModuleFileNameW(nullptr, pathBuf, reqSize);
+        if (writtenCh == 0 || (errCode = GetLastError()) != 0 && errCode != ERROR_INSUFFICIENT_BUFFER) {
+            KiPlatform_FreeString(pathBuf);
 
+            *sizePtr = 0;
+            *lenPtr  = 0;
             return nullptr;
-        } else if (writtenCh < reqSize + 1) {
+        } else if (errCode == 0) {
             /* Great. It fits. */
             break;
         }
 
         /* Does not fit. Widen the buffer. */
-        free(pathBuf);
+        KiPlatform_FreeString(pathBuf);
         reqSize <<= 1;
     } while (KI_TRUE);
 
@@ -109,21 +123,26 @@ KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTVoid) {
      * Awesome. After all this fuckery up top, we can convert the full path to a UTF-8 string. After this, the original
      * string is not needed any longer.
      */
-    KiTChar *u8FullPath = KiPlatform_CreateFromNativeEncoding(pathBuf);
+    KiTChar *lastSep    = nullptr;
+    KiTChar *u8FullPath = KiPlatform_CreateFromNativeEncoding(pathBuf, lenPtr);
     {
         KiPlatform_FreeString(pathBuf);
-        if (u8FullPath == nullptr)
+        if (u8FullPath == nullptr) {
+            *sizePtr = 0;
+            *lenPtr  = 0;
+
             return nullptr;
+        }
 
         /* Convert to Kira ('/') separators. */
         KiPlatform_CanonicalizeSeparators(u8FullPath);
         /* Erase the last path component so that we are left with the runtime path. */
-        KiTChar *lastSep = strrchr(u8FullPath, '/');
-        if (lastSep != nullptr)
-            memset(lastSep, 0, strlen(lastSep) * sizeof *lastSep);
+        if ((lastSep = strrchr(u8FullPath, '/')) != nullptr)
+            *lastSep = '\0';
     }
 
-    /* All good. */
+    *sizePtr = *lenPtr;
+    *lenPtr  = (KiTOffset)lastSep - (KiTOffset)u8FullPath; /* We want length in bytes without NUL-terminator. */
     return u8FullPath;
 }
 

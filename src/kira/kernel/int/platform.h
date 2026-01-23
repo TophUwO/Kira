@@ -28,14 +28,17 @@
 
 /**
  */
+KI_NATIVE extern KiTChar *KI_CALL KiPlatform_AllocateString(KiTSize sizeInBytes) KI_VIRTUAL;
+/**
+ */
 KI_NATIVE extern KiTVoid KI_CALL KiPlatform_FreeString(KiTVoid *strPtr) KI_VIRTUAL;
 
 /**
  */
-KI_NATIVE extern KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr) KI_VIRTUAL;
+KI_NATIVE extern KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSize *sizePtr) KI_VIRTUAL;
 /**
  */
-KI_NATIVE extern KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr) KI_VIRTUAL;
+KI_NATIVE extern KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTSize *sizePtr) KI_VIRTUAL;
 
 /**
  */
@@ -45,7 +48,7 @@ KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetCurrentWorkingDirectory(KiTVoid)
 KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_SetCurrentWorkingDirectory(KiTChar const *newWdPath) KI_VIRTUAL;
 /**
  */
-KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTVoid) KI_VIRTUAL;
+KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize *sizePtr, KiTSize *lenPtr) KI_VIRTUAL;
 /**
  */
 KI_NATIVE extern KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) KI_VIRTUAL;

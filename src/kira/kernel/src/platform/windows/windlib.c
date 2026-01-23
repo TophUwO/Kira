@@ -29,7 +29,7 @@
 /** \cond INTERNAL */
 KiTDynLibHandle KI_CALL KiPlatform_LoadLibrary(KiTChar const *libPath) {
     /* Convert to UTF-16 because that's what Windows likes. */
-    WCHAR *u16Path = KiPlatform_CreateFromKiraEncoding(libPath);
+    WCHAR *u16Path = KiPlatform_CreateFromKiraEncoding(libPath, KI_DONTCARE(KiTSize));
     if (u16Path == nullptr)
         return nullptr;
 
@@ -37,7 +37,7 @@ KiTDynLibHandle KI_CALL KiPlatform_LoadLibrary(KiTChar const *libPath) {
     KiTDynLibHandle res = (KiTDynLibHandle)LoadLibraryW((LPCWSTR)u16Path);
 
     /* Clean up. */
-    KiPlatform_FreeString(u16Path);
+    free(u16Path);
     return res;
 }
 

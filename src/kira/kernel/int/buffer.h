@@ -36,6 +36,9 @@ KI_NATIVE typedef struct KiSBuffer KiSBuffer;
 KI_NATIVE extern KiEErrorCode KI_CALL KiCreateBuffer(KiTSize initSize, KiSBuffer **resPtr);
 /**
  */
+KI_NATIVE extern KiEErrorCode KI_CALL KiCreateBufferFromExisting(KiTSize sizeInBytes, KiTVoid *bufPtr, KiSBuffer **resPtr);
+/**
+ */
 KI_NATIVE extern KiTVoid KI_CALL KiDestroyBuffer(KiSBuffer *bufPtr);
 /**
  */
@@ -43,6 +46,12 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiReserveBuffer(KiSBuffer *bufPtr, KiTSize
 /**
  */
 KI_NATIVE extern KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize bufSize);
+/**
+ */
+KI_NATIVE extern KiTVoid KI_CALL KiAttachBuffer(KiSBuffer *bufPtr, KiTVoid const *rawBufPtr, KiTSize sizeInBytes, KiTOffset offset);
+/**
+ */
+KI_NATIVE extern KiTVoid *KI_CALL KiDetachBuffer(KiSBuffer *bufPtr, KiTSize *sizePtr, KiTOffset *offPtr);
 
 /**
  */

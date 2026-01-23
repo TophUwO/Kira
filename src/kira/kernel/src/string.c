@@ -15,6 +15,8 @@
 
 
 /* stdlib includes */
+#include <stdlib.h>
+
 #include <string.h>
 
 /* Kira includes */
@@ -22,10 +24,13 @@
 
 #include <kira/kernel/int/string.h>
 #include <kira/kernel/int/buffer.h>
+#include <kira/kernel/int/platform.h>
 
 
 KiEErrorCode KI_CALL KiCreateString(KiTChar const *srcStr, KiSString **resPtr) {
-    /* Create a new buffer holding the string. */
+    KI_ASSERT(srcStr != nullptr, KiErr_InParameter);
+    KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
+
     KiEErrorCode errCode = KiCreateBuffer(0, (KiSBuffer **)resPtr);
     {
         if (errCode != KiErr_Ok)
@@ -44,14 +49,40 @@ KiEErrorCode KI_CALL KiCreateString(KiTChar const *srcStr, KiSString **resPtr) {
         }
     }
 
-    /* All good. */
+    return KiErr_Ok;
+}
+
+KiEErrorCode KI_CALL KiCreateStringApplicationRootDir(KiSString **resPtr) {
+    KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
+
+    KiTSize size, len;
+    KiTChar const *rootDir = KiPlatform_GetApplicationRootDirectory(&size, &len);
+    if (rootDir == nullptr) {
+        *resPtr = nullptr;
+
+        return KiErr_GetSystemPath;
+    }
+
+    KiEErrorCode errCode = KiCreateBuffer(0, (KiSBuffer **)resPtr);
+    {
+        if (errCode != KiErr_Ok) {
+            free((KiTVoid *)rootDir);
+
+            *resPtr = nullptr;
+            return errCode;
+        }
+
+        KiAttachBuffer((KiSBuffer *)*resPtr, rootDir, size, len + 1);
+    }
+
     return KiErr_Ok;
 }
 
 KiEErrorCode KI_CALL KiDuplicateString(KiSString const *srcPtr, KiSString **resPtr) {
     KI_ASSERT(srcPtr != nullptr, KiErr_InParameter);
+    KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
 
-    KiSBuffer *srcAsBuf  = (KiSBuffer *)srcPtr;
+    KiSBuffer *srcAsBuf = (KiSBuffer *)srcPtr;
     {
         KiEErrorCode errCode = KiCreateBuffer(KiGetBufferSize((KiSBuffer *)srcPtr), (KiSBuffer **)resPtr);
         if (errCode != KiErr_Ok)
@@ -66,7 +97,6 @@ KiEErrorCode KI_CALL KiDuplicateString(KiSString const *srcPtr, KiSString **resP
         }
     }
 
-    /* All good. */
     return KiErr_Ok;
 }
 
@@ -115,7 +145,6 @@ KiEErrorCode KI_CALL KiAssignToString(KiSString *strPtr, KiTChar const *srcPtr) 
         }
     }
 
-    /* All good. */
     return KiErr_Ok;
 }
 
@@ -133,7 +162,7 @@ KiEErrorCode KI_CALL KiPushPathComponent(KiSString *strPtr, KiTChar pathSep, KiT
     KiTOffset const oldOff = KiGetBufferPosition((KiSBuffer const *)strPtr);
     {
         KiEErrorCode errCode = KiErr_Ok;
-        
+
         /* Write separator. */
         KiSeekBufferPosition((KiSBuffer *)strPtr, KI_MAX(0, oldOff - 1));
         {
@@ -160,7 +189,6 @@ KiEErrorCode KI_CALL KiPushPathComponent(KiSString *strPtr, KiTChar pathSep, KiT
         }
     }
 
-    /* All good. */
     return KiErr_Ok;
 }
 

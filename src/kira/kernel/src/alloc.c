@@ -125,7 +125,6 @@ static KiEErrorCode KI_CALL KiInternal_KrnlCreatePoolAllocation(
         }
     }
 
-    /* All good. */
     *resPtr = (KiSPoolAllocation){ sizeInBytes / systemPageSize, initCommSize, rawPtr, poolStart };
     return KiErr_Ok;
 }
@@ -166,7 +165,6 @@ static KiEErrorCode KI_CALL KiInternal_KrnlCommitPoolPages(
     if (pgCnt < minPgCnt)
         return KiErr_MemoryAllocation;
 
-    /* Get the system's page size. */
     KiTSize const systemPageSize = KiPlatform_VirtualGetPageSize();
     /* Now, simply commit them. */
     KiTVoid *stPtr = (KiTByte *)poolAllocPtr->mp_alignedBase + pgOff * systemPageSize;
@@ -179,7 +177,6 @@ static KiEErrorCode KI_CALL KiInternal_KrnlCommitPoolPages(
         poolAllocPtr->m_nPgComm += pgCnt;
     }
 
-    /* All good. */
     return KiErr_Ok;
 }
 
@@ -233,7 +230,6 @@ static KiTSize inline KI_CALL KiInternal_KrnlCalcNumberOfPagesForBlock(
     KI_ASSERT(poolPtr != nullptr,       KiErr_InParameter);
     KI_ASSERT(blockStartPtr != nullptr, KiErr_InParameter);
 
-    /* Calculate start and end page for block. */
     KiTOffset const blStartOff = ((KiTIntptr)blockStartPtr + 0           - (KiTIntptr)poolPtr + (1 << 12)) >> 12;
     KiTOffset const blEndOff   = ((KiTIntptr)blockStartPtr + totalBlSize - (KiTIntptr)poolPtr + (1 << 12)) >> 12;
 
@@ -256,10 +252,8 @@ static KiTVoid inline *KI_CALL KiInternal_KrnlCalcAddressOfNextBlock(KiSMemoryPo
 static KiTVoid KI_CALL KiInternal_KrnlAddAllToPoolFreeList(KiSMemoryPool *poolPtr, KiTVoid *firstBlockAddr) {
     KI_ASSERT(poolPtr != nullptr, KiErr_InOutParameter);
 
-    /* Calculate address of first slot. */
     KiTVoid const *firstSlot = firstBlockAddr;
     {
-        /* Get total block size. */
         KiTSize const totalBlSize = KiInternal_KrnlCalcTotalBlockSize(poolPtr->m_blockSize, poolPtr->m_blockAlign);
 
         for (KiTVoid const **slAddr = (KiTVoid const **)firstSlot; KI_TRUE; slAddr = *(KiTVoid **)slAddr) {
@@ -332,7 +326,6 @@ static KiEErrorCode KI_CALL KiInternal_KrnlCreatePool(
         KiInternal_KrnlCalcAddressOfFirstBlock((KiSMemoryPool *)poolAlloc.mp_alignedBase)
     );
 
-    /* All good. */
     *resPtr = (KiTVoid *)poolAlloc.mp_alignedBase;
     return KiErr_Ok;
 }
@@ -362,7 +355,6 @@ lbl_ALLOCVIAFREELIST:
         poolPtr->mp_freeList = *(KiTVoid **)poolPtr->mp_freeList;
         ++poolPtr->m_blockCount;
 
-        /* All good. */
         return KiErr_Ok;
     }
     KiEErrorCode errCode = KiErr_Ok;
@@ -444,7 +436,6 @@ static KiEErrorCode KI_CALL KiInternal_KrnlCreateAndAddPool(
     }
     *(KiTVoid **)blockPtr = *resPtr;
 
-    /* All good. */
     return KiErr_Ok;
 }
 
@@ -473,7 +464,6 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(PoolAllocator)(KiTVoid *extraParam
 
     return errCode;
 
-    /* Some static asserts for the entire allocator. */
     _Static_assert(KI_ISPOWEROFTWO(KI_KRNLALLOC_POOLSIZE), "Pool-allocator per-pool size must be a power of two.");
     _Static_assert(sizeof(KiSMemoryPool) <= (1 << 12),     "Pool-allocator per-pool metadata must fit into one page.");
 }
@@ -505,7 +495,6 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(PoolAllocator)(KiTVoid *extraPar
     /* Now, delete the "root". */
     KiInternal_KrnlDestroyPool(gl_PoolAllocator.mp_poolArray);
 
-    /* All good. */
     KiDestroyRWLock(&gl_PoolAllocator.m_rwLock);
     return KiErr_Ok;
 }

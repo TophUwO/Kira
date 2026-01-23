@@ -82,7 +82,22 @@ KiEErrorCode KI_CALL KiCreateBuffer(KiTSize initSize, KiSBuffer **resPtr) {
         };
     }
 
-    /* All good. */
+    return KiErr_Ok;
+}
+
+KiEErrorCode KI_CALL KiCreateBufferFromExisting(KiTSize sizeInBytes, KiTVoid *bufPtr, KiSBuffer **resPtr) {
+    KI_ASSERT(sizeInBytes > 0,   KiErr_InParameter);
+    KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
+    KI_ASSERT(resPtr != nullptr, KiErr_OutptrParameter);
+
+    if ((*resPtr = malloc(sizeof **resPtr)) == nullptr)
+        return KiErr_MemoryAllocation;
+
+    **resPtr = (KiSBuffer){
+        .m_size    = sizeInBytes,
+        .m_off     = sizeInBytes - 1,
+        .mp_buffer = bufPtr,
+    };
     return KiErr_Ok;
 }
 
@@ -132,6 +147,48 @@ KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize b
     );
 }
 
+KiTVoid KI_CALL KiAttachBuffer(KiSBuffer *bufPtr, KiTVoid const *rawBufPtr, KiTSize sizeInBytes, KiTOffset offset) {
+    KI_ASSERT(bufPtr != nullptr,    KiErr_InOutParameter);
+    KI_ASSERT(rawBufPtr != nullptr, KiErr_InParameter);
+    KI_ASSERT(sizeInBytes > 0,      KiErr_InParameter);
+    KI_ASSERT(offset >= 0,          KiErr_InParameter);
+
+    if (bufPtr->mp_buffer != nullptr) {
+        /* Buffer already attached. */
+        return;
+    }
+
+    *bufPtr = (KiSBuffer){
+        .m_size    = sizeInBytes,
+        .m_off     = offset,
+        .mp_buffer = (KiTVoid *)rawBufPtr
+    };
+}
+
+KiTVoid *KI_CALL KiDetachBuffer(KiSBuffer *bufPtr, KiTSize *sizePtr, KiTOffset *offPtr) {
+    KI_ASSERT(bufPtr != nullptr,  KiErr_InOutParameter);
+    KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
+    KI_ASSERT(offPtr != nullptr,  KiErr_OutParameter);
+
+    if (bufPtr->mp_buffer == nullptr) {
+        /* No buffer attached. */
+        *sizePtr = 0;
+        *offPtr  = -1;
+
+        return nullptr;
+    }
+    KiTVoid *resPtr = bufPtr->mp_buffer;
+    *sizePtr = bufPtr->m_size;
+    *offPtr  = bufPtr->m_off;
+
+    *bufPtr = (KiSBuffer){
+        .m_size    = 0,
+        .m_off     = -1,
+        .mp_buffer = nullptr
+    };
+    return resPtr;
+}
+
 
 KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr, KiTSize s) {
     KI_ASSERT(bufPtr != nullptr,  KiErr_InOutParameter);
@@ -158,7 +215,6 @@ KiEErrorCode KI_CALL KiWriteBufferData(KiSBuffer *bufPtr, KiTVoid const *dataPtr
     }
     memcpy((KiTByte *)bufPtr->mp_buffer + bufPtr->m_off, dataPtr, s);
 
-    /* All good. */
     bufPtr->m_off += s;
     return KiErr_Ok;
 }
@@ -201,7 +257,6 @@ KiEErrorCode KI_CALL KiWriteStringToBuffer(KiSBuffer *bufPtr, KiTChar const *fmt
     }
     va_end(vlArgs);
 
-    /* All good. */
     return KiErr_Ok;
 }
 

@@ -25,41 +25,73 @@
 #include <kira/kernel/int/platform.h>
 
 
-KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr) {
-    /* Allocate and convert message to UTF-16. */
-    WCHAR *cvtRes;
-    KiTSize const reqSize = (KiTSize)MultiByteToWideChar(CP_UTF8, 0, srcPtr, -1, nullptr, 0);
-    if ((cvtRes = calloc(1, reqSize * sizeof *cvtRes)) == nullptr)
-        return nullptr;
+KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSize *sizePtr) {
+    KI_ASSERT(srcPtr != nullptr,  KiErr_InParameter);
+    KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
 
-    /* Convert to UTF16. */
-    int const res = MultiByteToWideChar(CP_UTF8, 0, srcPtr, -1, cvtRes, reqSize);
-    if (res == 0) {
-        free(cvtRes);
+    WCHAR *cvtRes;
+    KiTSize reqSize;
+    SetLastError(0);
+    {
+        reqSize = (KiTSize)MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, srcPtr, -1, nullptr, 0);
+    }
+    if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
+        /* Encoding error. */
+        *sizePtr = 0;
 
         return nullptr;
     }
 
-    /* All good. */
+    if ((cvtRes = calloc(1, reqSize * sizeof *cvtRes)) == nullptr) {
+        *sizePtr = 0;
+
+        return nullptr;
+    }
+
+    KiTSize const res = MultiByteToWideChar(CP_UTF8, 0, srcPtr, -1, cvtRes, reqSize);
+    if (res == 0) {
+        free(cvtRes);
+
+        *sizePtr = 0;
+        return nullptr;
+    }
+
+    *sizePtr = res * sizeof *cvtRes;
     return cvtRes;
 }
 
-KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr) {
-    /* Allocate and convert message to UTF-16. */
-    KiTChar *cvtRes;
-    KiTSize const reqSize = (KiTSize)WideCharToMultiByte(CP_UTF8, 0, srcPtr, -1, nullptr, 0, nullptr, nullptr);
-    if ((cvtRes = calloc(1, reqSize * sizeof *cvtRes)) == nullptr)
-        return nullptr;
+KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTSize *sizePtr) {
+    KI_ASSERT(srcPtr != nullptr,  KiErr_InParameter);
+    KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
 
-    /* Convert to UTF16. */
-    int const res = WideCharToMultiByte(CP_UTF8, 0, srcPtr, -1, cvtRes, reqSize, nullptr, nullptr);
-    if (res == 0) {
-        free(cvtRes);
+    KiTChar *cvtRes;
+    KiTSize reqSize;
+    SetLastError(0);
+    {
+        reqSize = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, srcPtr, -1, nullptr, 0, nullptr, nullptr);
+    }
+    if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
+        /* Encoding error. */
+        *sizePtr = 0;
 
         return nullptr;
     }
 
-    /* All good. */
+    if ((cvtRes = calloc(1, reqSize * sizeof *cvtRes)) == nullptr) {
+        *sizePtr = 0;
+
+        return nullptr;
+    }
+
+    KiTSize const res = WideCharToMultiByte(CP_UTF8, 0, srcPtr, -1, cvtRes, reqSize, nullptr, nullptr);
+    if (res == 0) {
+        free(cvtRes);
+
+        *sizePtr = 0;
+        return nullptr;
+    }
+
+    *sizePtr = res;
     return cvtRes;
 }
 
