@@ -207,7 +207,7 @@ KiTVoid KI_CALL KiPopPathComponent(KiSString *strPtr, KiTChar pathSep) {
     memset(lastSepPtr, 0, strlen(lastSepPtr));
     KiSeekBufferPosition(
         (KiSBuffer *)strPtr,
-        (KiTIntptr)lastSepPtr - (KiTIntptr)KiGetBufferPointer((KiSBuffer const *)strPtr, KI_SEEK_BEGIN)
+        (KiTIntptr)lastSepPtr - (KiTIntptr)KiGetBufferPointer((KiSBuffer const *)strPtr, KI_SEEK_BEGIN) + 1
     );
 }
 

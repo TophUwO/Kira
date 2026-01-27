@@ -52,6 +52,12 @@ KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize
 /**
  */
 KI_NATIVE extern KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) KI_VIRTUAL;
+/**
+ */
+KI_NATIVE extern KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) KI_VIRTUAL;
+/**
+ */
+KI_NATIVE extern KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) KI_VIRTUAL;
 
 /**
  */

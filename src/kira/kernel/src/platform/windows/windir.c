@@ -17,6 +17,7 @@
 
 /* Windows includes */
 #include <windows.h>
+#include <shlwapi.h>
 
 /* Kira includes */
 #include <kira/dbg.h>
@@ -24,6 +25,9 @@
 #include <kira/kernel/reg.h>
 
 #include <kira/kernel/int/platform.h>
+
+/* static libraries */
+#pragma comment (lib, "shlwapi.lib")
 
 
 KiTChar *KI_CALL KiPlatform_AllocateString(KiTSize sizeInBytes) {
@@ -156,6 +160,46 @@ KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) {
                 bufPtr[i] = '/';
     }
 }
+
+KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) {
+    KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
+
+    KiTBool res;
+    WCHAR *cvtPath = KiPlatform_CreateFromKiraEncoding(pathStr, KI_DONTCARE(KiTSize));
+    {
+        if (cvtPath == nullptr)
+            return KI_FALSE;
+
+        if (isDir == KI_TRUE)
+            res = PathIsDirectoryW(cvtPath) != KI_FALSE;
+        else {
+            DWORD const attr = GetFileAttributesW(cvtPath);
+
+            res = attr ^ INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY) == KI_FALSE;
+        }
+    }
+    KiPlatform_FreeString(cvtPath);
+
+    return res;
+}
+
+KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) {
+    KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
+
+    KiTBool res;
+    WCHAR *cvtPath = KiPlatform_CreateFromKiraEncoding(pathStr, KI_DONTCARE(KiTSize));
+    {
+        if (cvtPath == nullptr)
+            return KI_FALSE;
+
+        res = (KiTBool)PathIsRelativeW(cvtPath);
+    }
+    KiPlatform_FreeString(cvtPath);
+
+    return res;
+}
+
+
 #endif /* KI_PLATFORM_WINDOWS */
 
 

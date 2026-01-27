@@ -22,7 +22,6 @@
 /* Kira includes */
 #include <kira/kernel/rt.h>
 #include <kira/kernel/json.h>
-#include <kira/kernel/profile.h>
 
 #include <kira/kernel/int/string.h>
 #include <kira/kernel/int/platform.h>
@@ -41,80 +40,13 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid);
 /**
  */
 KI_NATIVE typedef struct KiSKernelState {
-    KiSReturnState           m_retState;
-    KiSJson                 *mp_rtConfig;
-    KiSRuntimeSpecification  m_rtSpecs;
+    KiSReturnState          m_retState;
+    KiSRuntimeSpecification m_rtSpecs;
 } KiSKernelState;
+
 /**
  */
 static KiSKernelState gl_KernelState = { 0 };
-
-
-/**
- */
-static KiEErrorCode KI_CALL KiInternal_KrnlLoadRtConfig(KiTVoid) {
-    KiSString *configFilePath;
-    {
-        KiEErrorCode errCode = KiCreateStringApplicationRootDir(&configFilePath);
-        if (errCode != KiErr_Ok)
-            return errCode;
-
-        /* Push file name. */
-        if ((errCode = KiPushPathComponent(configFilePath, '/', "conf/launch.json")) != KiErr_Ok) {
-            KiDestroyString(configFilePath);
-
-            return errCode;
-        }
-
-        /* Load JSON. */
-        gl_KernelState.mp_rtConfig = KiOpenJsonDocument(KiGetCString(configFilePath));
-    }
-    KiDestroyString(configFilePath);
-
-    /* If the JSON could be loaded, we are good else we riot. */
-    return gl_KernelState.mp_rtConfig != nullptr ? KiErr_Ok : KiErr_LoadJsonDocument;
-}
-
-/**
- */
-static KiSString *KI_CALL KiInternal_KrnlPickProfile(KiTVoid) {
-    /* Get all the attributes we might need. */
-    KiSJsonValueQuery attrQuery[] = {
-        [0] = { "/profilePath",          KiJsonValTy_String  },
-        [1] = { "/fallbackToDefProfile", KiJsonValTy_Boolean },
-        [2] = { "/preferredProfile",     KiJsonValTy_String  },
-        [3] = { "/defaultProfile",       KiJsonValTy_String  }
-    };
-    KiTBool isError = KiGetJsonElementValues(gl_KernelState.mp_rtConfig, attrQuery, KI_COUNTOF(attrQuery));
-    if (isError)
-        return nullptr;
-
-    /* (1) Get the root directory for profile picking. */
-    KiSString *profileDir;
-    {
-        KiEErrorCode errCode = KiCreateStringApplicationRootDir(&profileDir);
-        if (errCode != KiErr_Ok)
-            return nullptr;
-
-        /* Append relative profile path. */
-        if ((errCode = KiPushPathComponent(profileDir, '/', attrQuery[0].mp_strValue)) != KiErr_Ok) {
-            KiDestroyString(profileDir);
-
-            return nullptr;
-        }
-    }
-    
-    /*
-     * (3) Iterate over the profile directory and do two things:
-     *  (a) If we find the profile we want, store file name and return.
-     *  (b) If we find the default profile, save it.
-     *
-     * Then, after we are done iterating, return the significant profile (i.e., either the one we wanted, or, if not
-     * found and fallback is enabled, the default one.) If neither the one we wanted nor the default profile could be
-     * located, we return nullptr. The caller will be able to handle this appropriately.
-     */
-    /** \todo IMPLEMENT PICKING PROFILE */
-}
 /** \endcond */
 
 
@@ -131,11 +63,6 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
 
         gl_KernelState.m_rtSpecs.m_structSize = size2Copy;
     }
-
-    /* Load runtime config. */
-    KiEErrorCode errCode = KiInternal_KrnlLoadRtConfig();
-    if (errCode != KiErr_Ok)
-        return errCode;
 
     /* Start debugging session if necessary. */
 #if (defined KI_CONFIG_DEBUG)
@@ -160,25 +87,10 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
     }
 #endif
 
-    /* Startup kernel. */
-    if ((errCode = KiStartKernelModules()) != KiErr_Ok)
+    /* Load kernel modules. This will also load a configuration and profile. */
+    KiEErrorCode errCode = KiStartKernelModules();
+    if (errCode != KiErr_Ok)
         return errCode;
-
-    /* Load profile in config or pick a suitable one. */
-    KiSString *pickedProfilePath = KiInternal_KrnlPickProfile();
-    {
-        if (pickedProfilePath == nullptr)
-            return KiErr_PickProfile;
-
-        /* Set it as active profile. */
-        errCode = KiLoadProfile(KiGetCString(pickedProfilePath));
-        if (errCode != KiErr_Ok) {
-            KiDestroyString(pickedProfilePath);
-
-            return errCode;
-        }
-    }
-    KiDestroyString(pickedProfilePath);
 
     // enum all modules 
     // add all comps to reg
@@ -190,18 +102,12 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
 }
 
 KiEErrorCode KI_CALL KiShutdown(KiTVoid) {
-    /* Unload profile. */
-    KiUnloadProfile();
-    /* Shutdown kernel. */
     KiEErrorCode const errCode = KiShutdownKernelModules();
 
-    /* Shutdown debug session. */
 #if (defined KI_CONFIG_DEBUG)
     KiStopDebugSession();
 #endif
 
-    /* Unload runtime config. */
-    KiCloseJsonDocument(gl_KernelState.mp_rtConfig);
     return errCode;
 }
 
@@ -244,10 +150,6 @@ KiSReturnState *KI_CALL KiGetReturnState(KiTVoid) {
 
 KiSRuntimeSpecification const *KI_CALL KiGetRuntimeSpecification(KiTVoid) {
     return (KiSRuntimeSpecification const *)&gl_KernelState.m_rtSpecs;
-}
-
-KiSJson const *KI_CALL KiGetRuntimeConfiguration(KiTVoid) {
-    return (KiSJson const *)gl_KernelState.mp_rtConfig;
 }
 
 

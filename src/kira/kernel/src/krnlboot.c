@@ -26,7 +26,7 @@
 //KI_KRNLMOD_IMPORT(Registry);
 KI_KRNLMOD_IMPORT(ErrorStringificationService);
 KI_KRNLMOD_IMPORT(PoolAllocator);
-KI_KRNLMOD_IMPORT(ProfileManagement);
+KI_KRNLMOD_IMPORT(ConfigurationManagement);
 KI_KRNLMOD_IMPORT(ExceptionHandlingSystem);
 KI_KRNLMOD_IMPORT(DebugModuleControl);
 /** \endcond */
@@ -40,7 +40,7 @@ static KiSModuleInfo const *const gl_c_ModuleInitTable[] = {
     &KI_KRNLMOD_IDENTIFY(DebugModuleControl),
     //&KI_KRNLMOD_IDENTIFY(Registry),
     //&KI_KRNLMOD_IDENTIFY(PoolAllocator),
-    &KI_KRNLMOD_IDENTIFY(ProfileManagement)
+    &KI_KRNLMOD_IDENTIFY(ConfigurationManagement)
 };
 
 /**
