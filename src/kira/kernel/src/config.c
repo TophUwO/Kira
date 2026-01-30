@@ -168,7 +168,7 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
  *           <tr><td> KiErr_MemoryReallocation <td> operation caused a memory reallocation which failed
  *           <tr><td> KiErr_LoadJsonDocument   <td> initialization configuration file could not be loaded
  *          </table>
- * \note    This function may allocate memory using \c [m|c|re]alloc() if needed.
+ * \note    This function may allocate memory using <tt>[m|c|re]alloc()]</tt> if needed.
  * \warning The behavior is undefined if \c confPath is \c NULL or if it points to an invalid memory location.
  */
 static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
