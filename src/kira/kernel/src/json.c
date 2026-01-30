@@ -78,9 +78,6 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
         /* Read and close file. */
         fread_s(rJson, (fSize + 1) * sizeof *rJson, 1, fSize, fPointer);
         fclose(fPointer);
-
-        /* Validate and normalize. */
-        
     }
     cJSON *newDoc = cJSON_Parse(rJson);
     free(rJson);

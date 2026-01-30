@@ -502,6 +502,7 @@ KI_NATIVE typedef enum KiEErrorCode {
     KiErr_SpecIdentLimitExceeded,
     KiErr_SpecTokenSizeError,
     KiErr_MissingSpecToken,
+    KiErr_NoConfigDirectory,
 
     KiErr_CmdlUnexpectedToken,
     KiErr_CmdlMissingParen,

@@ -15,10 +15,12 @@
 
 
 /* stdlib includes */
+/** \cond */
 #if (!defined _CRT_SECURE_NO_WARNINGS)
     #define _CRT_SECURE_NO_WARNINGS
 #endif
 #include <stdlib.h>
+/** \endcond */
 
 /* Kira includes */
 #include <kira/dbg.h>
@@ -33,7 +35,7 @@
 /** \cond INTERNAL */
 /**
  */
-KI_NATIVE typedef struct KiSConfigurationManagementState {
+KI_NATIVE typedef struct KiSConfigurationState {
     KiSJson *mp_config;
     KiSJson *mp_profile;
 } KiSConfigurationManagementState;
@@ -128,7 +130,7 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
      *   (a) an 'init.json' file
      *   (b) a 'profiles' directory
      *
-     * We select the first path candidate that satisfies the above conditions.
+     * We select the first path candidate that satisfies all of the above conditions.
      */
     KiSString *currPath;
     KiEErrorCode errCode;
@@ -154,6 +156,37 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
     return nullptr;
 }
 
+/**
+ * \brief  loads the initialization file, usually "init.json" located in the root of the configuration directory
+ * \param  [in, out] confPath modifiable path to the root of the (configuration) directory to load the init config from
+ * \return \c KiErr_Ok on success, a value other than \c KiErr_Ok on failure. The following error codes can be returned
+ *         by this function:
+ *          <table>
+ *           <tr><th> Identifier               <th> Reason
+ *           <tr><td> KiErr_Ok                 <td> no error
+ *           <tr><td> KiErr_ContainerFull      <td> operation would have exceeded the container's maximum capacity
+ *           <tr><td> KiErr_MemoryReallocation <td> operation caused a memory reallocation which failed
+ *           <tr><td> KiErr_LoadJsonDocument   <td> initialization configuration file could not be loaded
+ *          </table>
+ * \note    This function may allocate memory using \c [m|c|re]alloc() if needed.
+ * \warning The behavior is undefined if \c confPath is \c NULL or if it points to an invalid memory location.
+ */
+static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
+    KI_ASSERT(confPath != nullptr, KiErr_InOutParameter);
+
+    KiEErrorCode errCode = KiPushPathComponent(confPath, '/', "init.json");
+    {
+        if (errCode != KiErr_Ok)
+            return errCode;
+
+        if ((gl_ConfigurationManagement.mp_config = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
+            errCode = KiErr_LoadJsonDocument;
+    }
+    KiPopPathComponent(confPath, '/');
+
+    return errCode;
+}
+
 
 /**
  */
@@ -162,8 +195,20 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
 
     KiSString *cfgPath = KiInternal_DetermineConfigDirectoryPath();
     {
+        if (cfgPath == nullptr)
+            return KiErr_NoConfigDirectory;
 
+        /* Load the init.cfg file. */
+        KiEErrorCode errCode = KiInternal_LoadInitFile(cfgPath);
+        if (errCode != KiErr_Ok) {
+            KiDestroyString(cfgPath);
+
+            return errCode;
+        }
+
+        /* Load and build the in-memory profile. */
     }
+    KiDestroyString(cfgPath);
 
     /* Stub. */
     return KiErr_Ok;
