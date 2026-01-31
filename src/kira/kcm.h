@@ -494,24 +494,7 @@ KI_NATIVE typedef enum KiEErrorCode {
     KiErr_VirtualCommit,
     KiErr_VirtualUncommit,
     KiErr_VirtualFree,
-    KiErr_ReqPropNotProvided,
-    KiErr_InvalidFlagCombination,
-    KiErr_TypeMismatch,
-    KiErr_ExpectedSpecEnd,
-    KiErr_UnexpectedSpecToken,
-    KiErr_SpecIdentLimitExceeded,
-    KiErr_SpecTokenSizeError,
-    KiErr_MissingSpecToken,
     KiErr_NoConfigDirectory,
-
-    KiErr_CmdlUnexpectedToken,
-    KiErr_CmdlMissingParen,
-    KiErr_CmdlMissingBlock,
-    KiErr_CmdlExpectedSpecEnd,
-    KiErr_CmdlInvalidFlagCombination,
-    KiErr_CmdlRequiredPropNotProvided,
-    KiErr_CmdlInvalidArgType,
-    KiErr_CmdlInvalidArgValue,
 
     KI_ENUM_COUNT(KiErr)
 } KiEErrorCode;
