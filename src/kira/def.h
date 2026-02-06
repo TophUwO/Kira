@@ -16,9 +16,35 @@
 
 #pragma once
 
-/* Kira includes */
-#include <kira/compat.h>
 
+/** \cond */
+/* Detect C standard version. */
+#if (__STDC_VERSION__ >= 202311L)
+    #define KI_STD_C23
+#elif (__STDC_VERSION__ >= 201710L)
+    #define KI_STD_C17
+#elif (__STDC_VERSION__ >= 201112L)
+    #define KI_STD_C11
+#else
+    /* We need to at least have C11 support for Kira to work. */
+    #error Kira requires full C11 compiler support. Use, e.g., -std=c11, or change to a newer toolset. 
+#endif
+
+/* What if some poor soul still uses a compiler incompliant with C23? Shame on them, obviously. */
+#if ((!defined __cplusplus) && (!defined KI_STD_C23))
+    #define constexpr const
+    #define nullptr   ((KiTVoid *)(0))
+
+    #if (!defined bool)
+        #define bool _Bool
+    #endif
+#endif
+
+/* We need to also fix static assertions if not done by the platform itself. */
+#if (defined KI_STD_C23)
+    #define _Static_assert static_assert
+#endif
+/** \endcond */
 
 /**
  * \defgroup KiAPIMacros API Macro Definitions

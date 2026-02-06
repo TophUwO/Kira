@@ -187,6 +187,12 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
     return errCode;
 }
 
+/**
+ */
+static KiTVoid KI_CALL KiInternal_UnloadInitFile(KiTVoid) {
+    KiCloseJsonDocument(gl_ConfigurationManagement.mp_config);
+}
+
 
 /**
  */
@@ -205,8 +211,6 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
 
             return errCode;
         }
-
-        /* Load and build the in-memory profile. */
     }
     KiDestroyString(cfgPath);
 
@@ -218,6 +222,9 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
  */
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(ConfigurationManagement)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
+
+    KiCloseJsonDocument(gl_ConfigurationManagement.mp_profile);
+    KiCloseJsonDocument(gl_ConfigurationManagement.mp_config);
 
     return KiErr_Ok;
 }

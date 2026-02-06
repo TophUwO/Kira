@@ -1,7 +1,7 @@
 /****************************************************************************************************************
  * Kira - cross-platform component-based modular application development framework written in C11               *
  *                                                                                                              *
- * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                  *
+ * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
  *                                                                                                              *
  * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
  * this project. If this file is not present, visit                                                             *
@@ -199,10 +199,6 @@
  * \note  Like all annotations, they must appear after <tt>KI_REQUIRES(...)</tt>.
  */
 #define KI_SUBSYSTEM
-
-/**
- */
-#define KI_NAMED(ifaceName)
 
 
 /**

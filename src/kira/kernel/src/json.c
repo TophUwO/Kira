@@ -56,7 +56,6 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
     KI_ASSERT(filePath != nullptr, KiErr_InParameter);
     KI_ASSERT(*filePath != '\0',   KiErr_InParameter);
 
-    /* Open the file. */
     KiTChar *rJson;
     {
         /* Open file. */
@@ -86,7 +85,8 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
 }
 
 KiTVoid KI_CALL KiCloseJsonDocument(KiSJson *docPtr) {
-    KI_ASSERT(docPtr != nullptr, KiErr_InOutParameter);
+    if (docPtr == nullptr)
+        return;
 
     cJSON_Delete((cJSON *)docPtr);
 }
