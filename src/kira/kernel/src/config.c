@@ -28,6 +28,7 @@
 #include <kira/kernel/json.h>
 
 #include <kira/kernel/int/string.h>
+#include <kira/kernel/int/buffer.h>
 #include <kira/kernel/int/krnlmod.h>
 #include <kira/kernel/int/platform.h>
 
@@ -35,15 +36,20 @@
 /** \cond INTERNAL */
 /**
  */
-KI_NATIVE typedef struct KiSConfigurationState {
-    KiSJson *mp_config;
-    KiSJson *mp_profile;
-} KiSConfigurationManagementState;
+KI_NATIVE typedef struct KiSRuntimeConfigurationState {
+    KiSJson        *mp_config;
+    KiSBuffer      *mp_cmdl;
+    KiSBuffer      *mp_envVarStorage;
+    KiSStringView **mpp_envVarViews;
+    KiTSize         m_nEnvVars;
+    KiSJson        *mpp_preldProfiles;
+    KiTSize         m_nPreldProfiles;
+} KiSRuntimeConfigurationState;
 
 
 /**
  */
-static KiSConfigurationManagementState gl_ConfigurationManagement = { 0 };
+static KiSRuntimeConfigurationState gl_Config = { 0 };
 
 /**
  */
@@ -179,7 +185,7 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
         if (errCode != KiErr_Ok)
             return errCode;
 
-        if ((gl_ConfigurationManagement.mp_config = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
+        if ((gl_Config.mp_config = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
             errCode = KiErr_LoadJsonDocument;
     }
     KiPopPathComponent(confPath, '/');
@@ -190,7 +196,27 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
 /**
  */
 static KiTVoid KI_CALL KiInternal_UnloadInitFile(KiTVoid) {
-    KiCloseJsonDocument(gl_ConfigurationManagement.mp_config);
+    KiCloseJsonDocument(gl_Config.mp_config);
+}
+
+/**
+ */
+static KiEErrorCode KI_CALL KiInternal_CreateEnvironmentAndCommandline(KiTVoid) {
+    KiTSize bufSize;
+    KiTChar *rawCmdl = KiPlatform_GetCommandLine(&bufSize);
+    {
+        if (rawCmdl == nullptr)
+            return KiErr_SysGetCommandLine;
+
+        KiEErrorCode errCode = KiCreateBufferFromExisting(bufSize, rawCmdl, &gl_Config.mp_cmdl);
+        if (errCode != KiErr_Ok) {
+            KiPlatform_FreeString(rawCmdl);
+
+            return errCode;
+        }
+    }
+
+    return KiErr_Ok;
 }
 
 
@@ -214,7 +240,6 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
     }
     KiDestroyString(cfgPath);
 
-    /* Stub. */
     return KiErr_Ok;
 }
 
@@ -223,12 +248,36 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(ConfigurationManagement)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    KiCloseJsonDocument(gl_ConfigurationManagement.mp_profile);
-    KiCloseJsonDocument(gl_ConfigurationManagement.mp_config);
+    KiCloseJsonDocument(gl_Config.mp_config);
 
     return KiErr_Ok;
 }
 /** \endcond */
+
+
+KiSStringView KI_CALL KiGetCommandLine(KiTVoid) {
+    KI_ASSERT(gl_Config.mp_cmdl != nullptr, KiErr_InParameter);
+
+    KiTSize const size = KiGetBufferPosition(gl_Config.mp_cmdl);
+    {
+        if (size < sizeof "\0")
+            return (KiSStringView){ .mp_strPtr = nullptr, .m_sizeInBytes = 0 };
+
+        return (KiSStringView){
+            .mp_strPtr     = KiGetBufferPointer(gl_Config.mp_cmdl, 0),
+            .m_sizeInBytes = KiGetBufferPosition(gl_Config.mp_cmdl) - sizeof "\0"
+        };
+    }
+}
+
+KiSStringView const **KI_CALL KiGetEnvironmentVariables(KiTVoid) {
+
+}
+
+
+KiSJson const *KI_CALL KiGetPreloadedProfiles(KiTSize *nProfilesPtr) {
+
+}
 
 
 /** \cond */

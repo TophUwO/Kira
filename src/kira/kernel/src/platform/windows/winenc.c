@@ -25,9 +25,10 @@
 #include <kira/kernel/int/platform.h>
 
 
-KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSize *sizePtr) {
+KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSize *sizePtr, KiTSize *memSizePtr) {
     KI_ASSERT(srcPtr != nullptr,  KiErr_InParameter);
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
+    KI_ASSERT(memSizePtr != nullptr, KiErr_OutParameter);
 
     WCHAR *cvtRes;
     KiTSize reqSize;
@@ -56,13 +57,15 @@ KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSiz
         return nullptr;
     }
 
-    *sizePtr = res * sizeof *cvtRes;
+    *sizePtr    = res     * sizeof *cvtRes;
+    *memSizePtr = reqSize * sizeof *cvtRes;
     return cvtRes;
 }
 
-KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTSize *sizePtr) {
+KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTSize *sizePtr, KiTSize *memSizePtr) {
     KI_ASSERT(srcPtr != nullptr,  KiErr_InParameter);
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
+    KI_ASSERT(memSizePtr != nullptr, KiErr_OutParameter);
 
     KiTChar *cvtRes;
     KiTSize reqSize;
@@ -91,7 +94,8 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTS
         return nullptr;
     }
 
-    *sizePtr = res;
+    *sizePtr    = res     * sizeof *cvtRes;
+    *memSizePtr = reqSize * sizeof *cvtRes;
     return cvtRes;
 }
 

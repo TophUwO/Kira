@@ -491,6 +491,7 @@ KI_NATIVE typedef enum KiEErrorCode {
     KiErr_VirtualUncommit,
     KiErr_VirtualFree,
     KiErr_NoConfigDirectory,
+    KiErr_SysGetCommandLine,
 
     KI_ENUM_COUNT(KiErr)
 } KiEErrorCode;
