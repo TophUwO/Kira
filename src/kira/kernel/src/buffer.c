@@ -140,11 +140,12 @@ KiTVoid KI_CALL KiFillBuffer(KiSBuffer *bufPtr, KiTVoid const *srcBuf, KiTSize b
     }
 
     /* Write the remainder. */
-    memcpy(
-        (KiTByte *)bufPtr->mp_buffer + (bufPtr->m_size - bufPtr->m_size % bufSize),
-        0,
-        bufPtr->m_size % bufSize
-    );
+    if (bufPtr->m_size % bufSize != 0)
+        memcpy(
+            (KiTByte *)bufPtr->mp_buffer + writeCount * bufSize,
+            srcBuf,
+            bufPtr->m_size % bufSize
+        );
 }
 
 KiTVoid KI_CALL KiAttachBuffer(KiSBuffer *bufPtr, KiTVoid const *rawBufPtr, KiTSize sizeInBytes, KiTOffset offset) {
