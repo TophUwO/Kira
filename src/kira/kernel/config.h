@@ -19,18 +19,11 @@
 /* Kira includes */
 #include <kira/kcm.h>
 
-#include <kira/kernel/json.h>
+#include <kira/kernel/int/string.h>
 
 
 /**
  */
-KI_NATIVE KI_API KiSStringView KI_CALL KiGetCommandLine(KiTVoid);
-/**
- */
-KI_NATIVE KI_API KiSStringView const **KI_CALL KiGetEnvironmentVariables(KiTVoid);
-
-/**
- */
-KI_NATIVE KI_API KiSJson const *KI_CALL KiGetPreloadedProfiles(KiTSize *nProfilesPtr);
+KI_NATIVE KiSString *KI_CALL KiGetRootProfilePath(KiTVoid);
 
 

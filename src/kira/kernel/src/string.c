@@ -63,6 +63,7 @@ KiEErrorCode KI_CALL KiCreateStringApplicationRootDir(KiSString **resPtr) {
         return KiErr_GetSystemPath;
     }
 
+    /// TODO: change this due to possible difference between free() and KiPlatform_FreeString()
     KiEErrorCode errCode = KiCreateBuffer(0, (KiSBuffer **)resPtr);
     {
         if (errCode != KiErr_Ok) {

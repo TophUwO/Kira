@@ -289,7 +289,10 @@ TAB_SIZE               = 4
 # with the commands \{ and \} for these it is advised to use the version @{ and
 # @} or use a double escape (\\{ and \\})
 
-ALIASES                = "virtual=\note <strong>Virtual:</strong> This function is marked as \e virtual and thus must be implemented per platform."
+ALIASES                = "tested=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>tested</b>.</dd></dl>\endinternal" \
+                         "ki_tested{1}=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>\1</b>.</dl>\endinternal" \
+                         "ki_tested{2;}=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>\1</b>. Please refer to the details below for more detailed information on this function's test status.<br><br>\2</dd></dl>\endinternal" \
+                         "ki_tested{3;}=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>\1</b>. Please refer to the details below for more detailed information on this function's test status.<br><br>\2<br>Date/time of the latest test run: <b>\3</b></dd></dl>\endinternal"
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C sources
 # only. Doxygen will then generate output that is more tailored for C. For
@@ -618,7 +621,7 @@ HIDE_IN_BODY_DOCS      = NO
 # will be excluded. Set it to YES to include the internal documentation.
 # The default value is: NO.
 
-INTERNAL_DOCS          = NO
+INTERNAL_DOCS          = YES
 
 # With the correct setting of option CASE_SENSE_NAMES Doxygen will better be
 # able to match the capabilities of the underlying filesystem. In case the
@@ -765,7 +768,7 @@ GENERATE_DEPRECATEDLIST= YES
 # sections, marked by \if <section_label> ... \endif and \cond <section_label>
 # ... \endcond blocks.
 
-ENABLED_SECTIONS       =
+ENABLED_SECTIONS       = INTERNAL
 
 # The MAX_INITIALIZER_LINES tag determines the maximum number of lines that the
 # initial value of a variable or macro / define can have for it to appear in the
@@ -1445,7 +1448,7 @@ HTML_EXTRA_FILES       =
 # The default value is: AUTO_LIGHT.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE        = LIGHT
+HTML_COLORSTYLE        = TOGGLE
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to

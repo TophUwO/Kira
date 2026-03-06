@@ -9,7 +9,7 @@
  *****************************************************************************************************************/
 
 /**
- * \file  enum.h
+ * \file  fenum.h
  * \brief defines the API for the kernel-level file enumeration system
  */
 

@@ -15,12 +15,7 @@
 
 
 /* stdlib includes */
-/** \cond */
-#if (!defined _CRT_SECURE_NO_WARNINGS)
-    #define _CRT_SECURE_NO_WARNINGS
-#endif
-#include <stdlib.h>
-/** \endcond */
+#include <string.h>
 
 /* Kira includes */
 #include <kira/dbg.h>
@@ -28,7 +23,6 @@
 #include <kira/kernel/json.h>
 
 #include <kira/kernel/int/string.h>
-#include <kira/kernel/int/buffer.h>
 #include <kira/kernel/int/krnlmod.h>
 #include <kira/kernel/int/platform.h>
 
@@ -36,28 +30,20 @@
 /** \cond INTERNAL */
 /**
  */
-KI_NATIVE typedef struct KiSRuntimeConfigurationState {
-    KiSJson        *mp_config;
-    KiSBuffer      *mp_cmdl;
-    KiSBuffer      *mp_envVarStorage;
-    KiSStringView **mpp_envVarViews;
-    KiTSize         m_nEnvVars;
-    KiSJson        *mpp_preldProfiles;
-    KiTSize         m_nPreldProfiles;
-} KiSRuntimeConfigurationState;
+static KiSJson *gl_RuntimeConfig = nullptr;
 
-
-/**
- */
-static KiSRuntimeConfigurationState gl_Config = { 0 };
 
 /**
  */
 static KiSStringView const gl_c_DefaultConfigDirPaths[] = {
-    KI_MAKE_STRING_VIEW("cfg"),
-    KI_MAKE_STRING_VIEW("conf"),
-    KI_MAKE_STRING_VIEW("config"),
-    KI_MAKE_STRING_VIEW("configuration")
+    KI_MAKE_STRING_VIEW("conf")
+};
+
+/**
+ */
+static KiSStringView const gl_c_ProfileExts[] = {
+    KI_MAKE_STRING_VIEW(".json"),
+    KI_MAKE_STRING_VIEW(".JSON")
 };
 
 
@@ -85,6 +71,21 @@ static KiSString *KI_CALL KiInternal_BuildAbsolutePath(KiTChar const *pathStr) {
     }
 
     return resPtr;
+}
+
+/**
+ */
+static KiTBool KI_CALL KiInternal_FilenameHasJsonExt(KiTChar const *pathStr) {
+    KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
+
+    KiTChar const *lastDot = strrchr(pathStr, '.');
+    {
+        for (KiTSize i = 0; i < KI_COUNTOF(gl_c_ProfileExts); i++)
+            if (!strcmp(lastDot, gl_c_ProfileExts[i].mp_strPtr))
+                return KI_TRUE;
+    }
+
+    return KI_FALSE;
 }
 
 /**
@@ -118,11 +119,17 @@ static KiTBool KI_CALL KiInternal_CheckConfigurationPathCandidate(KiSString *pat
 /**
  */
 static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
-    /* First of all, we build an ordered list of configuration directory candidates. */
+    /*
+     * First of all, we get the value of the potentially defined configuration directory override. The function will
+     * automatically handle the cases in which this variable was not defined or it is empty.
+     */
+    KiTChar *cfgPathOverride = KiPlatform_GetEnvironmentVariable("KIRA_CONFIGURATION_DIRECTORY", KI_DONTCARE(KiTSize));
+
+    /* Be build an ordered list of configuration directory candidates. */
     KiTChar const *configSearchPaths[KI_COUNTOF(gl_c_DefaultConfigDirPaths) + 1] = { nullptr };
     for (KiTSize i = 0; i < KI_COUNTOF(configSearchPaths); i++) {
         if (i == 0) {
-            configSearchPaths[0] = getenv("KIRA_CONFIGURATION_DIRECTORY");
+            configSearchPaths[0] = cfgPathOverride;
 
             continue;
         }
@@ -147,10 +154,15 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
 
             /* Build absolute path. */
             currPath = KiInternal_BuildAbsolutePath(configSearchPaths[i]);
-            if (currPath == nullptr)
+            if (currPath == nullptr) {
+                KiPlatform_FreeString(cfgPathOverride);
+
                 return nullptr;
+            }
 
             if (KiInternal_CheckConfigurationPathCandidate(currPath) == KI_TRUE) {
+                KiPlatform_FreeString(cfgPathOverride);
+
                 /* Found a valid directory. Use it. */
                 return currPath;
             }
@@ -159,6 +171,7 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
     }
 
     /* Could not find a valid config directory. */
+    KiPlatform_FreeString(cfgPathOverride);
     return nullptr;
 }
 
@@ -185,7 +198,7 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
         if (errCode != KiErr_Ok)
             return errCode;
 
-        if ((gl_Config.mp_config = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
+        if ((gl_RuntimeConfig = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
             errCode = KiErr_LoadJsonDocument;
     }
     KiPopPathComponent(confPath, '/');
@@ -195,34 +208,7 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
 
 /**
  */
-static KiTVoid KI_CALL KiInternal_UnloadInitFile(KiTVoid) {
-    KiCloseJsonDocument(gl_Config.mp_config);
-}
-
-/**
- */
-static KiEErrorCode KI_CALL KiInternal_CreateEnvironmentAndCommandline(KiTVoid) {
-    KiTSize bufSize;
-    KiTChar *rawCmdl = KiPlatform_GetCommandLine(&bufSize);
-    {
-        if (rawCmdl == nullptr)
-            return KiErr_SysGetCommandLine;
-
-        KiEErrorCode errCode = KiCreateBufferFromExisting(bufSize, rawCmdl, &gl_Config.mp_cmdl);
-        if (errCode != KiErr_Ok) {
-            KiPlatform_FreeString(rawCmdl);
-
-            return errCode;
-        }
-    }
-
-    return KiErr_Ok;
-}
-
-
-/**
- */
-static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *extraParam) {
+static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
     KiSString *cfgPath = KiInternal_DetermineConfigDirectoryPath();
@@ -230,7 +216,6 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
         if (cfgPath == nullptr)
             return KiErr_NoConfigDirectory;
 
-        /* Load the init.cfg file. */
         KiEErrorCode errCode = KiInternal_LoadInitFile(cfgPath);
         if (errCode != KiErr_Ok) {
             KiDestroyString(cfgPath);
@@ -245,50 +230,34 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ConfigurationManagement)(KiTVoid *
 
 /**
  */
-static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(ConfigurationManagement)(KiTVoid *extraParam) {
+static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    KiCloseJsonDocument(gl_Config.mp_config);
+    KiCloseJsonDocument(gl_RuntimeConfig);
 
     return KiErr_Ok;
 }
 /** \endcond */
 
 
-KiSStringView KI_CALL KiGetCommandLine(KiTVoid) {
-    KI_ASSERT(gl_Config.mp_cmdl != nullptr, KiErr_InParameter);
+KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
+    if (gl_RuntimeConfig == nullptr)
+        return nullptr;
 
-    KiTSize const size = KiGetBufferPosition(gl_Config.mp_cmdl);
-    {
-        if (size < sizeof "\0")
-            return (KiSStringView){ .mp_strPtr = nullptr, .m_sizeInBytes = 0 };
-
-        return (KiSStringView){
-            .mp_strPtr     = KiGetBufferPointer(gl_Config.mp_cmdl, 0),
-            .m_sizeInBytes = KiGetBufferPosition(gl_Config.mp_cmdl) - sizeof "\0"
-        };
-    }
-}
-
-KiSStringView const **KI_CALL KiGetEnvironmentVariables(KiTVoid) {
-
-}
-
-
-KiSJson const *KI_CALL KiGetPreloadedProfiles(KiTSize *nProfilesPtr) {
-
+    /// TODO: implement
+    return nullptr;
 }
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(ConfigurationManagement) {
+KI_KRNLMOD_DEFINE(RuntimeConfiguration) {
     .m_structSize = sizeof(KiSModuleInfo),
     .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
-    .mp_modId     = &KI_MAKE_STRING_VIEW("configuration manager"),
+    .mp_modId     = &KI_MAKE_STRING_VIEW("runtime configuration"),
     .m_modFlags   = 0,
 
-    .mp_fnInit    = &KI_KRNLMOD_INITFN(ConfigurationManagement),
-    .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(ConfigurationManagement)
+    .mp_fnInit    = &KI_KRNLMOD_INITFN(RuntimeConfiguration),
+    .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(RuntimeConfiguration)
 };
 /** \endcond */
 
