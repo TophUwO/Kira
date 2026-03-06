@@ -21,21 +21,19 @@
 #include <kira/kernel/int/krnlmod.h>
 
 
-/** \cond INTERNAL */
 /** \cond */
 //KI_KRNLMOD_IMPORT(Registry);
 KI_KRNLMOD_IMPORT(ErrorStringificationService);
 KI_KRNLMOD_IMPORT(PoolAllocator);
-KI_KRNLMOD_IMPORT(ConfigurationManagement);
+KI_KRNLMOD_IMPORT(RuntimeConfiguration);
 KI_KRNLMOD_IMPORT(ExceptionHandlingSystem);
 KI_KRNLMOD_IMPORT(DebugModuleControl);
-/** \endcond */
 
 
 /**
  */
 static KiSModuleInfo const *const gl_c_ModuleInitTable[] = {
-    &KI_KRNLMOD_IDENTIFY(ConfigurationManagement),
+    &KI_KRNLMOD_IDENTIFY(RuntimeConfiguration),
     &KI_KRNLMOD_IDENTIFY(ErrorStringificationService),
     &KI_KRNLMOD_IDENTIFY(ExceptionHandlingSystem),
     &KI_KRNLMOD_IDENTIFY(DebugModuleControl),
@@ -88,6 +86,6 @@ KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid) {
     gl_InitIndex = -1;
     return KiErr_Ok;
 }
-/** \cond INTERNAL */
+/** \endcond */
 
 

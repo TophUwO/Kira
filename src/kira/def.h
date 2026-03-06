@@ -78,15 +78,15 @@
 #endif
 
 /**
- * \def   KI_VIRTUAL
- * \brief marks a function as 'virtual', that is, must be implemented per-platform and has no default implementation
+ * \def   KI_PLATFORM
+ * \brief marks a function as having to be implemented per-platform and has no default implementation
  * 
  * \par Remarks
  *   While this symbol has no significance to the compiler, it is there for annotation purposes. It makes it obvious
- *   what functions a developer porting Kira to a new platform must implement in order for it to work. Each virtual
+ *   what functions a developer porting Kira to a new platform must implement in order for it to work. Each per-platform
  *   function has detailed behavioral documentation attached to it.
  */
-#define KI_VIRTUAL
+#define KI_PLATFORM
 /** @} */
 
 

@@ -9,7 +9,7 @@
  *****************************************************************************************************************/
 
 /**
- * \file  wincvt.c
+ * \file  wintransc.c
  * \brief implements the to-native-string conversions for the Windows platform
  */
 #if (defined KI_PLATFORM_WINDOWS)
@@ -25,7 +25,7 @@
 #include <kira/kernel/int/platform.h>
 
 
-KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSize *sizePtr, KiTSize *memSizePtr) {
+KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTInt64 maxLen, KiTSize *sizePtr, KiTSize *memSizePtr) {
     KI_ASSERT(srcPtr != nullptr,  KiErr_InParameter);
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
     KI_ASSERT(memSizePtr != nullptr, KiErr_OutParameter);
@@ -34,7 +34,7 @@ KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSiz
     KiTSize reqSize;
     SetLastError(0);
     {
-        reqSize = (KiTSize)MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, srcPtr, -1, nullptr, 0);
+        reqSize = (KiTSize)MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, srcPtr, KI_MAX(maxLen, -1), nullptr, 0);
     }
     if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
         /* Encoding error. */
@@ -49,7 +49,7 @@ KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSiz
         return nullptr;
     }
 
-    KiTSize const res = MultiByteToWideChar(CP_UTF8, 0, srcPtr, -1, cvtRes, reqSize);
+    KiTSize const res = MultiByteToWideChar(CP_UTF8, 0, srcPtr, KI_MAX(maxLen, -1), cvtRes, reqSize);
     if (res == 0) {
         free(cvtRes);
 
@@ -62,7 +62,7 @@ KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTSiz
     return cvtRes;
 }
 
-KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTSize *sizePtr, KiTSize *memSizePtr) {
+KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTInt64 maxLen, KiTSize *sizePtr, KiTSize *memSizePtr) {
     KI_ASSERT(srcPtr != nullptr,  KiErr_InParameter);
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
     KI_ASSERT(memSizePtr != nullptr, KiErr_OutParameter);
@@ -71,7 +71,7 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTS
     KiTSize reqSize;
     SetLastError(0);
     {
-        reqSize = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, srcPtr, -1, nullptr, 0, nullptr, nullptr);
+        reqSize = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, srcPtr, KI_MAX(maxLen, -1), nullptr, 0, nullptr, nullptr);
     }
     if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
         /* Encoding error. */
@@ -86,7 +86,7 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTS
         return nullptr;
     }
 
-    KiTSize const res = WideCharToMultiByte(CP_UTF8, 0, srcPtr, -1, cvtRes, reqSize, nullptr, nullptr);
+    KiTSize const res = WideCharToMultiByte(CP_UTF8, 0, srcPtr, KI_MAX(maxLen, -1), cvtRes, reqSize, nullptr, nullptr);
     if (res == 0) {
         free(cvtRes);
 

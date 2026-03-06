@@ -26,10 +26,9 @@
 #include <kira/kernel/int/platform.h>
 
 
-/** \cond INTERNAL */
 KiTDynLibHandle KI_CALL KiPlatform_LoadLibrary(KiTChar const *libPath) {
     /* Convert to UTF-16 because that's what Windows likes. */
-    WCHAR *u16Path = KiPlatform_CreateFromKiraEncoding(libPath, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+    WCHAR *u16Path = KiPlatform_CreateFromKiraEncoding(libPath, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
     if (u16Path == nullptr)
         return nullptr;
 
@@ -60,7 +59,6 @@ KiTBool KI_CALL KiPlatform_IsLibrary(KiTChar const *filePath) {
 
     return !strcmp(extBuf, ".dll") || !strcmp(extBuf, ".DLL");
 }
-/** \endcond */
 
 
 #endif /* defined KI_PLATFORM_WINDOWS */

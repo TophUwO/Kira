@@ -29,7 +29,7 @@ KiTVoid KI_CALL KiPlatform_Notify(KiTChar const *mBuf, KiSDebugTerminationContex
     KI_ASSERT(mBuf != nullptr,  KiErr_InParameter);
     KI_ASSERT(tCtxt != nullptr, KiErr_InParameter);
 
-    WCHAR *tmpBuf = KiPlatform_CreateFromKiraEncoding(mBuf, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+    WCHAR *tmpBuf = KiPlatform_CreateFromKiraEncoding(mBuf, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
     {
         MessageBoxW(nullptr, tmpBuf, u"Debug Error", MB_OK);
     }

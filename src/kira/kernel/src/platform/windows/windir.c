@@ -22,8 +22,6 @@
 /* Kira includes */
 #include <kira/dbg.h>
 
-#include <kira/kernel/reg.h>
-
 #include <kira/kernel/int/platform.h>
 
 /* static libraries */
@@ -57,7 +55,7 @@ KiTChar *KI_CALL KiPlatform_GetCurrentWorkingDirectory(KiTVoid) {
         GetCurrentDirectoryW(reqSize, tmpBuf);
 
         /* Convert to native Kira encoding. */
-        resPtr = KiPlatform_CreateFromNativeEncoding(tmpBuf, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+        resPtr = KiPlatform_CreateFromNativeEncoding(tmpBuf, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
         free(tmpBuf);
     }
 
@@ -70,7 +68,7 @@ KiEErrorCode KI_CALL KiPlatform_SetCurrentWorkingDirectory(KiTChar const *newWdP
 
     /* Convert to native encoding. */
     BOOL res;
-    KiTVoid const *ntEncPath = KiPlatform_CreateFromKiraEncoding(newWdPath, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+    KiTVoid const *ntEncPath = KiPlatform_CreateFromKiraEncoding(newWdPath, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
     {
         if (ntEncPath == nullptr)
             return KiErr_EncodingError;
@@ -128,7 +126,7 @@ KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize *sizePtr, KiTSiz
      * string is not needed any longer.
      */
     KiTChar *lastSep    = nullptr;
-    KiTChar *u8FullPath = KiPlatform_CreateFromNativeEncoding(pathBuf, lenPtr, KI_DONTCARE(KiTSize));
+    KiTChar *u8FullPath = KiPlatform_CreateFromNativeEncoding(pathBuf, -1, lenPtr, KI_DONTCARE(KiTSize));
     {
         KiPlatform_FreeString(pathBuf);
         if (u8FullPath == nullptr) {
@@ -150,12 +148,6 @@ KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize *sizePtr, KiTSiz
     return u8FullPath;
 }
 
-KiTChar *KI_CALL KiPlatform_GetCommandLine(KiTSize *sizePtr) {
-    KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
-
-    return KiPlatform_CreateFromNativeEncoding((KiTVoid const *)GetCommandLineW(), KI_DONTCARE(KiTSize), sizePtr);
-}
-
 KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) {
     KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
 
@@ -171,7 +163,7 @@ KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) {
     KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
 
     KiTBool res;
-    WCHAR *cvtPath = KiPlatform_CreateFromKiraEncoding(pathStr, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+    WCHAR *cvtPath = KiPlatform_CreateFromKiraEncoding(pathStr, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
     {
         if (cvtPath == nullptr)
             return KI_FALSE;
@@ -193,7 +185,7 @@ KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) {
     KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
 
     KiTBool res;
-    WCHAR *cvtPath = KiPlatform_CreateFromKiraEncoding(pathStr, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+    WCHAR *cvtPath = KiPlatform_CreateFromKiraEncoding(pathStr, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
     {
         if (cvtPath == nullptr)
             return KI_FALSE;

@@ -9,7 +9,7 @@
  *****************************************************************************************************************/
 
 /**
- * \file  gparray.c
+ * \file  array.c
  * \brief implements the kernel-level general-purpose array
  */
 
@@ -213,11 +213,12 @@ KiTVoid **KI_CALL KiMapArray(
     KiTSize *nElem
 ) {
     KI_ASSERT(arrPtr != nullptr,                                 KiErr_InParameter);
-    KI_ASSERT(KI_INRANGE_INCL(offset, 0, arrPtr->m_elemCap - 1), KiErr_IndexError);
+    KI_ASSERT(KI_INRANGE_INCL(offset, 0, arrPtr->m_elemCnt - 1), KiErr_IndexError);
+    KI_ASSERT(count <= arrPtr->m_elemCnt - offset,               KiErr_SizeParameter);
     KI_ASSERT(beginPtr != nullptr,                               KiErr_OutptrParameter);
     KI_ASSERT(nElem != nullptr,                                  KiErr_OutParameter);
 
-    *nElem    = KI_MIN(arrPtr->m_elemCap - count - offset, count);
+    *nElem    = arrPtr->m_elemCnt - offset;
     *beginPtr = &arrPtr->mpp_elemArr[offset];
 
     return *beginPtr;
@@ -231,6 +232,12 @@ KiTVoid *KI_CALL KiGetArrayElementAt(KiSArray const *arrPtr, KiTIndex slIndex) {
         return nullptr;
 
     return arrPtr->mpp_elemArr[slIndex];
+}
+
+KiTSize KI_CALL KiGetArrayElementCount(KiSArray const *arrPtr) {
+    KI_ASSERT(arrPtr != nullptr, KiErr_InParameter);
+
+    return arrPtr->m_elemCnt;
 }
 
 

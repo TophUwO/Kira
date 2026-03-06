@@ -28,6 +28,7 @@
 .vscode/
 .idea/
 .cache/
+.old/
 
 # OS-specific files
 .DS_Store

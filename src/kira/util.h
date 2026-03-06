@@ -372,7 +372,7 @@ KI_NATIVE typedef struct KiSVersion {
  * \param ma major version
  * \param mi minor version
  * \param pa patch version
- * \param re revision/build number
+ * \param rev revision/build number
  */
 #define KI_MAKE_VERSION(ma, mi, pa, rev)    \
     (KiSVersion const){                     \
@@ -391,7 +391,7 @@ KI_NATIVE typedef struct KiSVersion {
  * \param ma major version
  * \param mi minor version
  * \param pa patch version
- * \param re revision/build number
+ * \param rev revision/build number
  */
 #define KI_MAKE_VERSION_STRING(ma, mi, pa, rev) #ma"."#mi"."#pa"-rev"#rev
 
