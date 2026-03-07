@@ -234,11 +234,13 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *ext
 }
 
 /**
+ * \ki_tested{all;tested;;03/07/2026}
  */
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
     KiCloseJsonDocument(gl_RuntimeConfigState.mp_config);
+    KiDestroyString(gl_RuntimeConfigState.mp_configRootDir);
 
     return KiErr_Ok;
 }

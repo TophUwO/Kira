@@ -2515,7 +2515,9 @@ PREDEFINED             = KI_NATIVE= \
                          KI_PUBLIC= \
                          KI_PRIVATE= \
                          KI_TEST= \
-                         KI_PLATFORM_WINDOWS=
+                         KI_PLATFORM_WINDOWS= \
+                         "KI_KRNLMOD_UNINITFN(modId)=KiInternal_Uninit##modId" \
+                         "KI_KRNLMOD_INITFN(modId)=KiInternal_Init##modId"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The
