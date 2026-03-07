@@ -297,7 +297,7 @@ static KiSStringView const *gl_c_ErrorStringDictionary[] = {
     &KI_MAKE_STRING_VIEW("KiErr_EntityIsNotADirectory"),
     &KI_MAKE_STRING_VIEW("KiErr_EncodingError"),
 
-    [56] = &KI_MAKE_STRING_VIEW("")
+    [57] = &KI_MAKE_STRING_VIEW("")
 };
 KI_VERIFY_LUT(gl_c_ErrorStringDictionary, __KiErr_Count__ - KiErr_Ok);
 
@@ -306,7 +306,7 @@ KI_VERIFY_LUT(gl_c_ErrorStringDictionary, __KiErr_Count__ - KiErr_Ok);
  *        corresponding numeric error code
  */
 static KiSStringView const *gl_c_ErrorBriefDictionary[] = {
-    [56] = &KI_MAKE_STRING_VIEW("")
+    [57] = &KI_MAKE_STRING_VIEW("")
 };
 KI_VERIFY_LUT(gl_c_ErrorBriefDictionary, __KiErr_Count__ - KiErr_Ok);
 
@@ -339,7 +339,7 @@ static KiSStringView const *gl_c_ErrorDetailsDictionary[] = {
         "(yet) implemented. It can be returned during development and can be used as the return value for default "
         "implementations for interface methods. In the deployed code, this code should never be returned."
     ),
-    [56] = &KI_MAKE_STRING_VIEW("")
+    [57] = &KI_MAKE_STRING_VIEW("")
 };
 KI_VERIFY_LUT(gl_c_ErrorDetailsDictionary, __KiErr_Count__ - KiErr_Ok);
 

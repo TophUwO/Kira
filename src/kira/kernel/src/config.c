@@ -20,6 +20,7 @@
 /* Kira includes */
 #include <kira/dbg.h>
 
+#include <kira/kernel/config.h>
 #include <kira/kernel/json.h>
 
 #include <kira/kernel/int/string.h>
@@ -30,7 +31,14 @@
 /** \cond INTERNAL */
 /**
  */
-static KiSJson *gl_RuntimeConfig = nullptr;
+KI_NATIVE typedef struct KiSRuntimeConfigurationState {
+    KiSJson   *mp_config;
+    KiSString *mp_configRootDir;
+} KiSRuntimeConfigurationState;
+
+/**
+ */
+static KiSRuntimeConfigurationState gl_RuntimeConfigState = { nullptr };
 
 
 /**
@@ -154,11 +162,8 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
 
             /* Build absolute path. */
             currPath = KiInternal_BuildAbsolutePath(configSearchPaths[i]);
-            if (currPath == nullptr) {
-                KiPlatform_FreeString(cfgPathOverride);
-
-                return nullptr;
-            }
+            if (currPath == nullptr)
+                break;
 
             if (KiInternal_CheckConfigurationPathCandidate(currPath) == KI_TRUE) {
                 KiPlatform_FreeString(cfgPathOverride);
@@ -198,7 +203,7 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
         if (errCode != KiErr_Ok)
             return errCode;
 
-        if ((gl_RuntimeConfig = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
+        if ((gl_RuntimeConfigState.mp_config = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
             errCode = KiErr_LoadJsonDocument;
     }
     KiPopPathComponent(confPath, '/');
@@ -223,7 +228,7 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *ext
             return errCode;
         }
     }
-    KiDestroyString(cfgPath);
+    gl_RuntimeConfigState.mp_configRootDir = cfgPath;
 
     return KiErr_Ok;
 }
@@ -233,7 +238,7 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *ext
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    KiCloseJsonDocument(gl_RuntimeConfig);
+    KiCloseJsonDocument(gl_RuntimeConfigState.mp_config);
 
     return KiErr_Ok;
 }
@@ -241,11 +246,47 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *e
 
 
 KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
-    if (gl_RuntimeConfig == nullptr)
+    if (gl_RuntimeConfigState.mp_config == nullptr || gl_RuntimeConfigState.mp_configRootDir == nullptr)
         return nullptr;
 
-    /// TODO: implement
-    return nullptr;
+    KiSString *res;
+    {
+        if (KiDuplicateString(gl_RuntimeConfigState.mp_configRootDir, &res) != KiErr_Ok)
+            return nullptr;
+
+        /*
+         * Get root profile file name (without extension). Retrieving this value and using it is safe because the
+         * runtime config is considered read-only and thus the queried values will never change throughout the
+         * application's runtime.
+         */
+        KiSJsonValueQuery rootProfileQuery = {
+            .mp_pathStr = "/activeProfile",
+            .m_reqType  = KiJsonValTy_String
+        };
+        if (KiGetJsonElementValue(gl_RuntimeConfigState.mp_config, &rootProfileQuery) != KI_FALSE) {
+            KiDestroyString(res);
+
+            return nullptr;
+        }
+
+        /* Add file name to root dir. */
+        KiEErrorCode errCode = KiErr_Ok;
+        {
+            (KiTVoid)(
+                   (errCode = KiPushPathComponent(res, '/', "profiles"))                   == KiErr_Ok
+                && (errCode = KiPushPathComponent(res, '/', rootProfileQuery.mp_strValue)) == KiErr_Ok
+                && (errCode = KiPushPathComponent(res, '.', "json"))                       == KiErr_Ok
+            );
+
+            if (errCode != KiErr_Ok) {
+                KiDestroyString(res);
+
+                return nullptr;
+            }
+        }
+    }
+
+    return res;
 }
 
 

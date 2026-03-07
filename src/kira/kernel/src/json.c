@@ -49,6 +49,21 @@ static KiEJsonValueType KI_CALL KiInternal_JsonToKiraType(KiTInt32 cjsonTy) {
 
     return KiJsonValTy_Invalid;
 }
+
+/**
+ */
+static KiTBool KI_CALL KiInternal_IsValidValueType(KiTInt32 typeId) {
+    return KI_INRANGE_EXCL(typeId, KiJsonValTy_Invalid, __KiJsonValTy_Count__);
+}
+
+/**
+ */
+static KiTBool KI_CALL KiInternal_IsTypeMismatch(KiEJsonValueType actType, KiEJsonValueType reqType) {
+    if (!KiInternal_IsValidValueType(actType) || !KiInternal_IsValidValueType(reqType))
+        return KI_FALSE;
+
+    return actType != reqType;
+}
 /** \endcond */
 
 
@@ -142,7 +157,7 @@ KiTBool KI_CALL KiGetJsonElementValues(
 
             /* Get the JSON element and check type. */
             cJSON const *reqElem = (cJSON const *)KiGetJsonElement(elemPtr, currQueryObj->mp_pathStr);
-            if (reqElem == nullptr || KiInternal_JsonToKiraType(reqElem->type) != currQueryObj->m_reqType) {
+            if (reqElem == nullptr || KiInternal_IsTypeMismatch(KiInternal_JsonToKiraType(reqElem->type), currQueryObj->m_reqType)) {
                 currQueryObj->m_errCode = reqElem == nullptr
                     ? KiErr_JsonAttribNotFound
                     : KiErr_JsonAttribTypeMismatch
@@ -156,10 +171,12 @@ KiTBool KI_CALL KiGetJsonElementValues(
             switch (currQueryObj->m_reqType) {
                 case KiJsonValTy_Boolean: currQueryObj->m_boolValue = reqElem->valueint != KI_FALSE; break;
                 case KiJsonValTy_Number:  currQueryObj->m_dblValue  = reqElem->valuedouble;          break;
-                case KiJsonValTy_String:  currQueryObj->mp_strValue = reqElem->string;               break;
+                case KiJsonValTy_String:  currQueryObj->mp_strValue = reqElem->valuestring;          break;
                 case KiJsonValTy_Array:
                 case KiJsonValTy_Object:  currQueryObj->mp_arrValue = (KiSJson *)reqElem->child;     break;               
                 default:
+                    currQueryObj->m_errCode = KiErr_JsonInvalidValueType;
+
                     isError = KI_TRUE;
             }
         }

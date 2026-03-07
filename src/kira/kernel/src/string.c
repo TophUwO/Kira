@@ -89,7 +89,7 @@ KiEErrorCode KI_CALL KiDuplicateString(KiSString const *srcPtr, KiSString **resP
         if (errCode != KiErr_Ok)
             return errCode;
 
-        errCode = KiWriteBufferData((KiSBuffer *)*resPtr, KiGetBufferPointer(srcAsBuf, 0), KiGetBufferSize(srcAsBuf));
+        errCode = KiWriteBufferData((KiSBuffer *)*resPtr, KiGetBufferPointer(srcAsBuf, 0), KiGetBufferPosition(srcAsBuf));
         if (errCode != KiErr_Ok) {
             KiDestroyBuffer((KiSBuffer *)*resPtr);
 

@@ -484,6 +484,7 @@ KI_NATIVE typedef enum KiEErrorCode {
     KiErr_PickProfile,
     KiErr_JsonAttribNotFound,
     KiErr_JsonAttribTypeMismatch,
+    KiErr_JsonInvalidValueType,
     KiErr_IllegalMemoryPoolState,
     KiErr_VirtualReserve,
     KiErr_VirtualCommit,
@@ -691,10 +692,10 @@ KI_NATIVE typedef struct KiSComponentControlContext {
 
 /**
  */
-KI_NATIVE typedef struct KiSModulePublicState {
+KI_NATIVE typedef struct KiSPublicModuleState {
     KiTSize  m_structSize;
     KiTInt32 m_errPrefix;
-} KiSModulePublicState;
+} KiSPublicModuleState;
 
 
 /**
@@ -876,7 +877,7 @@ KI_INTERFACE(KiIModule) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
     KiSModuleMetadata const *(KI_CALL *GetModuleMetadata)(KiIModule *self);
     /**
      */
-    KiSModulePublicState const *(KI_CALL *GetPublicState)(KiIModule *self);
+    KiSPublicModuleState const *(KI_CALL *GetPublicState)(KiIModule *self);
 
     /**
      */
