@@ -94,7 +94,7 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *sizePtr) {
 }
 
 /**
- * \ki_tested{Windows; tested;
+ * \ki_tested_on{Windows; tested;
  *  <b>The following test cases have been successfully verified:</b>
  *  <ul>
  *   <li>assertion failure upon passing an invalid parameter</li>
@@ -168,7 +168,7 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *name, KiTSize 
 }
 
 /**
- * \ki_tested{Windows; tested;
+ * \ki_tested_on{Windows; tested;
  *  <b>The following test cases have been successfully verified:</b>
  *  <ul>
  *   <li>assertion failure upon entering invalid parameter as per preconditions</li>

@@ -234,7 +234,7 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *ext
 }
 
 /**
- * \ki_tested{all;tested;;03/07/2026}
+ * \ki_tested
  */
 static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
@@ -247,9 +247,19 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *e
 /** \endcond */
 
 
+/**
+ * \ki_tested{tested;
+ *  <b>The following test cases have been successfully verified:</b>
+ *  <ul>
+ *   <li>assertion failures upon missing/incorrect preconditions</li>
+ *   <li>correct path formatting</li>
+ *  </ul>;
+ *  03/07/2026
+ * }
+ */
 KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
-    if (gl_RuntimeConfigState.mp_config == nullptr || gl_RuntimeConfigState.mp_configRootDir == nullptr)
-        return nullptr;
+    KI_ASSERT(gl_RuntimeConfigState.mp_config != nullptr,        KiErr_InParameter);
+    KI_ASSERT(gl_RuntimeConfigState.mp_configRootDir != nullptr, KiErr_InParameter);
 
     KiSString *res;
     {

@@ -289,11 +289,11 @@ TAB_SIZE               = 4
 # with the commands \{ and \} for these it is advised to use the version @{ and
 # @} or use a double escape (\\{ and \\})
 
-ALIASES                = "tested=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>tested</b>.</dd></dl>\endinternal" \
+ALIASES                = "ki_tested=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>tested</b>.</dd></dl>\endinternal" \
                          "ki_tested{1}=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>\1</b>.</dl>\endinternal" \
                          "ki_tested{2;}=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>\1</b>. Please refer to the details below for more detailed information on this function's test status.<br><br>\2</dd></dl>\endinternal" \
                          "ki_tested{3;}=\internal<dl class=\"section test\"><dt>Test Status</dt><dd>The test status of this function is <b>\1</b>. Please refer to the details below for more detailed information on this function's test status.<br><br>\2<br>Date/time of the latest test run: <b>\3</b></dd></dl>\endinternal" \
-                         "ki_tested{4;}=\internal<dl class=\"section test\"><dt>Test Status (Platform: \1)</dt><dd>The test status of this function is <b>\2</b>. Please refer to the details below for more detailed information on this function's test status.<br><br>\3<br>Date/time of the latest test run: <b>\4</b></dd></dl>\endinternal"
+                         "ki_tested_on{4;}=\internal<dl class=\"section test\"><dt>Test Status (Platform: \1)</dt><dd>The test status of this function is <b>\2</b>. Please refer to the details below for more detailed information on this function's test status.<br><br>\3<br>Date/time of the latest test run: <b>\4</b></dd></dl>\endinternal"
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C sources
 # only. Doxygen will then generate output that is more tailored for C. For
