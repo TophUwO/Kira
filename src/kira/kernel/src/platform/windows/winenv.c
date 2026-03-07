@@ -93,11 +93,24 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *sizePtr) {
     return res;
 }
 
-KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *varIdent, KiTSize *sizePtr) {
+/**
+ * \ki_tested{Windows; tested;
+ *  <b>The following test cases have been successfully verified:</b>
+ *  <ul>
+ *   <li>assertion failure upon passing an invalid parameter</li>
+ *   <li>non-interfering operation (no writes to \c name by another thread while this function is being executed on the current thread)</li>
+ *   <li>interfering operation (value of environment variable changed by another thread while executing this function)</li>
+ *  </ul>;
+ *  03/06/2026
+ * }
+ */
+KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *name, KiTSize *sizePtr) {
+    KI_ASSERT(name != nullptr,    KiErr_InParameter);
+    KI_ASSERT(*name != '\0',      KiErr_InParameter);
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
 
     /* (1) Convert name to native encoding. */
-    KiTVoid *ntVarId = KiPlatform_CreateFromKiraEncoding(varIdent, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
+    KiTVoid *ntVarId = KiPlatform_CreateFromKiraEncoding(name, -1, KI_DONTCARE(KiTSize), KI_DONTCARE(KiTSize));
     if (ntVarId == nullptr)
         return nullptr;
 
@@ -152,6 +165,63 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *varIdent, KiTS
     /* Error (alloc, encoding, not found, etc.) or max no. of tries reached. */
     KiPlatform_FreeString(ntVarId);
     return nullptr;
+}
+
+/**
+ * \ki_tested{Windows; tested;
+ *  <b>The following test cases have been successfully verified:</b>
+ *  <ul>
+ *   <li>assertion failure upon entering invalid parameter as per preconditions</li>
+ *   <li>adding environment variable</li>
+ *   <li>updating environment variable</li>
+ *   <li>unsetting (i.e., removing) environment variable</li>
+ *  </ul><br>
+ *  <b>Not yet successfully verified:</b>
+ *  <ul>
+ *   <li>encoding error in \c name or <tt>value</tt></li>
+ *  </ul>;
+ *  03/07/2026
+ * }
+ */
+KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar const *value) {
+    KI_ASSERT(name != nullptr, KiErr_InParameter);
+
+    /*
+     * (1) Get the size of the buffer required to hold the K-V pair. The pair must be in the form of "K\0V\0" so that we
+     *     can access both strings as if they were NUL-terminated. We also handle the special case of *value* being
+     *      *nullptr*. this case, the behavior is to unset the variable. This must be done by calling SetEnvironmentVariableW() 
+     *     directly with *name* and *nullptr* for *value*. In such a case, we simply use the buffer to store the
+     *     converted name only.
+     */
+    KiTSize keySize = 0, valSize = 0;
+    {
+        /*
+         * When *cbMultiByte* is -1, the string is expected to be NUL-terminated. As a result, the return value includes
+         * this NUL-terminator.
+         */
+        keySize = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, name, -1, nullptr, 0);
+        if (value != nullptr)
+            valSize = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value, -1, nullptr, 0);
+
+        if (keySize == 0 || (value != nullptr && valSize == 0))
+            return KI_FALSE;
+    }
+
+    /* (2) Allocate the buffer. */
+    WCHAR *kvPairBlock = malloc((keySize + valSize) * sizeof *kvPairBlock);
+    if (kvPairBlock == nullptr)
+        return KI_FALSE;
+
+    /* (3) Format the K\0V\0 pair. */
+    MultiByteToWideChar(CP_UTF8, 0, name, -1, &kvPairBlock[0], keySize);
+    if (value != nullptr)
+        MultiByteToWideChar(CP_UTF8, 0, value, -1, &kvPairBlock[keySize], valSize);
+
+    /* (4) Now, set or unset the variable. */
+    BOOL const res = SetEnvironmentVariableW(&kvPairBlock[0], value != nullptr ? &kvPairBlock[keySize] : nullptr);
+
+    free(kvPairBlock);
+    return (KiTBool)res;
 }
 
 

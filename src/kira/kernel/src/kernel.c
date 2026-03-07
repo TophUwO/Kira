@@ -92,7 +92,7 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
     if (errCode != KiErr_Ok)
         return errCode;
 
-    // enum all modules 
+    // enum all modules
     // add all comps to reg
     // create all debug handlers
     // load the rest of the modules (via iterative dfs)
