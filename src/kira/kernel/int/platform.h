@@ -82,47 +82,47 @@ KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetCommandLine(KiTSize *sizePtr) KI
  */
 KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *sizePtr) KI_PLATFORM;
 /**
- * \brief     retrieves the value of the environment variable identified by \c name of the current process
- * \param     [in] name pointer to a (<tt>NUL</tt>-terminated) C-string containing the name of the environment variable
- *                 of which the value is to be retrieved
- * \param     [out] sizePtr pointer to a variable of type \c KiTSize which will receive the number of bytes (incl. <tt>NUL</tt>)
- *                  in the buffer that represent the result
- * \returns   pointer to a C-string containing the value of the environment variable \c name, or \c nullptr if there was
- *            an error or \c name could not be found in the current environment
- * \pre       Parameters \c name and \c sizePtr must not be \c nullptr.
- * \pre       Parameter \c name must not be the empty string.
- * \post      If the function succeeds, \c sizePtr is set to the size in bytes of the returned memory block. If the
- *            function fails, the value of \c *sizePtr is undefined.
- * \note      If the function succeeds, it dynamically allocates memory. When you are done working with the string
- *            returned by this function, call \c KiPlatform_FreeString() in order to destroy it.
- * \note      This function queries the \b current value of the given environment variable. If its value gets changed
- *            throughout the application's run, the value returned by this function will likely become outdated.
- * \note      This function must be thread-safe under the assumption that neither \c name nor \c sizePtr are written to
- *            by another thread at the same time this function is being executed on the current thread.
- * \warning   If either \c name or \c sizePtr is modified by another thread while this function is being executed, the
- *            behavior is undefined.
+ * \brief   retrieves the value of the environment variable identified by \c name of the current process
+ * \param   [in] name pointer to a (<tt>NUL</tt>-terminated) C-string containing the name of the environment variable
+ *               of which the value is to be retrieved
+ * \param   [out] sizePtr pointer to a variable of type \c KiTSize which will receive the number of bytes (incl. <tt>NUL</tt>)
+ *                in the buffer that represent the result
+ * \returns pointer to a C-string containing the value of the environment variable \c name, or \c nullptr if there was
+ *          an error or \c name could not be found in the current environment
+ * \pre     Parameters \c name and \c sizePtr must not be \c nullptr.
+ * \pre     Parameter \c name must not be the empty string.
+ * \post    If the function succeeds, \c sizePtr is set to the size in bytes of the returned memory block. If the
+ *          function fails, the value of \c *sizePtr is undefined.
+ * \note    If the function succeeds, it dynamically allocates memory. When you are done working with the string
+ *          returned by this function, call \c KiPlatform_FreeString() in order to destroy it.
+ * \note    This function queries the \b current value of the given environment variable. If its value gets changed
+ *          throughout the application's run, the value returned by this function will likely become outdated.
+ * \note    This function must be thread-safe under the assumption that neither \c name nor \c sizePtr are written to
+ *          by another thread at the same time this function is being executed on the current thread.
+ * \warning If either \c name or \c sizePtr is modified by another thread while this function is being executed, the
+ *          behavior is undefined.
  */
 KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *name, KiTSize *sizePtr) KI_PLATFORM;
 /**
- * \brief     updates the value of the environment variable identified by \c name of the current process with \c value
- * \param     [in] name pointer to a (<tt>NUL</tt>-terminated) C-string containing the name of the environment variable
- *                 of which the value is to be updated
- * \param     [in] value pointer to a (<tt>NUL</tt>-terminated) C-string containing the value to update \c name with;
- *                 this parameter can be \c nullptr in which case the variable with name \c name will be \e unset (i.e.,
- *                 <tt>removed</tt>)
- * \returns   \c KI_TRUE on success, or \c KI_FALSE on failure
- * \pre       Parameter \c name must be non-<tt>nullptr</tt> and non-empty.
- * \post      If the function succeeds (i.e., returns <tt>KI_TRUE</tt>), the value of \c name is updated with \c value.
- *            If \c value is \c nullptr, the variable identified by \c name is removed from the current process
- *            environment.
- *            If no environment variable with name \c name existed prior to calling this function, a new variable with
- *            name \c name is added and set to \c value (unless \c value is <tt>nullptr</tt>.) If no variable with name
- *            \c name existed prior to calling this function and \c value is \c nullptr, the environment is not changed
- *            and the function returns \c KI_TRUE.
- * \note      This function must be thread-safe under the assumption that neither \c name nor \c value are written to by
- *            another thread at the same time this function is being executed on the current thread.
- * \warning   If either \c name or \c value are changed by another thread while this function is being executed, the
- *            behavior is undefined.
+ * \brief   updates the value of the environment variable identified by \c name of the current process with \c value
+ * \param   [in] name pointer to a (<tt>NUL</tt>-terminated) C-string containing the name of the environment variable
+ *               of which the value is to be updated
+ * \param   [in] value pointer to a (<tt>NUL</tt>-terminated) C-string containing the value to update \c name with;
+ *               this parameter can be \c nullptr in which case the variable with name \c name will be \e unset (i.e.,
+ *               <tt>removed</tt>)
+ * \returns \c KI_TRUE on success, or \c KI_FALSE on failure
+ * \pre     Parameter \c name must be non-<tt>nullptr</tt> and non-empty.
+ * \post    If the function succeeds (i.e., returns <tt>KI_TRUE</tt>), the value of \c name is updated with \c value.
+ *          If \c value is \c nullptr, the variable identified by \c name is removed from the current process
+ *          environment.
+ *          If no environment variable with name \c name existed prior to calling this function, a new variable with
+ *          name \c name is added and set to \c value (unless \c value is <tt>nullptr</tt>.) If no variable with name
+ *          \c name existed prior to calling this function and \c value is \c nullptr, the environment is not changed
+ *          and the function returns \c KI_TRUE.
+ * \note    This function must be thread-safe under the assumption that neither \c name nor \c value are written to by
+ *          another thread at the same time this function is being executed on the current thread.
+ * \warning If either \c name or \c value are changed by another thread while this function is being executed, the
+ *          behavior is undefined.
  */
 KI_NATIVE extern KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar const *value) KI_PLATFORM;
 /**

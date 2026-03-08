@@ -15,9 +15,6 @@
 #if (defined KI_PLATFORM_WINDOWS)
 
 
-/* stdlib includes */
-#include <stdlib.h>
-
 /* Windows includes */
 #include <windows.h>
 
@@ -43,7 +40,7 @@ KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTInt
         return nullptr;
     }
 
-    if ((cvtRes = calloc(1, reqSize * sizeof *cvtRes)) == nullptr) {
+    if ((cvtRes = (KiTVoid *)KiPlatform_AllocateString(reqSize * sizeof *cvtRes)) == nullptr) {
         *sizePtr = 0;
 
         return nullptr;
@@ -51,7 +48,7 @@ KiTVoid *KI_CALL KiPlatform_CreateFromKiraEncoding(KiTChar const *srcPtr, KiTInt
 
     KiTSize const res = MultiByteToWideChar(CP_UTF8, 0, srcPtr, KI_MAX(maxLen, -1), cvtRes, reqSize);
     if (res == 0) {
-        free(cvtRes);
+        KiPlatform_FreeString(cvtRes);
 
         *sizePtr = 0;
         return nullptr;
@@ -80,7 +77,7 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTI
         return nullptr;
     }
 
-    if ((cvtRes = calloc(1, reqSize * sizeof *cvtRes)) == nullptr) {
+    if ((cvtRes = KiPlatform_AllocateString(reqSize * sizeof *cvtRes)) == nullptr) {
         *sizePtr = 0;
 
         return nullptr;
@@ -88,7 +85,7 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTI
 
     KiTSize const res = WideCharToMultiByte(CP_UTF8, 0, srcPtr, KI_MAX(maxLen, -1), cvtRes, reqSize, nullptr, nullptr);
     if (res == 0) {
-        free(cvtRes);
+        KiPlatform_FreeString(cvtRes);
 
         *sizePtr = 0;
         return nullptr;
