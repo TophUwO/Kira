@@ -34,12 +34,13 @@ KI_NATIVE typedef struct KiSJson KiSJson;
  */
 KI_NATIVE typedef enum KiEJsonValueType {
     KiJsonValTy_Invalid = 0,
-    KiJsonValTy_Null    = 1,
-    KiJsonValTy_Number  = 2,
-    KiJsonValTy_Boolean = 3,
-    KiJsonValTy_String  = 4,
-    KiJsonValTy_Array   = 5,
-    KiJsonValTy_Object  = 6,
+
+    KiJsonValTy_Null    = 1 << 0,
+    KiJsonValTy_Number  = 1 << 1,
+    KiJsonValTy_Boolean = 1 << 2,
+    KiJsonValTy_String  = 1 << 3,
+    KiJsonValTy_Array   = 1 << 4,
+    KiJsonValTy_Object  = 1 << 5,
 
     __KiJsonValTy_Count__
 } KiEJsonValueType;
@@ -50,6 +51,7 @@ KI_NATIVE typedef enum KiEJsonValueType {
 KI_NATIVE typedef struct KiSJsonValueQuery {
     KiTChar          const *mp_pathStr;
     KiEJsonValueType        m_reqType;
+    KiEJsonValueType        m_actType;
     KiEErrorCode            m_errCode;
 
     union {
@@ -71,6 +73,9 @@ KI_NATIVE KI_API KiTVoid KI_CALL KiCloseJsonDocument(KiSJson *docPtr);
 /**
  */
 KI_NATIVE KI_API KiSJson *KI_CALL KiGetJsonElement(KiSJson const *docPtr, KiTChar const *propPath);
+/**
+ */
+KI_NATIVE KI_API KiTChar const *KI_CALL KiGetJsonElementName(KiSJson const *elemPtr);
 /**
  */
 KI_NATIVE KI_API KiSJson *KI_CALL KiGetPreviousJsonElement(KiSJson const *elemPtr);

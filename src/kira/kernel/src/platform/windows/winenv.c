@@ -32,9 +32,25 @@
 KiTChar *KI_CALL KiPlatform_GetCommandLine(KiTSize *sizePtr) {
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
 
-    return KiPlatform_CreateFromNativeEncoding((KiTVoid const *)GetCommandLineW(), -1, sizePtr, KI_DONTCARE(KiTSize));
+    KiTVoid const *rawCmdl = GetCommandLineW();
+    if (rawCmdl == nullptr)
+        return nullptr;
+
+    return KiPlatform_CreateFromNativeEncoding(rawCmdl, -1, sizePtr, KI_DONTCARE(KiTSize));
 }
 
+/**
+ * \ki_tested_on{Windows;tested;
+ *  <b>The following test cases have been successfully verified:</b>
+ *  <ul>
+ *   \li assertion failure upon passing an invalid \lsizePtr
+ *   \li empty environment
+ *   \li environment with many variables
+ *   \li environment with non-Latin characters in both key and value
+ *  </ul>;
+ *  Mar 8, 2026
+ * }
+ */
 KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *sizePtr) {
     KI_ASSERT(sizePtr != nullptr, KiErr_OutParameter);
 
@@ -52,41 +68,24 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *sizePtr) {
          * NUL-terminator (with two consecutive NUL-terminators marking the end of the block), we need to determine the
          * size of the environment block manually.
          */
-        KiTSize blockSize;
-        for (WCHAR *currTerm = rawEnv, *nextTerm = nullptr;;) {
-            /** \cond */
-            /**
-             * \brief maximum size of one <tt>K=V</tt> pair (<tt>0 > |V| >= 32768</tt>, see documentation linked below
-             *        for more information); simply double the size to (heuristically) account for the <tt>K=</tt> part
-             * \sa    https://learn.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-getenvironmentvariablew
-             */
-            static KiTSize const gl_c_MaxEnvAdvance = 2 * 32768;
-            /** \endcond */
+        KiTSize blockSize = 0;
+        for (WCHAR *currTerm = rawEnv;;) {
+            blockSize += (KiTSize)wcslen(currTerm) + 1;
+            currTerm   = &rawEnv[blockSize];
 
-            if ((nextTerm = wmemchr(currTerm, u'\0', gl_c_MaxEnvAdvance)) == nullptr) {
-                /* K=V pair is too long. Simply use the block up to the last correctly parsed one. */
-                blockSize = (KiTSize)((KiTIntptr)currTerm - (KiTIntptr)rawEnv);
-
-                break;
-            } else if (nextTerm[1] == u'\0') {
+            if (*currTerm == L'\0') {
                 /*
-                 * We found two consecutive NUL-terminators in a row. We're done. The peek by one character is safe
-                 * because the environment block always ends in \0\0 and wmemchr() points to the first \0.
+                 * Found the final empty string (i.e., two \0 in a row), meaning we are done. We increment *blockSize*
+                 * once more so that the second \0 is counted as well.
                  */
-                blockSize = (KiTSize)(((KiTIntptr)nextTerm + 2) - (KiTIntptr)rawEnv);
+                ++blockSize;
 
                 break;
             }
-
-            /* Only found a single \0. Continue search. */
-            currTerm = nextTerm + 1;
         }
 
-        /*
-         * Finally, convert the entire block at once. This function requires the size in platform characters, not
-         * necessarily in bytes. Thus, we need to reduce the size down to platform characters.
-         */
-        res = KiPlatform_CreateFromNativeEncoding(rawEnv, blockSize >> KI_P2LOG2(sizeof(WCHAR)), sizePtr, KI_DONTCARE(KiTSize));
+        /* Finally, convert the entire block at once. This will not stop at singular NUL-terminators. */
+        res = KiPlatform_CreateFromNativeEncoding(rawEnv, blockSize, sizePtr, KI_DONTCARE(KiTSize));
     }
     FreeEnvironmentStringsW(rawEnv);
 
@@ -94,14 +93,14 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *sizePtr) {
 }
 
 /**
- * \ki_tested_on{Windows; tested;
+ * \ki_tested_on{Windows;tested;
  *  <b>The following test cases have been successfully verified:</b>
  *  <ul>
- *   <li>assertion failure upon passing an invalid parameter</li>
- *   <li>non-interfering operation (no writes to \c name by another thread while this function is being executed on the current thread)</li>
- *   <li>interfering operation (value of environment variable changed by another thread while executing this function)</li>
+ *   \li assertion failure upon passing an invalid parameter
+ *   \li non-interfering operation (no writes to \c name by another thread while this function is being executed on the current thread)
+ *   \li interfering operation (value of environment variable changed by another thread while executing this function)
  *  </ul>;
- *  03/06/2026
+ *  Mar 6, 2026
  * }
  */
 KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *name, KiTSize *sizePtr) {
@@ -168,19 +167,19 @@ KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar const *name, KiTSize 
 }
 
 /**
- * \ki_tested_on{Windows; tested;
+ * \ki_tested_on{Windows;tested;
  *  <b>The following test cases have been successfully verified:</b>
  *  <ul>
- *   <li>assertion failure upon entering invalid parameter as per preconditions</li>
- *   <li>adding environment variable</li>
- *   <li>updating environment variable</li>
- *   <li>unsetting (i.e., removing) environment variable</li>
+ *   \li assertion failure upon entering invalid parameter as per preconditions
+ *   \li adding environment variable
+ *   \li updating environment variable
+ *   \li unsetting (i.e., removing) environment variable
  *  </ul><br>
  *  <b>Not yet successfully verified:</b>
  *  <ul>
- *   <li>encoding error in \c name or <tt>value</tt></li>
+ *   \li encoding error in \c name or \c value
  *  </ul>;
- *  03/07/2026
+ *  Mar 7, 2026
  * }
  */
 KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar const *value) {

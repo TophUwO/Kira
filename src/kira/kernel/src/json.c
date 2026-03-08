@@ -62,7 +62,7 @@ static KiTBool KI_CALL KiInternal_IsTypeMismatch(KiEJsonValueType actType, KiEJs
     if (!KiInternal_IsValidValueType(actType) || !KiInternal_IsValidValueType(reqType))
         return KI_FALSE;
 
-    return actType != reqType;
+    return (actType & reqType) == 0;
 }
 /** \endcond */
 
@@ -107,9 +107,10 @@ KiTVoid KI_CALL KiCloseJsonDocument(KiSJson *docPtr) {
 }
 
 KiSJson *KI_CALL KiGetJsonElement(KiSJson const *elemPtr, KiTChar const *propPath) {
-    KI_ASSERT(elemPtr != nullptr,   KiErr_InParameter);
-    KI_ASSERT(propPath != nullptr, KiErr_InParameter);
-    KI_ASSERT(*propPath != '\0',   KiErr_InParameter);
+    KI_ASSERT(elemPtr != nullptr, KiErr_InParameter);
+
+    if (propPath == nullptr)
+        return (KiSJson *)elemPtr;
 
     /*
      * A JSON pointer always starts with a '/'. If the first character is a forward slash, we will interpret the value
@@ -119,6 +120,12 @@ KiSJson *KI_CALL KiGetJsonElement(KiSJson const *elemPtr, KiTChar const *propPat
         ? cJSONUtils_GetPointerCaseSensitive((cJSON *)elemPtr, propPath)
         : cJSON_GetObjectItemCaseSensitive((cJSON *)elemPtr, propPath)
     );
+}
+
+KiTChar const *KI_CALL KiGetJsonElementName(KiSJson const *elemPtr) {
+    KI_ASSERT(elemPtr != nullptr, KiErr_InParameter);
+
+    return ((cJSON *)elemPtr)->string;
 }
 
 KiSJson *KI_CALL KiGetPreviousJsonElement(KiSJson const *elemPtr) {
@@ -149,7 +156,7 @@ KiTBool KI_CALL KiGetJsonElementValues(
     KI_ASSERT(queriesArr != nullptr, KiErr_InOutParameter);
     KI_ASSERT(nQueries > 0,          KiErr_InParameter);
 
-    KiTBool isError = KI_FALSE;
+    KiTBool isOk = KI_TRUE;
     {
         for (KiTSize i = 0; i < nQueries; i++) {
             /* Get the query object. */
@@ -163,26 +170,27 @@ KiTBool KI_CALL KiGetJsonElementValues(
                     : KiErr_JsonAttribTypeMismatch
                 ;
 
-                isError = KI_TRUE;
+                isOk = KI_FALSE;
                 continue;
             }
 
             /* Copy the value into the query object. */
-            switch (currQueryObj->m_reqType) {
+            switch (currQueryObj->m_actType = KiInternal_JsonToKiraType(reqElem->type)) {
                 case KiJsonValTy_Boolean: currQueryObj->m_boolValue = reqElem->valueint != KI_FALSE; break;
                 case KiJsonValTy_Number:  currQueryObj->m_dblValue  = reqElem->valuedouble;          break;
                 case KiJsonValTy_String:  currQueryObj->mp_strValue = reqElem->valuestring;          break;
                 case KiJsonValTy_Array:
-                case KiJsonValTy_Object:  currQueryObj->mp_arrValue = (KiSJson *)reqElem->child;     break;               
+                case KiJsonValTy_Object:  currQueryObj->mp_arrValue = (KiSJson *)reqElem->child;     break;
+                case KiJsonValTy_Null:    currQueryObj->mp_objValue = nullptr;                       break;
                 default:
                     currQueryObj->m_errCode = KiErr_JsonInvalidValueType;
 
-                    isError = KI_TRUE;
+                    isOk = KI_FALSE;
             }
         }
     }
 
-    return isError;
+    return isOk;
 }
 
 KiEJsonValueType KI_CALL KiGetJsonElementType(KiSJson const *elemPtr) {

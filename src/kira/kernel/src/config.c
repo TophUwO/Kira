@@ -212,23 +212,75 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
 }
 
 /**
+ * \ki_tested{tested;
+ *  <b>The following test cases have been successfully verified:</b>
+ *  <ul>
+ *   \li assertion failures upon missing/incorrect preconditions
+ *   \li adding a normal environment variable
+ *   \li adding an empty environment variable
+ *   \li unsetting an environment variable (via <tt>nullptr>-value)
+ *   \li adding environment variable with non-Latin name and value
+ *  </ul>;
+ *  Mar 8, 2026
+ * }
+ */
+static KiTVoid KI_CALL KiInternal_SetConfigEnvironmentVariables(KiSJson const *cfgDoc) {
+    KI_ASSERT(cfgDoc != nullptr, KiErr_InParameter);
+
+    /* (1) Get the environment block from the config (if present). */
+    KiSJsonValueQuery envObjQuery = { .mp_pathStr = "/environment/env", .m_reqType = KiJsonValTy_Object };
+    {
+        KiTBool const queryRes = KiGetJsonElementValue(gl_RuntimeConfigState.mp_config, &envObjQuery);
+
+        if (queryRes == KI_FALSE || envObjQuery.mp_objValue == nullptr)
+            return;
+    }
+
+    /*
+     * (2) Go through the block (JSON dictionary) and add all the environment variables. The key is the variable name
+     *     and the value is the value of that environment variable.
+     */
+    for (KiSJson *var = (KiSJson *)envObjQuery.mp_objValue; var != nullptr; var = KiGetNextJsonElement(var)) {
+        /* Get the key. */
+        KiTChar const *varName = KiGetJsonElementName(var);
+        if (varName == nullptr || *varName == '\0')
+            continue;
+
+        /* Get the value associated with the current key. */
+        KiSJsonValueQuery varValueQuery = { .mp_pathStr = nullptr, .m_reqType = KiJsonValTy_String | KiJsonValTy_Null };
+        {
+            KiTBool const queryRes = KiGetJsonElementValue(var, &varValueQuery);
+
+            if (queryRes == KI_FALSE)
+                continue;
+        }
+
+        KiPlatform_SetEnvironmentVariable(varName, varValueQuery.mp_strValue);
+    }
+}
+
+/**
  */
 static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
 
-    KiSString *cfgPath = KiInternal_DetermineConfigDirectoryPath();
+    /* (1) Determine configuration directory path. */
+    gl_RuntimeConfigState.mp_configRootDir = KiInternal_DetermineConfigDirectoryPath();
     {
-        if (cfgPath == nullptr)
+        if (gl_RuntimeConfigState.mp_configRootDir == nullptr)
             return KiErr_NoConfigDirectory;
 
-        KiEErrorCode errCode = KiInternal_LoadInitFile(cfgPath);
+        /* (2) Load config file as JSON. */
+        KiEErrorCode errCode = KiInternal_LoadInitFile(gl_RuntimeConfigState.mp_configRootDir);
         if (errCode != KiErr_Ok) {
-            KiDestroyString(cfgPath);
+            KiDestroyString(gl_RuntimeConfigState.mp_configRootDir);
 
             return errCode;
         }
+
+        /* (3) Add all environment variables listed in the config's "environment" section. */
+        KiInternal_SetConfigEnvironmentVariables(gl_RuntimeConfigState.mp_config);
     }
-    gl_RuntimeConfigState.mp_configRootDir = cfgPath;
 
     return KiErr_Ok;
 }
@@ -251,10 +303,10 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(RuntimeConfiguration)(KiTVoid *e
  * \ki_tested{tested;
  *  <b>The following test cases have been successfully verified:</b>
  *  <ul>
- *   <li>assertion failures upon missing/incorrect preconditions</li>
- *   <li>correct path formatting</li>
+ *   \li assertion failures upon missing/incorrect preconditions
+ *   \li correct path formatting
  *  </ul>;
- *  03/07/2026
+ *  Mar 7, 2026
  * }
  */
 KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
@@ -271,11 +323,8 @@ KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
          * runtime config is considered read-only and thus the queried values will never change throughout the
          * application's runtime.
          */
-        KiSJsonValueQuery rootProfileQuery = {
-            .mp_pathStr = "/activeProfile",
-            .m_reqType  = KiJsonValTy_String
-        };
-        if (KiGetJsonElementValue(gl_RuntimeConfigState.mp_config, &rootProfileQuery) != KI_FALSE) {
+        KiSJsonValueQuery rootProfileQuery = { .mp_pathStr = "/activeProfile", .m_reqType  = KiJsonValTy_String };
+        if (KiGetJsonElementValue(gl_RuntimeConfigState.mp_config, &rootProfileQuery) == KI_FALSE) {
             KiDestroyString(res);
 
             return nullptr;
