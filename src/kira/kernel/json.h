@@ -33,16 +33,22 @@ KI_NATIVE typedef struct KiSJson KiSJson;
 /**
  */
 KI_NATIVE typedef enum KiEJsonValueType {
-    KiJsonValTy_Invalid = 0,
+    KiJsonValTy_Invalid    = 0,
 
-    KiJsonValTy_Null    = 1 << 0,
-    KiJsonValTy_Number  = 1 << 1,
-    KiJsonValTy_Boolean = 1 << 2,
-    KiJsonValTy_String  = 1 << 3,
-    KiJsonValTy_Array   = 1 << 4,
-    KiJsonValTy_Object  = 1 << 5,
+    KiJsonValTy_Null       = 1 << 0,
+    KiJsonValTy_Number     = 1 << 1,
+    KiJsonValTy_Boolean    = 1 << 2,
+    KiJsonValTy_String     = 1 << 3,
+    KiJsonValTy_Array      = 1 << 4,
+    KiJsonValTy_Object     = 1 << 5,
 
-    __KiJsonValTy_Count__
+    KiJsonValTy_Any        =   KiJsonValTy_Null | KiJsonValTy_Number | KiJsonValTy_Boolean | KiJsonValTy_String
+                             | KiJsonValTy_Array | KiJsonValTy_Object,
+    KiJsonValTy_StrOrNull  = KiJsonValTy_String | KiJsonValTy_Null,
+    KiJsonValTy_NumOrNull  = KiJsonValTy_Number | KiJsonValTy_Null,
+    KiJsonValTy_BoolOrNull = KiJsonValTy_Boolean | KiJsonValTy_Null,
+    KiJsonValTy_ArrOrNull  = KiJsonValTy_Array | KiJsonValTy_Null,
+    KiJsonValTy_ObjOrNull  = KiJsonValTy_Object | KiJsonValTy_Null
 } KiEJsonValueType;
 
 
@@ -53,6 +59,7 @@ KI_NATIVE typedef struct KiSJsonValueQuery {
     KiEJsonValueType        m_reqType;
     KiEJsonValueType        m_actType;
     KiEErrorCode            m_errCode;
+    KiTBool                 m_isOpt;
 
     union {
         KiTBool          m_boolValue;
@@ -66,7 +73,7 @@ KI_NATIVE typedef struct KiSJsonValueQuery {
 
 /**
  */
-KI_NATIVE KI_API KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath);
+KI_NATIVE KI_API KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath, KiEErrorCode *errCodePtr);
 /**
  */
 KI_NATIVE KI_API KiTVoid KI_CALL KiCloseJsonDocument(KiSJson *docPtr);
@@ -82,6 +89,9 @@ KI_NATIVE KI_API KiSJson *KI_CALL KiGetPreviousJsonElement(KiSJson const *elemPt
 /**
  */
 KI_NATIVE KI_API KiSJson *KI_CALL KiGetNextJsonElement(KiSJson const *elemPtr);
+/**
+ */
+KI_NATIVE KI_API KiEErrorCode KI_CALL KiSetNextJsonElement(KiSJson *elemPtr, KiTChar const *keyStr, KiSJson *nextElemPtr);
 /**
  */
 KI_NATIVE KI_API KiTBool KI_CALL KiGetJsonElementValue(KiSJson const *elemPtr, KiSJsonValueQuery *queryPtr);

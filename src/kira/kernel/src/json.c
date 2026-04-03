@@ -52,8 +52,8 @@ static KiEJsonValueType KI_CALL KiInternal_JsonToKiraType(KiTInt32 cjsonTy) {
 
 /**
  */
-static KiTBool KI_CALL KiInternal_IsValidValueType(KiTInt32 typeId) {
-    return KI_INRANGE_EXCL(typeId, KiJsonValTy_Invalid, __KiJsonValTy_Count__);
+static KiTBool KI_CALL KiInternal_IsValidValueType(KiEJsonValueType typeField) {
+    return KI_INRANGE_INCL(typeField, KiJsonValTy_Invalid + 1, KiJsonValTy_Any);
 }
 
 /**
@@ -67,7 +67,7 @@ static KiTBool KI_CALL KiInternal_IsTypeMismatch(KiEJsonValueType actType, KiEJs
 /** \endcond */
 
 
-KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
+KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath, KiEErrorCode *errCodePtr) {
     KI_ASSERT(filePath != nullptr, KiErr_InParameter);
     KI_ASSERT(*filePath != '\0',   KiErr_InParameter);
 
@@ -75,8 +75,12 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
     {
         /* Open file. */
         FILE *fPointer;
-        if (fopen_s(&fPointer, filePath, "rb") != 0)
+        if (fopen_s(&fPointer, filePath, "rb") != 0) {
+            if (errCodePtr != nullptr)
+                *errCodePtr = KiErr_NoSuchFileOrDirectory;
+
             return nullptr;
+        }
         /* Get file size. */
         _fseeki64(fPointer, 0, SEEK_END);
         KiTSize const fSize = _ftelli64(fPointer);
@@ -87,6 +91,8 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
         if (rJson == nullptr) {
             fclose(fPointer);
 
+            if (errCodePtr != nullptr)
+                *errCodePtr = KiErr_MemoryAllocation;
             return nullptr;
         }
         /* Read and close file. */
@@ -96,6 +102,8 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath) {
     cJSON *newDoc = cJSON_Parse(rJson);
     free(rJson);
 
+    if (errCodePtr != nullptr)
+        *errCodePtr = KiErr_Ok;
     return (KiSJson *)newDoc;
 }
 
@@ -140,6 +148,21 @@ KiSJson *KI_CALL KiGetNextJsonElement(KiSJson const *elemPtr) {
     return (KiSJson *)((cJSON const *)elemPtr)->next; 
 }
 
+KiEErrorCode KI_CALL KiSetNextJsonElement(KiSJson *elemPtr, KiTChar const *keyStr, KiSJson *nextElemPtr) {
+    KI_ASSERT(elemPtr != nullptr, KiErr_InOutParameter);
+
+    KiTBool res;
+    {
+        /// TODO: check if this is good, adding an obj to an obj thinking it is an array
+        if (KiGetJsonElementType(elemPtr) == KiJsonValTy_Array || keyStr == nullptr)
+            res = cJSON_AddItemToArray((cJSON *)elemPtr, (cJSON *)nextElemPtr);
+        else
+            res = cJSON_AddItemToObject((cJSON *)elemPtr, keyStr, (cJSON *)nextElemPtr);
+    }
+
+    return res != KI_TRUE ? KiErr_JsonCouldNotAppendItem : KiErr_Ok;
+}
+
 KiTBool KI_CALL KiGetJsonElementValue(KiSJson const *elemPtr, KiSJsonValueQuery *queryPtr) {
     KI_ASSERT(elemPtr != nullptr,  KiErr_InParameter);
     KI_ASSERT(queryPtr != nullptr, KiErr_InOutParameter);
@@ -165,11 +188,16 @@ KiTBool KI_CALL KiGetJsonElementValues(
             /* Get the JSON element and check type. */
             cJSON const *reqElem = (cJSON const *)KiGetJsonElement(elemPtr, currQueryObj->mp_pathStr);
             if (reqElem == nullptr || KiInternal_IsTypeMismatch(KiInternal_JsonToKiraType(reqElem->type), currQueryObj->m_reqType)) {
+                if (reqElem == nullptr && currQueryObj->m_isOpt == KI_TRUE) {
+                    currQueryObj->m_errCode = KiErr_JsonAttribNotFound;
+
+                    continue;
+                }
+
                 currQueryObj->m_errCode = reqElem == nullptr
                     ? KiErr_JsonAttribNotFound
                     : KiErr_JsonAttribTypeMismatch
                 ;
-
                 isOk = KI_FALSE;
                 continue;
             }

@@ -121,6 +121,16 @@ KiTVoid KI_CALL KiDestroyArray(KiSArray *arrPtr) {
     free(arrPtr);
 }
 
+KiTVoid KI_CALL KiClearArray(KiSArray *arrPtr) {
+    KI_ASSERT(arrPtr != nullptr, KiErr_InOutParameter);
+
+    arrPtr->m_elemCnt    = 0;
+    arrPtr->m_firstEmpty = 0;
+
+    memset(arrPtr->mpp_elemArr, 0, sizeof *arrPtr->mpp_elemArr * arrPtr->m_elemCap);
+}
+
+
 KiEErrorCode KI_CALL KiInsertIntoArray(
     KiSArray *arrPtr,
     KiTVoid const *elemPtr,
@@ -170,6 +180,7 @@ KiTVoid *KI_CALL KiEraseFromArray(KiSArray *arrPtr, KiTIndex idx) {
     arrPtr->m_firstEmpty = arrPtr->m_firstEmpty > idx ? idx : arrPtr->m_firstEmpty;
 
     /* Return previous element. */
+    --arrPtr->m_elemCnt;
     return resPtr;
 }
 
@@ -204,6 +215,7 @@ KiTVoid *KI_CALL KiPopFromArray(KiSArray *arrPtr) {
         : nullptr
     ;
 }
+
 
 KiTVoid **KI_CALL KiMapArray(
     KiSArray const *arrPtr,

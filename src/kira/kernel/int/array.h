@@ -40,6 +40,9 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiCreateArray(KiSArray **resPtr);
 /**
  */
 KI_NATIVE extern KiTVoid KI_CALL KiDestroyArray(KiSArray *arrPtr);
+/**
+ */
+KI_NATIVE extern KiTVoid KI_CALL KiClearArray(KiSArray *arrPtr);
 
 /**
  */

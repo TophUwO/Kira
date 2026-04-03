@@ -141,6 +141,14 @@
         struct KiIComponentFactory *KI_CONCAT2(iId, _Fac);  \
     );                                                      \
     KiSResolvedRequirement const *KI_CONCAT2(iId, _Req);
+/**
+ */
+#define KI_REQUIRES_AS(iId, alias)                            \
+    KI_UNION(                                                 \
+        struct iId                 *KI_CONCAT2(alias, _Inst); \
+        struct KiIComponentFactory *KI_CONCAT2(alias, _Fac);  \
+    );                                                        \
+    KiSResolvedRequirement const *KI_CONCAT2(alias, _Req);
 
 /**
  * \def   KI_SINGLETON
@@ -491,6 +499,8 @@ KI_NATIVE typedef enum KiEErrorCode {
     KiErr_VirtualUncommit,
     KiErr_VirtualFree,
     KiErr_NoConfigDirectory,
+    KiErr_NoProfileToLoad,
+    KiErr_JsonCouldNotAppendItem,
 
     KI_ENUM_COUNT(KiErr)
 } KiEErrorCode;

@@ -130,6 +130,9 @@ KI_NATIVE extern KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const
 KI_NATIVE extern KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) KI_PLATFORM;
 /**
  */
+KI_NATIVE extern KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) KI_PLATFORM;
+/**
+ */
 KI_NATIVE extern KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) KI_PLATFORM;
 /**
  */

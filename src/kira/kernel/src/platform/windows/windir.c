@@ -159,6 +159,10 @@ KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) {
     }
 }
 
+KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) {
+    return '\\';
+}
+
 KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) {
     KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
 

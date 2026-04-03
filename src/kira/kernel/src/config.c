@@ -1,12 +1,12 @@
-/*****************************************************************************************************************
- * Kira - cross-platform 2-D role-playing game (RPG) game engine for desktop and mobile, and console platforms *
- *                                                                                                               *
- * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                   *
- *                                                                                                               *
- * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of  *
- * this project. If this file is not present, visit                                                              *
- *     https://www.apache.org/licenses/LICENSE-2.0                                                               *
- *****************************************************************************************************************/
+/****************************************************************************************************************
+ * Kira - cross-platform component-based modular application development framework written in C11               *
+ *                                                                                                              *
+ * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
+ *                                                                                                              *
+ * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
+ * this project. If this file is not present, visit                                                             *
+ *     https://www.apache.org/licenses/LICENSE-2.0                                                              *
+ ****************************************************************************************************************/
 
 /**
  * \file  config.c
@@ -20,9 +20,9 @@
 /* Kira includes */
 #include <kira/dbg.h>
 
-#include <kira/kernel/config.h>
 #include <kira/kernel/json.h>
 
+#include <kira/kernel/int/config.h>
 #include <kira/kernel/int/string.h>
 #include <kira/kernel/int/krnlmod.h>
 #include <kira/kernel/int/platform.h>
@@ -203,8 +203,7 @@ static KiEErrorCode KI_CALL KiInternal_LoadInitFile(KiSString *confPath) {
         if (errCode != KiErr_Ok)
             return errCode;
 
-        if ((gl_RuntimeConfigState.mp_config = KiOpenJsonDocument(KiGetCString(confPath))) == nullptr)
-            errCode = KiErr_LoadJsonDocument;
+        gl_RuntimeConfigState.mp_config = KiOpenJsonDocument(KiGetCString(confPath), &errCode);
     }
     KiPopPathComponent(confPath, '/');
 
@@ -247,7 +246,7 @@ static KiTVoid KI_CALL KiInternal_SetConfigEnvironmentVariables(KiSJson const *c
             continue;
 
         /* Get the value associated with the current key. */
-        KiSJsonValueQuery varValueQuery = { .mp_pathStr = nullptr, .m_reqType = KiJsonValTy_String | KiJsonValTy_Null };
+        KiSJsonValueQuery varValueQuery = { .mp_pathStr = nullptr, .m_reqType = KiJsonValTy_StrOrNull };
         {
             KiTBool const queryRes = KiGetJsonElementValue(var, &varValueQuery);
 
@@ -259,10 +258,14 @@ static KiTVoid KI_CALL KiInternal_SetConfigEnvironmentVariables(KiSJson const *c
     }
 }
 
+
 /**
  */
 static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(RuntimeConfiguration)(KiTVoid *extraParam) {
     KI_UNREFERENCED_PARAMETER(extraParam);
+
+    /* (0) Reset state from a potential previous session. */
+    memset(&gl_RuntimeConfigState, 0, sizeof gl_RuntimeConfigState);
 
     /* (1) Determine configuration directory path. */
     gl_RuntimeConfigState.mp_configRootDir = KiInternal_DetermineConfigDirectoryPath();
@@ -333,10 +336,12 @@ KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
         /* Add file name to root dir. */
         KiEErrorCode errCode = KiErr_Ok;
         {
+            KiTChar const pathSep = KiPlatform_GetPathSeparator();
+
             (KiTVoid)(
-                   (errCode = KiPushPathComponent(res, '/', "profiles"))                   == KiErr_Ok
-                && (errCode = KiPushPathComponent(res, '/', rootProfileQuery.mp_strValue)) == KiErr_Ok
-                && (errCode = KiPushPathComponent(res, '.', "json"))                       == KiErr_Ok
+                   (errCode = KiPushPathComponent(res, pathSep, "profiles"))                   == KiErr_Ok
+                && (errCode = KiPushPathComponent(res, pathSep, rootProfileQuery.mp_strValue)) == KiErr_Ok
+                && (errCode = KiPushPathComponent(res, '.', "json"))                           == KiErr_Ok
             );
 
             if (errCode != KiErr_Ok) {
