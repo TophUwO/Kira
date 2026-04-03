@@ -9,46 +9,22 @@
  *****************************************************************************************************************/
 
 /**
- * \file  winrand.c
- * \brief implements native random number seed generation for the Kicrosoft(R) Windows(R) platform
- */
-#if (defined KI_PLATFORM_WINDOWS)
+ * \file  windir.c
+ * \brief implements Windows(R)-specific routines regarding directory handling
+*/
+#if (defined KI_PLATFORM_LINUX)
 
-
-/* Windows includes */
-#include <windows.h>
-#include <wincrypt.h>
 
 /* Kira includes */
-#include <kira/def.h>
+#include <kira/kernel/int/platform.h>
 
 
-/* static library bindings */
-#pragma comment (lib, "crypt32.lib")
 
-
-KiTUint64 KI_CALL KiVirtual_KrnlHtGetRandomSeed(KiTVoid) {
-    KiTUint64 resVal = 0;
-
-    /* Acquire cryptographic provider context. */
-    HCRYPTPROV cryptProv;
-    if (CryptAcquireContextW(&cryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) == FALSE)
-        goto lbl_ONERRORDET;
-
-    /* Fill the seed array. */
-    BOOL const retVal = CryptGenRandom(cryptProv, (DWORD)sizeof resVal, (BYTE *)resVal);
-    
-    /* Release the context. */
-    CryptReleaseContext(cryptProv, 0);
-    if (retVal != FALSE)
-        return resVal;
-
-lbl_ONERRORDET:
-    /* Failed to retrieve context or random number, or supposed to use deterministic seed. */
-    return 0x9c9d7865503d5fdf;
+KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) {
+    return '/';
 }
 
 
-#endif /* KI_PLATFORM_WINDOWS */
+#endif /* KI_PLATFORM_LINUX */
 
 

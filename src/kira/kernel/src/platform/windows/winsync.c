@@ -76,6 +76,6 @@ KiTVoid KI_CALL KiVirtual_RWLockReleaseWrite(KiTRWLockHandle *rwLockPtr) {
 }
 
 
-#endif /* defined KI_PLATFORM_WINDOWS */
+#endif /* KI_PLATFORM_WINDOWS */
 
 

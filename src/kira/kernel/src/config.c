@@ -43,15 +43,15 @@ static KiSRuntimeConfigurationState gl_RuntimeConfigState = { nullptr };
 
 /**
  */
-static KiSStringView const gl_c_DefaultConfigDirPaths[] = {
-    KI_MAKE_STRING_VIEW("conf")
+static KiSStringView const *gl_c_DefaultConfigDirPaths[] = {
+    &KI_MAKE_STRING_VIEW("conf")
 };
 
 /**
  */
-static KiSStringView const gl_c_ProfileExts[] = {
-    KI_MAKE_STRING_VIEW(".json"),
-    KI_MAKE_STRING_VIEW(".JSON")
+static KiSStringView const *gl_c_ProfileExts[] = {
+    &KI_MAKE_STRING_VIEW(".json"),
+    &KI_MAKE_STRING_VIEW(".JSON")
 };
 
 
@@ -89,7 +89,7 @@ static KiTBool KI_CALL KiInternal_FilenameHasJsonExt(KiTChar const *pathStr) {
     KiTChar const *lastDot = strrchr(pathStr, '.');
     {
         for (KiTSize i = 0; i < KI_COUNTOF(gl_c_ProfileExts); i++)
-            if (!strcmp(lastDot, gl_c_ProfileExts[i].mp_strPtr))
+            if (!strcmp(lastDot, gl_c_ProfileExts[i]->mp_strPtr))
                 return KI_TRUE;
     }
 
@@ -142,7 +142,7 @@ static KiSString *KI_CALL KiInternal_DetermineConfigDirectoryPath(KiTVoid) {
             continue;
         }
 
-        configSearchPaths[i] = gl_c_DefaultConfigDirPaths[i - 1].mp_strPtr;
+        configSearchPaths[i] = gl_c_DefaultConfigDirPaths[i - 1]->mp_strPtr;
     }
 
     /* Then, we check for each path if

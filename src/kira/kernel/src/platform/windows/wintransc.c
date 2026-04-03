@@ -97,6 +97,6 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTI
 }
 
 
-#endif /* defined KI_PLATFORM_WINDOWS */
+#endif /* KI_PLATFORM_WINDOWS */
 
 

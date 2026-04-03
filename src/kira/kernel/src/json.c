@@ -34,6 +34,8 @@
 #include <kira/kernel/json.h>
 #include <kira/kernel/reg.h>
 
+#include <kira/kernel/int/platform.h>
+
 
 /** \cond INTERNAL */
 /**
@@ -71,42 +73,60 @@ static KiTBool KI_CALL KiInternal_IsTypeMismatch(KiEJsonValueType actType, KiEJs
 
 
 KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath, KiEErrorCode *errCodePtr) {
-    KI_ASSERT(filePath != nullptr, KiErr_InParameter);
-    KI_ASSERT(*filePath != '\0',   KiErr_InParameter);
+    KI_ASSERT(filePath != nullptr,   KiErr_InParameter);
+    KI_ASSERT(*filePath != '\0',     KiErr_InParameter);
+    KI_ASSERT(errCodePtr != nullptr, KiErr_OutParameter);
 
+    KiTVoid *fileHandle;
     KiTChar *rJson;
     {
-        /* Open file. */
-        FILE *fPointer = fopen(filePath, "rb");
-        if (fPointer != nullptr) {
-            if (errCodePtr != nullptr)
-                *errCodePtr = KiErr_NoSuchFileOrDirectory;
+        /* (1) Open file. */
+        *errCodePtr = KiPlatform_OpenFile(filePath, KiFAccMd_Read | KiFAccMd_Binary, &fileHandle);
+        if (*errCodePtr != KiErr_Ok)
+            return nullptr;
 
+        /* (2) Get file size. */
+        KiTSize const fileSize = KiPlatform_GetFileSize(fileHandle);
+        if (fileSize == KI_SIZE_MAX) {
+            KiPlatform_CloseFile(fileHandle);
+
+            *errCodePtr = KiErr_IOError;
             return nullptr;
         }
-        /* Get file size. */
-        fseeko(fPointer, 0, SEEK_END);
-        KiTSize const fSize = (KiTSize)ftello(fPointer);
-        rewind(fPointer);
 
-        /* Allocate array. */
-        rJson = malloc((fSize + 1) * sizeof *rJson);
+        /* (3) Allocate buffer. */
+        rJson = calloc(1, (fileSize + 1) * sizeof *rJson);
         if (rJson == nullptr) {
-            fclose(fPointer);
+            KiPlatform_CloseFile(fileHandle);
 
-            if (errCodePtr != nullptr)
-                *errCodePtr = KiErr_MemoryAllocation;
+            *errCodePtr = KiErr_MemoryAllocation;
             return nullptr;
         }
-        /* Read and close file. */
-        fread(rJson, 1, fSize, fPointer);
-        fclose(fPointer);
+
+        /* (4) Read and close file. */
+        KiTSize actReadSize;
+        {
+            *errCodePtr = KiPlatform_ReadFromFile(fileHandle, rJson, fileSize, &actReadSize);
+
+            if (*errCodePtr != KiErr_Ok || actReadSize < fileSize) {
+                free(rJson);
+                KiPlatform_CloseFile(fileHandle);
+
+                return nullptr;
+            }
+        }
+        KiPlatform_CloseFile(fileHandle);
     }
+
+    /* (5) Parse the document. */
     cJSON *newDoc = cJSON_Parse(rJson);
     free(rJson);
 
-    if (errCodePtr != nullptr)
-        *errCodePtr = KiErr_Ok;
+    if (newDoc == nullptr) {
+        *errCodePtr = KiErr_LoadJsonDocument;
+
+        return nullptr;
+    }
     return (KiSJson *)newDoc;
 }
 

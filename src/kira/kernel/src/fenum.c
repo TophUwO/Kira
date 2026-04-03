@@ -18,6 +18,9 @@
 #include <stdlib.h>
 
 #include <errno.h>
+#if (defined KI_PLATFORM_LINUX)
+    #include <string.h>
+#endif
 
 /* external/stdlib includes */
 #if (defined KI_PLATFORM_WINDOWS)

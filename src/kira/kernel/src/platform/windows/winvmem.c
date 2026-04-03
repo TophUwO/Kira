@@ -73,6 +73,6 @@ KiTSize KI_CALL KiPlatform_VirtualGetPageSize(KiTVoid) {
 }
 
 
-#endif /* defined KI_PLATFORM_WINDOWS */
+#endif /* KI_PLATFORM_WINDOWS */
 
 

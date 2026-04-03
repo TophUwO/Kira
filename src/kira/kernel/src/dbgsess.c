@@ -15,6 +15,9 @@
 
 
 /* stdlib includes */
+#if ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS))
+    #define _CRT_SECURE_NO_WARNINGS 1
+#endif
 #include <string.h>
 
 /* Kira includes */
@@ -45,7 +48,7 @@ KiEErrorCode KI_CALL KiStartDebugSession(KiSDebugOptions const *dbgOpt) {
     /* Reset debug options. */
     memset(&gl_DebugOptions, 0, sizeof gl_DebugOptions);
     /* Initialize debug options. */
-    memcpy_s(&gl_DebugOptions, sizeof gl_DebugOptions, dbgOpt, dbgOpt->m_structSize);
+    memcpy(&gl_DebugOptions, dbgOpt, dbgOpt->m_structSize);
 
     /* Intitialize debug subsystems. */
     KiTBool res = KI_TRUE;

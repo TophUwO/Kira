@@ -42,6 +42,6 @@ KI_NORETURN KiTVoid KI_CALL KiPlatform_Exit(KiEErrorCode errCode) {
 /** \endcond */
 
 
-#endif /* defined KI_PLATFORM_WINDOWS */
+#endif /* KI_PLATFORM_WINDOWS */
 
 

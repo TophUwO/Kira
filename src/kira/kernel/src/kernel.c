@@ -15,6 +15,9 @@
 
 
 /* stdlib includes */
+#if ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS))
+    #define _CRT_SECURE_NO_WARNINGS 1
+#endif
 #include <stdatomic.h>
 
 #include <string.h>
@@ -117,7 +120,7 @@ KiTVoid KI_CALL KiRun(KiSReturnState *retStatePtr) {
     /* At last, copy runtime return state. */
     KiTSize const dstSize = retStatePtr->m_structSize;
     {
-        memcpy_s(retStatePtr, dstSize, &gl_KernelState.m_retState, gl_KernelState.m_retState.m_structSize);
+        memcpy(retStatePtr, &gl_KernelState.m_retState, gl_KernelState.m_retState.m_structSize);
 
         retStatePtr->m_structSize = dstSize;
     }

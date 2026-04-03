@@ -141,7 +141,7 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ProfileManager)(KiTVoid *extraPara
                 }
                 KiPopPathComponent(profPath, KiPlatform_GetPathSeparator());
 
-                errCode = KiPushPathComponent(profPath, KiPlatform_GetPathSeparator(), baseProfQuery.mp_strValue);
+                errCode = KiPushPathComponent(profPath, KiPlatform_GetPathSeparator(), baseProfQuery[0].mp_strValue);
                 if (errCode != KiErr_Ok) {
                     KiInternal_UnloadAllProfiles(profArr);
                     KiDestroyArray(profArr);
