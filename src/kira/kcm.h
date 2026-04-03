@@ -501,6 +501,7 @@ KI_NATIVE typedef enum KiEErrorCode {
     KiErr_NoConfigDirectory,
     KiErr_NoProfileToLoad,
     KiErr_JsonCouldNotAppendItem,
+    KiErr_InvalidFileAccessMode,
 
     KI_ENUM_COUNT(KiErr)
 } KiEErrorCode;

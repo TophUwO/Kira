@@ -15,6 +15,9 @@
 
 
 /* stdlib includes */
+#if ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS))
+    #define _CRT_SECURE_NO_WARNINGS 1
+#endif
 #include <stdlib.h>
 
 #include <string.h>
@@ -71,7 +74,7 @@ static KiEErrorCode KI_CALL KiInternal_ArrayResize(KiSArray *arrPtr, KiTSize new
         if (newArr == nullptr)
             return KiErr_MemoryAllocation;
 
-        memcpy_s(newArr, newSize * sizeof *newArr, arrPtr->mpp_elemArr, arrPtr->m_elemCap * sizeof *newArr);
+        memcpy(newArr, arrPtr->mpp_elemArr, arrPtr->m_elemCap * sizeof *newArr);
         memset(&newArr[arrPtr->m_elemCap], 0, sizeof *newArr * (newSize - arrPtr->m_elemCap));
     }
 

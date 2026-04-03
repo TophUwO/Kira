@@ -73,7 +73,12 @@
     #define KI_CALL     __cdecl
     #define KI_NORETURN __declspec(noreturn)
 #else
-    #define KI_CALL     __attribute__((cdecl))
+    #if (defined KI_PLATFORM_WINDOWS)
+        #define KI_CALL __attribute__((cdecl))
+    #else
+        #define KI_CALL
+    #endif
+
     #define KI_NORETURN __attribute__((noreturn))
 #endif
 

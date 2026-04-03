@@ -553,3 +553,30 @@ KI_NATIVE typedef struct KiSFunctionHandle {
 } KiSFunctionHandle;
 
 
+/**
+ * 
+ */
+KI_NATIVE typedef enum KiEFileAccessMode {
+    KiFAccMd_Unknown      = 0,
+    KiFAccMd_None         = KiFAccMd_Unknown,
+
+    KiFAccMd_Read         = 1 << 0,
+    KiFAccMd_Write        = 1 << 1,
+    KiFAccMd_Append       = 1 << 2,
+    KiFAccMd_ReadWrite    = KiFAccMd_Read | KiFAccMd_Write,
+    
+    KiFAccMd_Binary       = 1 << 8,
+    KiFAccMd_Text         = 1 << 9,
+
+    KiFAccMd_MustExist    = 1 << 16,
+    KiFAccMd_MustNotExist = 1 << 17
+} KiEFileAccessMode;
+
+/**
+ * 
+ */
+KI_PLATFORM typedef enum KiEFilePositionOrigin {
+
+} KiEFilePositionOrigin;
+
+

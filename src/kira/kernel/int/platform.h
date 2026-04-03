@@ -139,6 +139,35 @@ KI_NATIVE extern KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, K
 KI_NATIVE extern KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) KI_PLATFORM;
 
 /**
+ * 
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_OpenFile(KiTChar const *pathStr, KiEFileAccessMode mode, KiTVoid **resPtr) KI_PLATFORM;
+/**
+ * 
+ */
+KI_NATIVE extern KiTVoid KI_CALL KiPlatform_CloseFile(KiTVoid *fHandle) KI_PLATFORM;
+/**
+ * 
+ */
+KI_NATIVE extern KiTSize KI_CALL KiPlatform_GetFileSize(KiTVoid *fHandle) KI_PLATFORM;
+/**
+ * 
+ */
+KI_NATIVE extern KiTOffset KI_CALL KiPlatform_GetFilePosition(KiTVoid *fHandle) KI_PLATFORM;
+/**
+ * 
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_SetFilePosition(KiTVoid *fHandle, KiTOffset offset, KiEFilePositionOrigin origin) KI_PLATFORM;
+/**
+ * 
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_ReadFromFile(KiTVoid *fHandle, KiTVoid *dstBufPtr, KiTSize sizeInBytes) KI_PLATFORM;
+/**
+ * 
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_WriteToFile(KiTVoid *fHandle, KiTVoid const *srcBufPtr, KiTSize sizeInBytes) KI_PLATFORM;
+
+/**
  */
 KI_NATIVE extern KiTDynLibHandle KI_CALL KiPlatform_LoadLibrary(KiTChar const *libPath) KI_PLATFORM;
 /**

@@ -18,6 +18,9 @@
 
 
 /* stdlib includes */
+#if ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS))
+    #define _CRT_SECURE_NO_WARNINGS 1
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -74,16 +77,16 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath, KiEErrorCode *errCo
     KiTChar *rJson;
     {
         /* Open file. */
-        FILE *fPointer;
-        if (fopen_s(&fPointer, filePath, "rb") != 0) {
+        FILE *fPointer = fopen(filePath, "rb");
+        if (fPointer != nullptr) {
             if (errCodePtr != nullptr)
                 *errCodePtr = KiErr_NoSuchFileOrDirectory;
 
             return nullptr;
         }
         /* Get file size. */
-        _fseeki64(fPointer, 0, SEEK_END);
-        KiTSize const fSize = _ftelli64(fPointer);
+        fseeko(fPointer, 0, SEEK_END);
+        KiTSize const fSize = (KiTSize)ftello(fPointer);
         rewind(fPointer);
 
         /* Allocate array. */
@@ -96,7 +99,7 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath, KiEErrorCode *errCo
             return nullptr;
         }
         /* Read and close file. */
-        fread_s(rJson, (fSize + 1) * sizeof *rJson, 1, fSize, fPointer);
+        fread(rJson, 1, fSize, fPointer);
         fclose(fPointer);
     }
     cJSON *newDoc = cJSON_Parse(rJson);
