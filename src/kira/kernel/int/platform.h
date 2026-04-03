@@ -161,7 +161,7 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_SetFilePosition(KiTVoid *fHandl
 /**
  * 
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_ReadFromFile(KiTVoid *fHandle, KiTVoid *dstBufPtr, KiTSize sizeInBytes) KI_PLATFORM;
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_ReadFromFile(KiTVoid *fHandle, KiTVoid *dstBufPtr, KiTSize sizeInBytes, KiTSize *resSize) KI_PLATFORM;
 /**
  * 
  */

@@ -563,20 +563,34 @@ KI_NATIVE typedef enum KiEFileAccessMode {
     KiFAccMd_Read         = 1 << 0,
     KiFAccMd_Write        = 1 << 1,
     KiFAccMd_Append       = 1 << 2,
-    KiFAccMd_ReadWrite    = KiFAccMd_Read | KiFAccMd_Write,
-    
-    KiFAccMd_Binary       = 1 << 8,
-    KiFAccMd_Text         = 1 << 9,
 
-    KiFAccMd_MustExist    = 1 << 16,
-    KiFAccMd_MustNotExist = 1 << 17
+    KiFAccMd_Update       = 1 << 8,
+    
+    KiFAccMd_Binary       = 1 << 16,
+    KiFAccMd_Text         = 1 << 17,
+
+    KiFAccMd_MustExist    = 1 << 24,
+    KiFAccMd_MustNotExist = 1 << 25
 } KiEFileAccessMode;
 
 /**
  * 
  */
 KI_PLATFORM typedef enum KiEFilePositionOrigin {
+    KiFPOri_Unknown = 0,
 
+    KiFPOri_Set,
+    KiFPOri_Cur,
+    KiFPOri_End,
+
+    __KiFPOri_Count__
 } KiEFilePositionOrigin;
+
+/**
+ *
+ */
+KI_NATIVE inline KiTBool KI_CALL KiIsValidFilePositionOrigin(KiEFilePositionOrigin origin) {
+    return KI_INRANGE_EXCL(origin, KiFPOri_Unknown, __KiFPOri_Count__);
+}
 
 
