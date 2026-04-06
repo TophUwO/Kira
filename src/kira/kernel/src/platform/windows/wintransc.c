@@ -10,7 +10,7 @@
 
 /**
  * \file  wintransc.c
- * \brief implements the to-native-string conversions for the Windows platform
+ * \brief implements the to-native-string conversions for the Windows(R) platform
  */
 #if (defined KI_PLATFORM_WINDOWS)
 

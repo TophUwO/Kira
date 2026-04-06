@@ -23,15 +23,12 @@
 
 
 KiTVoid KI_CALL KiPlatform_Sleep(KiTUint32 sleepMs) {
-    long res;
+    long nSec;
     {
-        KiTBool const isOverflow = __builtin_mul_overflow((KiTUint32)sleepMs, (KiTUint32)1000000, &res);
-
-        if (isOverflow == KI_TRUE)
-            return;
+        nSec = ((long)sleepMs % 1000) * (long)1000000;
     }
 
-    nanosleep(&(struct timespec const){ .tv_sec = 0, .tv_nsec = res }, nullptr);
+    KI_IGNORE_RETURN_VALUE(nanosleep(&(struct timespec const){ .tv_sec = sleepMs / 1000, .tv_nsec = nSec }, nullptr));
 }
 
 

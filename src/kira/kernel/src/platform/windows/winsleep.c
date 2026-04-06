@@ -10,7 +10,7 @@
 
 /**
  * \file  winsleep.c
- * \brief implements the native sleep() routine for the Windows platform
+ * \brief implements the native sleep() routine for the Windows(R) platform
  */
 #if (defined KI_PLATFORM_WINDOWS)
 

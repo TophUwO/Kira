@@ -123,6 +123,11 @@
 #define KI_OFFSETOF(str, f)            ((KiTOffset)(((size_t)((char*)&((str*)0)->f - (char*)0))))
 
 /**
+ * 
+ */
+#define KI_IGNORE_RETURN_VALUE(x)      ((KiTVoid)(x))
+
+/**
  * \defgroup McPadding Macros controlling structure padding
  * \brief    defines macros that allow padding to be added to structures in order for them to satisfy size and alignment
  *           requirements

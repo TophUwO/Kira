@@ -127,9 +127,6 @@ KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetEnvironmentVariable(KiTChar cons
 KI_NATIVE extern KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar const *value) KI_PLATFORM;
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) KI_PLATFORM;
-/**
- */
 KI_NATIVE extern KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) KI_PLATFORM;
 /**
  */

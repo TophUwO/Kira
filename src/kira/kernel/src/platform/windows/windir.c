@@ -148,17 +148,6 @@ KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize *sizePtr, KiTSiz
     return u8FullPath;
 }
 
-KiTVoid KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *bufPtr) {
-    KI_ASSERT(bufPtr != nullptr, KiErr_InOutParameter);
-
-    KiTSize const bufLen = strlen(bufPtr);
-    {
-        for (KiTSize i = 0; i < bufLen; i++)
-            if (bufPtr[i] == '\\')
-                bufPtr[i] = '/';
-    }
-}
-
 KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) {
     return '\\';
 }

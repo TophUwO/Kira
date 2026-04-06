@@ -128,7 +128,7 @@ KiEErrorCode KI_CALL KiPlatform_OpenFile(KiTChar const *pathStr, KiEFileAccessMo
 
     /* (2) Open the file. */
     errno = 0;
-    *resPtr = (KiTVoid *)fopen(pathStr, accessMode);
+    *resPtr = (KiTVoid *)fopen((char const *)pathStr, accessMode);
     if (*resPtr == nullptr)
         return KiNativeErrorCodeToKiraErrorCode(errno);
 
@@ -142,7 +142,7 @@ KI_NATIVE extern KiTVoid KI_CALL KiPlatform_CloseFile(KiTVoid *fHandle)  {
     if (fHandle == nullptr)
         return;
 
-    fclose((FILE *)fHandle);
+    KI_IGNORE_RETURN_VALUE(fclose((FILE *)fHandle));
 }
 
 /**
@@ -215,7 +215,7 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_ReadFromFile(KiTVoid *fHandle, 
     KI_ASSERT(resSize != nullptr,   KiErr_OutParameter);
 
     /* EOF is not considered an error. */
-    size_t const res = *resSize = fread(dstBufPtr, 1, sizeInBytes, (FILE *)fHandle);
+    size_t const res = *resSize = fread((void *)dstBufPtr, 1, (size_t)sizeInBytes, (FILE *)fHandle);
     if (res < sizeInBytes && ferror((FILE *)fHandle) != 0)
         return KiErr_IOError;
 
@@ -230,7 +230,7 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_WriteToFile(KiTVoid *fHandle, K
     KI_ASSERT(srcBufPtr != nullptr, KiErr_InParameter);
     KI_ASSERT(sizeInBytes > 0,      KiErr_SizeParameter);
 
-    size_t const res = fwrite(srcBufPtr, 1, sizeInBytes, (FILE *)fHandle);
+    size_t const res = fwrite((void const *)srcBufPtr, 1, (size_t)sizeInBytes, (FILE *)fHandle);
     if (res < sizeInBytes && ferror((FILE *)fHandle) != 0)
         return KiErr_IOError;
 

@@ -10,7 +10,7 @@
 
 /**
  * \file  winenv.c
- * \brief implements the retrieval routines for command-line and environment variables for the Windows platform
+ * \brief implements the retrieval routines for command-line and environment variables for the Windows(R) platform
  */
 #if (defined KI_PLATFORM_WINDOWS)
 
