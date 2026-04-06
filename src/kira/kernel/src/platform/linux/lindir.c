@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include <errno.h>
+#include <string.h>
 
 /* Linux includes */
 #include <unistd.h>
@@ -132,6 +133,16 @@ KiTChar *KI_CALL KiPlatform_GetApplicationRootDirectory(KiTSize *sizePtr, KiTSiz
 
     /* (3) Since readlink does not NUL-terminate the string, we need to do it ourelves. */
     pathBuf[reqSize] = '\0';
+
+    /* (4) Find the last '/' and zero all of what comes after it. This is how we find the application's root directory. */
+    char *lastSep = strrchr(pathBuf, reqSize);
+    if (lastSep == nullptr) {
+        KiPlatform_FreeString(pathBuf);
+
+        return nullptr;
+    }
+    memset((void *)lastSep, 0, (reqSize - (lastSep - pathBuf)) * sizeof *pathBuf);
+
     return pathBuf;
 }
 
