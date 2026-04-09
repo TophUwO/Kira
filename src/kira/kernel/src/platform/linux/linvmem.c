@@ -9,8 +9,8 @@
  ****************************************************************************************************************/
 
 /**
- * \file  linsleep.c
- * \brief implements Linux-specific routine for putting a thread to sleep
+ * \file  linvmem.c
+ * \brief implements Linux-specific routines for virtual memory (VMEM) management
  */
 #if (defined KI_PLATFORM_LINUX)
 

@@ -220,6 +220,11 @@ KI_NATIVE extern KI_NORETURN KiTVoid KI_CALL KiPlatform_Exit(KiEErrorCode errCod
 /**
  */
 KI_NATIVE extern KiTVoid KI_CALL KiPlatform_Sleep(KiTUint32 sleepMs) KI_PLATFORM;
+
+/**
+ * 
+ */
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_GetRandomBytes(KiTSize sizeInBytes, KiTVoid *resPtr) KI_PLATFORM;
 /** \} */
 /** \endcond */
 
