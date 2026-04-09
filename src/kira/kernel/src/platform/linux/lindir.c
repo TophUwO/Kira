@@ -11,7 +11,7 @@
 /**
  * \file  windir.c
  * \brief implements Windows(R)-specific routines regarding directory handling
-*/
+ */
 #if (defined KI_PLATFORM_LINUX)
 
 

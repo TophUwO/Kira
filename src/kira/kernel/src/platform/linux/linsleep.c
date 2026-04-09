@@ -11,7 +11,7 @@
 /**
  * \file  linsleep.c
  * \brief implements Linux-specific routine for putting a thread to sleep
-*/
+ */
 #if (defined KI_PLATFORM_LINUX)
 
 

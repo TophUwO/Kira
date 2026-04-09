@@ -11,7 +11,7 @@
 /**
  * \file  linfile.c
  * \brief implements Linux-specific basic file handling routines
-*/
+ */
 #if (defined KI_PLATFORM_LINUX)
 
 

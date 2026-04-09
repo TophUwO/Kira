@@ -10,7 +10,7 @@
 
 
 # Define project.
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.30 FATAL_ERROR)
 project(Kira
     VERSION      0.1.0.1
     DESCRIPTION  "cross-platform component-based modular application development framework written in C11"
