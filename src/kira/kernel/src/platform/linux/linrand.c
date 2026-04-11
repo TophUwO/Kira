@@ -10,7 +10,7 @@
 
 /**
  * \file  linrand.c
- * \brief implements the Linux-specific cryptographic random-number generator
+ * \brief implements the Linux-specific cryptographically-secure random-number generator
  */
 #if (defined KI_PLATFORM_LINUX)
 

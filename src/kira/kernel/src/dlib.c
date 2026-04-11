@@ -12,6 +12,7 @@
  * \file  dlib.c
  * \brief implements the dynamic library service which abstracts the OS-specific interface responsible for loading of
  *        dynamic libraries (shared objects, ...)
+ * \todo  remove this, call platform fns directly
  */
 
 
