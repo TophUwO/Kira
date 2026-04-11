@@ -109,6 +109,13 @@ static int KI_CALL KiInternal_KiraFPOriginToFseekOrigin(KiEFilePositionOrigin or
     /* Unreachable. */
     return -1;
 }
+
+/**
+ *
+ */
+static inline KiTBool KI_CALL KiInternal_IsValidFilePositionOrigin(KiEFilePositionOrigin origin) {
+    return KI_INRANGE_EXCL(origin, KiFPOri_Unknown, __KiFPOri_Count__);
+}
 /** \endcond */
 
 
@@ -184,8 +191,8 @@ KI_NATIVE extern KiTOffset KI_CALL KiPlatform_GetFilePosition(KiTVoid *fHandle) 
  * 
  */
 KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_SetFilePosition(KiTVoid *fHandle, KiTOffset offset, KiEFilePositionOrigin origin) {
-    KI_ASSERT(fHandle != nullptr,                             KiErr_InOutParameter);
-    KI_ASSERT(KiIsValidFilePositionOrigin(origin) == KI_TRUE, KiErr_InParameter);
+    KI_ASSERT(fHandle != nullptr,                                      KiErr_InOutParameter);
+    KI_ASSERT(KiInternal_IsValidFilePositionOrigin(origin) == KI_TRUE, KiErr_InParameter);
 
     /* (1) Get file position origin. */
     int const ntOrigin = KiInternal_KiraFPOriginToFseekOrigin(origin);

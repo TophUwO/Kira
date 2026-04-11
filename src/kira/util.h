@@ -591,11 +591,4 @@ KI_PLATFORM typedef enum KiEFilePositionOrigin {
     __KiFPOri_Count__
 } KiEFilePositionOrigin;
 
-/**
- *
- */
-KI_NATIVE inline KiTBool KI_CALL KiIsValidFilePositionOrigin(KiEFilePositionOrigin origin) {
-    return KI_INRANGE_EXCL(origin, KiFPOri_Unknown, __KiFPOri_Count__);
-}
-
 
