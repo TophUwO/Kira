@@ -99,6 +99,7 @@ KI_NATIVE extern KiTChar *KI_CALL KiPlatform_GetEnvironmentVariables(KiTSize *si
  *          throughout the application's run, the value returned by this function will likely become outdated.
  * \note    This function must be thread-safe under the assumption that neither \c name nor \c sizePtr are written to
  *          by another thread at the same time this function is being executed on the current thread.
+ * \warning The actual query for the value of the environment variable is not guaranteed to be thread-safe.
  * \warning If either \c name or \c sizePtr is modified by another thread while this function is being executed, the
  *          behavior is undefined.
  */

@@ -14,6 +14,7 @@
  */
 #if (defined KI_PLATFORM_LINUX)
 
+
 /* stdlib includes */
 #include <stdint.h>
 

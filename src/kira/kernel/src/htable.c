@@ -24,6 +24,7 @@
 #include <kira/kernel/reg.h>
 
 #include <kira/kernel/int/htable.h>
+#include <kira/kernel/int/platform.h>
 
 
 /** \cond INTERNAL */
@@ -179,13 +180,18 @@ KiEErrorCode KI_CALL KiCreateHashtable(
     KiFHashtableKeyCmp fnKeyCmp,
     KiSHashtable **resPtr
 ) {
-    /**
-     */
-    extern KiTUint64 KI_CALL KiVirtual_KrnlHtGetRandomSeed(KiTVoid);
-
     if (initCap == 0)      return KiErr_InParameter;
     if (fnHash == nullptr) return KiErr_CallbackParameter;
     if (resPtr == nullptr) return KiErr_InOutParameter;
+
+    /* Get random seed. */
+    KiTUint64 rndSeed;
+    {
+        KiEErrorCode const errCode = KiPlatform_GetRandomBytes(sizeof rndSeed, &rndSeed);
+
+        if (errCode != KiErr_Ok)
+            return errCode;
+    }
 
     /* Allocate hashtable memory. */
     if ((*resPtr = calloc(1, sizeof **resPtr)) == nullptr)
@@ -203,11 +209,10 @@ KiEErrorCode KI_CALL KiCreateHashtable(
     **resPtr = (KiSHashtable){
         .m_elemCount = 0,
         .m_elemCap   = initCap,
-        .m_hashSeed  = KiVirtual_KrnlHtGetRandomSeed(),
+        .m_hashSeed  = rndSeed,
         .mp_fnHash   = fnHash,
         .mp_tupleArr = initArr
     };
-    /* All good. */
     return KiErr_Ok;
 }
 
