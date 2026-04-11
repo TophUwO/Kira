@@ -9,7 +9,7 @@
  ****************************************************************************************************************/
 
 /**
- * \file  winsync.c
+ * \file  linsync.c
  * \brief implements Linux-specific low-level synchronization routines
  */
 #if (defined KI_PLATFORM_LINUX)

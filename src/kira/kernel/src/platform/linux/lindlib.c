@@ -9,7 +9,7 @@
  *****************************************************************************************************************/
 
 /**
- * \file  windir.c
+ * \file  lindlib.c
  * \brief implements Linux-specific routines regarding dynamic library management
  */
 #if (defined KI_PLATFORM_LINUX)
