@@ -34,7 +34,7 @@ KI_NATIVE typedef enum KiEProfileLoadingPolicy {
 
     KiProfLdPol_Load    = 1,
     KiProfLdPol_Skip    = 2,
-    KiProfLdPol_Ignore  = 3,
+    KiProfLdPol_Stop    = 3,
 
     KI_ENUM_COUNT(KiProfLdPol)
 } KiEProfileLoadingPolicy;
@@ -70,13 +70,30 @@ static KiTVoid KI_CALL KiInternal_UnloadAllProfiles(KiSArray *profiles) {
 /**
  */
 static KiEProfileLoadingPolicy KI_CALL KiInternal_GetProfileVisibilityId(KiTChar const *ldPolStr) {
-    KI_ASSERT(ldPolStr != nullptr, KiErr_InParameter);
+    /* "load" is considered the default loading policy. */
+    if (ldPolStr == nullptr)
+        return KiInternal_GetProfileVisibilityId("load");
 
-    if      (!strcmp(ldPolStr, "load"))   return KiProfLdPol_Load;
-    else if (!strcmp(ldPolStr, "ignore")) return KiProfLdPol_Ignore;
-    else if (!strcmp(ldPolStr, "skip"))   return KiProfLdPol_Skip;
+    if      (!strcmp(ldPolStr, "load")) return KiProfLdPol_Load;
+    else if (!strcmp(ldPolStr, "stop")) return KiProfLdPol_Stop;
+    else if (!strcmp(ldPolStr, "skip")) return KiProfLdPol_Skip;
 
     return KiProfLdPol_Unknown;
+}
+
+/**
+ * 
+ */
+static KiEErrorCode KI_CALL KiInternal_CompleteProfileFileName(KiSString *pathStr, KiTChar const *fileName) {
+    KI_ASSERT(pathStr != nullptr, KiErr_InOutParameter);
+
+    KiEErrorCode errCode = KiErr_Ok;
+    {
+        errCode = errCode == KiErr_Ok ? KiPushPathComponent(pathStr, KiPlatform_GetPathSeparator(), fileName) : errCode;
+        errCode = errCode == KiErr_Ok ? KiPushPathComponent(pathStr, '.', "json")                             : errCode;
+    }
+
+    return errCode;
 }
 
 
@@ -113,42 +130,79 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_INITFN(ProfileManager)(KiTVoid *extraPara
                 KiDestroyString(profPath);
                 return errCode;
             }
+            KiPopPathComponent(profPath, KiPlatform_GetPathSeparator());
 
             /*
-             * (6.1) See if the current profile's "baseProfile" property is set. If yes, adjust our current profile path
+             * (5.1) See if the current profile's "baseProfile" property is set. If yes, adjust our current profile path
              *       so that in the next iteration it can be loaded. Otherwise, we are finished.
-             * (6.2) Check profile visibility. This determines if the profile is even to be considered. 
+             * (5.2) Check profile visibility. This determines if the profile is even to be considered. 
              */
             KiSJsonValueQuery baseProfQuery[2] = {
                 { .mp_pathStr = "/config/baseProfile",   .m_reqType = KiJsonValTy_StrOrNull, .m_isOpt = KI_TRUE }, /* idx 0 */
-                { .mp_pathStr = "/config/loadingPolicy", .m_reqType = KiJsonValTy_String,    .m_isOpt = KI_TRUE }  /* idx 1 */
+                { .mp_pathStr = "/config/loadingPolicy", .m_reqType = KiJsonValTy_StrOrNull, .m_isOpt = KI_TRUE }  /* idx 1 */
             };
-            {
-                KiTBool const queryRes  = KiGetJsonElementValues(currProf, baseProfQuery, KI_COUNTOF(baseProfQuery));
-                KiTBool const foundBase = baseProfQuery[0].m_errCode != KiErr_JsonAttribNotFound;
-                KiTBool const foundPol  = baseProfQuery[1].m_errCode != KiErr_JsonAttribNotFound;
+            KiTBool const queryRes  = KiGetJsonElementValues(currProf, baseProfQuery, KI_COUNTOF(baseProfQuery));
+            KiTBool const foundBase = baseProfQuery[0].m_errCode != KiErr_JsonAttribNotFound;
+            KiTBool const foundPol  = baseProfQuery[1].m_errCode != KiErr_JsonAttribNotFound;
 
-                if (foundBase == KI_TRUE) {
-                    
+            /* If there was any error, we treat this as fatal, unload all profiles and return. */
+            if (queryRes != KI_TRUE) {
+                KiCloseJsonDocument(currProf);
+                KiInternal_UnloadAllProfiles(profArr);
+                KiDestroyArray(profArr);
+
+                KiDestroyString(profPath);
+                return errCode;
+            }
+
+            /*
+             * (6) Add to array if the current profile's loading policy is "load". "load" is also the default if no
+             *     loading policy has been specified.
+             *
+             * From here on, there is no need to check the type of the returned value, for a mismatch between the
+             * required and actual type of the attribute would have been caught as an error and signaled through
+             * *queryRes*.
+             */
+            KiEProfileLoadingPolicy ldPolicy = KiProfLdPol_Load;
+            if (foundPol == KI_TRUE) {
+                ldPolicy = KiInternal_GetProfileVisibilityId(baseProfQuery[1].mp_strValue);
+
+                switch (ldPolicy) {
+                    case KiProfLdPol_Stop:
+                        hasBaseProfile = KI_FALSE;
+
+                        KiCloseJsonDocument(currProf);
+                        continue;
+                    default: KI_NOOP;
                 }
+            }
+            hasBaseProfile = KI_FALSE;
 
-                if (queryRes == KI_FALSE) {
-                    /*
-                     * The property is not present or is set to *null*. This is not an error. It just means we have no
-                     * base profile and are, thus, done loading profiles.
-                     */
-                    hasBaseProfile = KI_FALSE;
-                }
-                KiPopPathComponent(profPath, KiPlatform_GetPathSeparator());
+            /** (7) Set the base profile as the next profile to load. */
+            if (foundBase == KI_TRUE && baseProfQuery[0].mp_strValue != nullptr) {
+                errCode = KiInternal_CompleteProfileFileName(profPath, baseProfQuery[0].mp_strValue);
 
-                errCode = KiPushPathComponent(profPath, KiPlatform_GetPathSeparator(), baseProfQuery[0].mp_strValue);
                 if (errCode != KiErr_Ok) {
+                    KiCloseJsonDocument(currProf);
                     KiInternal_UnloadAllProfiles(profArr);
                     KiDestroyArray(profArr);
 
                     KiDestroyString(profPath);
                     return errCode;
                 }
+                hasBaseProfile = KI_TRUE;
+            }
+
+            /* (8) Add the current profile to the array if it is supposed to be loaded. */
+            if (ldPolicy == KiProfLdPol_Skip)
+                KiCloseJsonDocument(currProf);
+            else if ((errCode = KiPushToArray(profArr, currProf)) != KiErr_Ok) {
+                KiCloseJsonDocument(currProf);
+                KiInternal_UnloadAllProfiles(profArr);
+                KiDestroyArray(profArr);
+
+                KiDestroyString(profPath);
+                return errCode;
             }
         } while (hasBaseProfile == KI_TRUE);
     }

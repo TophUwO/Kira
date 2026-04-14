@@ -84,6 +84,7 @@ static KiEErrorCode KI_CALL KiInternal_KiraFileAccessModeToFopenFileAccessMode(K
             }
 
             return KiErr_InvalidFileAccessMode;
+        case KiFAccMd_None:
         case KiFAccMd_MustExist: break;
         default:
             return KiErr_InvalidFileAccessMode;

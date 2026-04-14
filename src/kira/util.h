@@ -94,6 +94,15 @@
  */
 #define KI_UNREFERENCED_PARAMETER(p)   ((KiTVoid)(p))
 /**
+ * \def   KI_NOOP
+ * \brief defines an operation that is a statement but never has side-effects
+ *
+ * The main use of this is in a switch- or if-statement (especially <tt>default</tt>-branch which could cause compiler
+ * warnings if you do not handle all possible cases) where you might have to add a statement to the block in order to
+ * shut up the compiler.
+ */
+#define KI_NOOP                         ((KiTVoid)(0))
+/**
  */
 #define KI_CONCAT2(a, b)               __KI_CONCAT2_IMPL__(a, b)
 /**

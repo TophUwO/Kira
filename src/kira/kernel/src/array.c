@@ -191,19 +191,20 @@ KiEErrorCode KI_CALL KiPushToArray(KiSArray *arrPtr, KiTVoid const *elemPtr) {
     KI_ASSERT(arrPtr != nullptr,  KiErr_InOutParameter);
     KI_ASSERT(elemPtr != nullptr, KiErr_InParameter);
 
-    KiTIndex const idx2Insert = arrPtr->m_elemCap - 1;
+    KiTIndex const idx2Insert = arrPtr->m_elemCnt;
 
     /* Resize if the last slot is occupied. */
-    if (arrPtr->mpp_elemArr[arrPtr->m_elemCap - 1] != nullptr) {
-        KiEErrorCode errCode = KiInternal_ArrayResize(arrPtr, arrPtr->m_elemCap << 1);
+    if (arrPtr->mpp_elemArr == nullptr || arrPtr->mpp_elemArr[arrPtr->m_elemCap - 1] != nullptr) {
+        KiTSize const newCap = arrPtr->m_elemCap == 0 ? KI_KRNLGPARR_DEFCAP : arrPtr->m_elemCap << 1;
 
-        if (errCode != KiErr_Ok)
+        KiEErrorCode errCode;
+        if ((errCode = KiInternal_ArrayResize(arrPtr, newCap)) != KiErr_Ok)
             return errCode;
     }
 
     /* Insert element. */
     arrPtr->mpp_elemArr[idx2Insert]  = (KiTVoid *)elemPtr;
-    arrPtr->m_firstEmpty             = arrPtr->m_firstEmpty ^ KI_KRNLGPARR_NONE ? arrPtr->m_firstEmpty : idx2Insert + 1;
+    arrPtr->m_firstEmpty             = idx2Insert + 1;
     arrPtr->m_elemCnt               += 1;
 
     /* All good. */
