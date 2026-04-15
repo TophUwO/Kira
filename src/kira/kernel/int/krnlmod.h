@@ -22,24 +22,27 @@
 
 /**
  */
-#define KI_KRNLMOD_IDENTIFY(modId) gl_c_##modId##_Info
-/**
- */
-#define KI_KRNLMOD_DEFINE(modId, ...)                                                                          \
-    __attribute__((section("KIRA_KMD"), used)) static KiSKernelModuleInfo const KI_KRNLMOD_IDENTIFY(modId) = { \
+#define KI_KRNLMOD(modId, deps, ...)                                                                           \
+    static KiSStaticArray const *gl_c_##modId##_Dependencies = &KI_MAKE_STATIC_ARRAY((KiSUuid const *[])deps); \
+    static KiSStaticArray const *KI_CALL KiInternal_GetDeps##modId(KiTVoid) {                                  \
+        return gl_c_##modId##_Dependencies;                                                                    \
+    }                                                                                                          \
+    __attribute__((section("KIRA_KMD"), used)) static KiSKernelModuleInfo const gl_c_##modId##_Info = {        \
         .ma_startMagic = {  '_', '_', 'A', 'n', 'a', 'r', 'c', 'h', 'i', 'a', 'M', 'a', 'm', 'a', '_', '_' },  \
+        .mp_fnGetDeps  = &KiInternal_GetDeps##modId,                                                           \
         .m_moduleInfo  = __VA_ARGS__                                                                           \
     }
-/**
- */
-//#define KI_KRNLMOD_IMPORT(modId)   extern KiSKernelModuleInfo const KI_KRNLMOD_IDENTIFY(modId)
 
 /**
+ * 
  */
-#define KI_KRNLMOD_INITFN(modId)   KiInternal_Init##modId
+#define KI_KRNLMOD_DEPENDENCY(a, b, c, d) &KI_MAKE_UUID(a, b, c, d)
 /**
  */
-#define KI_KRNLMOD_UNINITFN(modId) KiInternal_Uninit##modId
+#define KI_KRNLMOD_INITFN(modId)          KiInternal_Init##modId
+/**
+ */
+#define KI_KRNLMOD_UNINITFN(modId)        KiInternal_Uninit##modId
 
 
 /**
@@ -47,10 +50,12 @@
 KI_NATIVE typedef struct KiSKernelModuleInfo {
     KiTByte const ma_startMagic[16];
 
+    KiSStaticArray const *(KI_CALL *mp_fnGetDeps)(KiTVoid);
     struct {
-        KiSUuid       const *mp_modUuid;
-        KiSStringView const *mp_modId;
-        KiTFlags64           m_modFlags;
+        KiSUuid        const  *mp_modUuid;
+        KiSStringView  const  *mp_modId;
+        KiTFlags64             m_modFlags;
+        KiSStaticArray const **mpp_depArr;
 
         KiEErrorCode (KI_CALL *mp_fnInit)(KiTVoid *extraParam);
         KiEErrorCode (KI_CALL *mp_fnUninit)(KiTVoid *extraParam);

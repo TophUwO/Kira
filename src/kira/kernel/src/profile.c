@@ -224,7 +224,9 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(ProfileManager)(KiTVoid *extraPa
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(ProfileManager, {
+KI_KRNLMOD(ProfileManager, {
+    &KI_MAKE_UUID(0xFFFFFFFF, 0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC)
+}, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("profile manager"),
     .m_modFlags  = 0,

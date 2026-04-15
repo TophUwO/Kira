@@ -154,7 +154,9 @@ KiTSize KI_CALL KiGetMaximumExceptionHandlerCount(KiTVoid) {
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(ExceptionHandlingSystem, {
+KI_KRNLMOD(ExceptionHandlingSystem, {
+    &KI_MAKE_UUID(0xFFFFFFFF, 0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC)
+}, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("exception handling system"),
     .m_modFlags  = 0,

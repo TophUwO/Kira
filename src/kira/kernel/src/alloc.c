@@ -593,7 +593,12 @@ KiTSize KI_CALL KiKrnlGetBlockSize(KiTVoid const *blockPtr) {
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(PoolAllocator, {
+KI_KRNLMOD(PoolAllocator,
+    KI_EXPAND({
+        KI_KRNLMOD_DEPENDENCY(0xFFFFFFFF, 0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC),
+        KI_KRNLMOD_DEPENDENCY(0xFFFFFFFF, 0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC)
+    }), 
+{
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("pool allocator"),
     .m_modFlags  = 0,

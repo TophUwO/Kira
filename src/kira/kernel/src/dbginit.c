@@ -62,7 +62,9 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(DebugModuleControl)(KiTVoid *ext
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(DebugModuleControl, {
+KI_KRNLMOD(DebugModuleControl, {
+    &KI_MAKE_UUID(0xFFFFFFFF, 0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC)
+}, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("debug module"),
     .m_modFlags  = 0,

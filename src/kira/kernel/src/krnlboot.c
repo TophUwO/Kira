@@ -153,6 +153,9 @@ KiEErrorCode KI_CALL KiStartKernelModules(KiTVoid) {
         for (; start != nullptr;) {
             printf("    %s\n", start->m_moduleInfo.mp_modId->mp_strPtr);
 
+            KiSStaticArray const *x = start->mp_fnGetDeps();
+            KiSUuid u = *((KiSUuid const **)x->mp_arrPtr)[0];
+
             start = KiInternal_YieldNextKernelModule((KiSKernelModuleInfo const *)((KiTByte *)start + 1));
         }
     }

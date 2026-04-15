@@ -357,7 +357,9 @@ KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(RuntimeConfiguration, {
+KI_KRNLMOD(RuntimeConfiguration, {
+    &KI_MAKE_UUID(0xFFFFFFFF, 0xAAAA, 0xBBBB, 0xCCCCCCCCCCCCCCCC)
+}, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("runtime configuration"),
     .m_modFlags  = 0,

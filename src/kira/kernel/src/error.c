@@ -481,7 +481,9 @@ KiEErrorCode KI_CALL KiErrnoToKiraErrorCode(KiTInt32 errnoCode) {
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(ErrorStringificationService, {
+KI_KRNLMOD(ErrorStringificationService, {
+    &KI_MAKE_UUID(0xFFFFFFFF, 0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC)
+}, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("error stringification service"),
     .m_modFlags  = 0,
