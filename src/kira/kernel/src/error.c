@@ -486,10 +486,7 @@ KI_KRNLMOD(ErrorStringificationService, {
 }, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("error stringification service"),
-    .m_modFlags  = 0,
-
-    .mp_fnInit   = &KI_KRNLMOD_INITFN(ErrorStringificationService),
-    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(ErrorStringificationService)
+    .m_modFlags  = 0
 });
 /** \endcond */
 

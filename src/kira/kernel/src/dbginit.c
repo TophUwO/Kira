@@ -67,10 +67,7 @@ KI_KRNLMOD(DebugModuleControl, {
 }, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("debug module"),
-    .m_modFlags  = 0,
-
-    .mp_fnInit   = &KI_KRNLMOD_INITFN(DebugModuleControl),
-    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(DebugModuleControl)
+    .m_modFlags  = 0
 });
 /** \endcond */
 

@@ -229,10 +229,7 @@ KI_KRNLMOD(ProfileManager, {
 }, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("profile manager"),
-    .m_modFlags  = 0,
-
-    .mp_fnInit   = &KI_KRNLMOD_INITFN(ProfileManager),
-    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(ProfileManager)
+    .m_modFlags  = 0
 });
 /** \endcond */
 

@@ -601,10 +601,7 @@ KI_KRNLMOD(PoolAllocator,
 {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("pool allocator"),
-    .m_modFlags  = 0,
-
-    .mp_fnInit   = &KI_KRNLMOD_INITFN(PoolAllocator),
-    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(PoolAllocator)
+    .m_modFlags  = 0
 });
 /** \endcond */
 

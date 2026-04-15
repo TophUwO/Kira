@@ -167,7 +167,7 @@ KiEErrorCode KI_CALL KiStartKernelModules(KiTVoid) {
             continue;
 
         /* Initialize the module. */
-        KiEErrorCode errCode = (*currModEntry->m_moduleInfo.mp_fnInit)(nullptr);
+        KiEErrorCode errCode = (*currModEntry->mp_fnInit)(nullptr);
         if (errCode != KiErr_Ok) {
             /** \cond */
             KI_NATIVE extern KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid);
@@ -196,7 +196,7 @@ KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid) {
         if (currModEntry == nullptr)
             continue;
 
-        (*currModEntry->m_moduleInfo.mp_fnUninit)(nullptr);
+        (*currModEntry->mp_fnUninit)(nullptr);
     }
 
     /* "Perfectly clean... as all things should be." */

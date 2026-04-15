@@ -159,10 +159,7 @@ KI_KRNLMOD(ExceptionHandlingSystem, {
 }, {
     .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
     .mp_modId    = &KI_MAKE_STRING_VIEW("exception handling system"),
-    .m_modFlags  = 0,
-    
-    .mp_fnInit   = &KI_KRNLMOD_INITFN(ExceptionHandlingSystem),
-    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(ExceptionHandlingSystem)
+    .m_modFlags  = 0
 });
 /** \endcond */
 
