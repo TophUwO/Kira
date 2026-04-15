@@ -481,15 +481,14 @@ KiEErrorCode KI_CALL KiErrnoToKiraErrorCode(KiTInt32 errnoCode) {
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(ErrorStringificationService) {
-    .m_structSize = sizeof(KiSModuleInfo),
-    .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
-    .mp_modId     = &KI_MAKE_STRING_VIEW("error stringification service"),
-    .m_modFlags   = 0,
+KI_KRNLMOD_DEFINE(ErrorStringificationService, {
+    .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
+    .mp_modId    = &KI_MAKE_STRING_VIEW("error stringification service"),
+    .m_modFlags  = 0,
 
-    .mp_fnInit    = &KI_KRNLMOD_INITFN(ErrorStringificationService),
-    .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(ErrorStringificationService)
-};
+    .mp_fnInit   = &KI_KRNLMOD_INITFN(ErrorStringificationService),
+    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(ErrorStringificationService)
+});
 /** \endcond */
 
 

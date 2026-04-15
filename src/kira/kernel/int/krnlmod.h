@@ -25,10 +25,14 @@
 #define KI_KRNLMOD_IDENTIFY(modId) gl_c_##modId##_Info
 /**
  */
-#define KI_KRNLMOD_DEFINE(modId)   KiSModuleInfo const KI_KRNLMOD_IDENTIFY(modId) =
+#define KI_KRNLMOD_DEFINE(modId, ...)                                                                          \
+    __attribute__((section("KIRA_KMD"), used)) static KiSKernelModuleInfo const KI_KRNLMOD_IDENTIFY(modId) = { \
+        .ma_startMagic = {  '_', '_', 'A', 'n', 'a', 'r', 'c', 'h', 'i', 'a', 'M', 'a', 'm', 'a', '_', '_' },  \
+        .m_moduleInfo  = __VA_ARGS__                                                                           \
+    }
 /**
  */
-#define KI_KRNLMOD_IMPORT(modId)   extern KiSModuleInfo const KI_KRNLMOD_IDENTIFY(modId)
+//#define KI_KRNLMOD_IMPORT(modId)   extern KiSKernelModuleInfo const KI_KRNLMOD_IDENTIFY(modId)
 
 /**
  */
@@ -40,14 +44,17 @@
 
 /**
  */
-KI_NATIVE typedef struct KiSModuleInfo {
-    KiTSize              m_structSize;
-    KiSUuid       const *mp_modUuid;
-    KiSStringView const *mp_modId;
-    KiTFlags64           m_modFlags;
+KI_NATIVE typedef struct KiSKernelModuleInfo {
+    KiTByte const ma_startMagic[16];
 
-    KiEErrorCode (KI_CALL *mp_fnInit)(KiTVoid *extraParam);
-    KiEErrorCode (KI_CALL *mp_fnUninit)(KiTVoid *extraParam);
-} KiSModuleInfo;
+    struct {
+        KiSUuid       const *mp_modUuid;
+        KiSStringView const *mp_modId;
+        KiTFlags64           m_modFlags;
+
+        KiEErrorCode (KI_CALL *mp_fnInit)(KiTVoid *extraParam);
+        KiEErrorCode (KI_CALL *mp_fnUninit)(KiTVoid *extraParam);
+    } m_moduleInfo;
+} KiSKernelModuleInfo;
 
 

@@ -357,15 +357,14 @@ KiSString *KI_CALL KiGetRootProfilePath(KiTVoid) {
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(RuntimeConfiguration) {
-    .m_structSize = sizeof(KiSModuleInfo),
-    .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
-    .mp_modId     = &KI_MAKE_STRING_VIEW("runtime configuration"),
-    .m_modFlags   = 0,
+KI_KRNLMOD_DEFINE(RuntimeConfiguration, {
+    .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
+    .mp_modId    = &KI_MAKE_STRING_VIEW("runtime configuration"),
+    .m_modFlags  = 0,
 
-    .mp_fnInit    = &KI_KRNLMOD_INITFN(RuntimeConfiguration),
-    .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(RuntimeConfiguration)
-};
+    .mp_fnInit   = &KI_KRNLMOD_INITFN(RuntimeConfiguration),
+    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(RuntimeConfiguration)
+});
 /** \endcond */
 
 

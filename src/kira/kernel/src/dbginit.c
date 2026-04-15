@@ -62,15 +62,14 @@ static KiEErrorCode KI_CALL KI_KRNLMOD_UNINITFN(DebugModuleControl)(KiTVoid *ext
 
 
 /** \cond */
-KI_KRNLMOD_DEFINE(DebugModuleControl) {
-    .m_structSize = sizeof(KiSModuleInfo),
-    .mp_modUuid   = &KI_MAKE_UUID(0, 0, 0, 0),
-    .mp_modId     = &KI_MAKE_STRING_VIEW("debug module"),
-    .m_modFlags   = 0,
+KI_KRNLMOD_DEFINE(DebugModuleControl, {
+    .mp_modUuid  = &KI_MAKE_UUID(0, 0, 0, 0),
+    .mp_modId    = &KI_MAKE_STRING_VIEW("debug module"),
+    .m_modFlags  = 0,
 
-    .mp_fnInit    = &KI_KRNLMOD_INITFN(DebugModuleControl),
-    .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(DebugModuleControl)
-};
+    .mp_fnInit   = &KI_KRNLMOD_INITFN(DebugModuleControl),
+    .mp_fnUninit = &KI_KRNLMOD_UNINITFN(DebugModuleControl)
+});
 /** \endcond */
 
 
