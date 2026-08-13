@@ -80,7 +80,7 @@ KiSJson *KI_CALL KiOpenJsonDocument(KiTChar const *filePath, KiEErrorCode *errCo
     KiTChar *rJson;
     {
         /* (1) Open file. */
-        *errCodePtr = KiPlatform_OpenFile(filePath, KiFAccMd_Read | KiFAccMd_Binary, &fileHandle);
+        *errCodePtr = KiPlatform_OpenFile(filePath, "rb", &fileHandle);
         if (*errCodePtr != KiErr_Ok)
             return nullptr;
 
@@ -248,5 +248,3 @@ KiEJsonValueType KI_CALL KiGetJsonElementType(KiSJson const *elemPtr) {
 
     return KiInternal_JsonToKiraType(((cJSON const *)elemPtr)->type);
 }
-
-

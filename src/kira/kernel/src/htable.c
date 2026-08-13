@@ -43,6 +43,7 @@
 
 
 /**
+ * \copydoc 
  */
 KI_NATIVE typedef struct KiSHashtableKVTuple {
     KiTVoid   const *mp_key;
@@ -172,8 +173,6 @@ static KiEErrorCode KI_CALL KiInternal_HashtableResize(KiSHashtable *htState, Ki
 /** \endcond */
 
 
-/**
- */
 KiEErrorCode KI_CALL KiCreateHashtable(
     KiTSize initCap,
     KiFHashtableHash fnHash,
@@ -216,8 +215,6 @@ KiEErrorCode KI_CALL KiCreateHashtable(
     return KiErr_Ok;
 }
 
-/**
- */
 KiTVoid KI_CALL KiDestroyHashtable(KiSHashtable *htPtr) {
     if (htPtr == nullptr)
         return;
@@ -230,8 +227,6 @@ KiTVoid KI_CALL KiDestroyHashtable(KiSHashtable *htPtr) {
     free(htPtr);
 }
 
-/**
- */
 KiEErrorCode KI_CALL KiInsertIntoHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr, KiTVoid const *valPtr) {
     if (htPtr == nullptr)  return KiErr_InOutParameter;
     if (keyPtr == nullptr) return KiErr_InParameter;
@@ -251,8 +246,6 @@ KiEErrorCode KI_CALL KiInsertIntoHashtable(KiSHashtable *htPtr, KiTVoid const *k
     return KiInternal_HashtableInsertWithoutResize(htPtr, keyPtr, valPtr);
 }
 
-/**
- */
 KiTBool KI_CALL KiIsInHashtable(KiSHashtable *htPtr, KiTVoid const *kPtr, KiTInt64 *iPtr) {
     if (htPtr == nullptr || kPtr == nullptr || iPtr == nullptr)
         return KI_FALSE;
@@ -299,8 +292,6 @@ lbl_NOTFOUND:
     return KI_FALSE;
 }
 
-/**
- */
 KiTVoid KI_CALL KiEraseFromHashtable(
     KiSHashtable *htPtr,
     KiTVoid const *keyPtr,
@@ -374,8 +365,6 @@ KiTVoid KI_CALL KiEraseFromHashtableIf(KiSHashtable *htPtr, KiFHashtableErasePre
     htPtr->m_elemCount -= nDel;
 }
 
-/**
- */
 KiTVoid *KI_CALL KiGetFromHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr) {
     KI_ASSERT(htPtr != nullptr,  KiErr_InOutParameter);
     KI_ASSERT(keyPtr != nullptr, KiErr_InParameter);

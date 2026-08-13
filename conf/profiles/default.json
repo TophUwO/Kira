@@ -1,0 +1,15 @@
+{
+    "uuid": "60e7fc31-c691-4f1f-a243-16585cd53679",
+    "name": "default",
+    "desc": "default profile loaded when no other profile is specified at runtime",
+
+    "config": {
+        "environment": {
+            "args": [],
+            "env":  {}
+        },
+        "entrypoint":  "a153651d-1c30-4888-83db-de6eb38064d1",
+        "visibility":  "visible",
+        "baseProfile": null
+    }
+}

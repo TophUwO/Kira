@@ -61,7 +61,7 @@ static KiTVoid KI_CALL KiInternal_UnloadAllProfiles(KiSArray *profiles) {
     KiTVoid **mappedProfArr = KiMapArray(profiles, 0, KiGetArrayElementCount(profiles), &mappedProfArr, &nProfiles);
     {
         for (KiTSize i = 0; i < nProfiles; i++)
-            KiCloseJsonDocument(mappedProfArr[i]);
+            KiCloseJsonDocument((KiSJson *)mappedProfArr[i]);
     }
 
     KiClearArray(profiles);

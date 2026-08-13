@@ -297,7 +297,7 @@ static KiSStringView const *gl_c_ErrorStringDictionary[] = {
     &KI_MAKE_STRING_VIEW("KiErr_EntityIsNotADirectory"),
     &KI_MAKE_STRING_VIEW("KiErr_EncodingError"),
 
-    [60] = &KI_MAKE_STRING_VIEW("")
+    [61] = &KI_MAKE_STRING_VIEW("")
 };
 KI_VERIFY_LUT(gl_c_ErrorStringDictionary, __KiErr_Count__ - KiErr_Ok);
 
@@ -306,7 +306,7 @@ KI_VERIFY_LUT(gl_c_ErrorStringDictionary, __KiErr_Count__ - KiErr_Ok);
  *        corresponding numeric error code
  */
 static KiSStringView const *gl_c_ErrorBriefDictionary[] = {
-    [60] = &KI_MAKE_STRING_VIEW("")
+    [61] = &KI_MAKE_STRING_VIEW("")
 };
 KI_VERIFY_LUT(gl_c_ErrorBriefDictionary, __KiErr_Count__ - KiErr_Ok);
 
@@ -339,7 +339,7 @@ static KiSStringView const *gl_c_ErrorDetailsDictionary[] = {
         "(yet) implemented. It can be returned during development and can be used as the return value for default "
         "implementations for interface methods. In the deployed code, this code should never be returned."
     ),
-    [60] = &KI_MAKE_STRING_VIEW("")
+    [61] = &KI_MAKE_STRING_VIEW("")
 };
 KI_VERIFY_LUT(gl_c_ErrorDetailsDictionary, __KiErr_Count__ - KiErr_Ok);
 
@@ -458,7 +458,7 @@ KiEErrorCode KI_CALL KiErrnoToKiraErrorCode(KiTInt32 errnoCode) {
     /**
      * \brief maps a native (i.e., \c errno) error code to a corresponding Kira error code
      */
-    static KiEErrorCode constexpr gl_c_Errno2KiraErrorCodeDirectory[] = {
+    static constexpr KiEErrorCode gl_c_Errno2KiraErrorCodeDirectory[] = {
         [EACCES]  = KiErr_InsufficientFilePerms,
         [EISDIR]  = KiErr_EntityIsADirectory,
         [ENOENT]  = KiErr_NoSuchFileOrDirectory,
@@ -466,7 +466,7 @@ KiEErrorCode KI_CALL KiErrnoToKiraErrorCode(KiTInt32 errnoCode) {
         [ENOTDIR] = KiErr_EntityIsNotADirectory
     };
     /** \cond */
-    KiTSize constexpr gl_c_DictSize = KI_COUNTOF(gl_c_Errno2KiraErrorCodeDirectory);
+    static constexpr KiTSize gl_c_DictSize = KI_COUNTOF(gl_c_Errno2KiraErrorCodeDirectory);
     /** \endcond */
 
     /*

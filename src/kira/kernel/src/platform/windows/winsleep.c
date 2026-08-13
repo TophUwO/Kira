@@ -27,6 +27,6 @@ KiTVoid KI_CALL KiPlatform_Sleep(KiTUint32 sleepMs) {
 }
 
 
-#endif /* KI_PLATFORM_WINDOWS */
+#endif /* (defined KI_PLATFORM_WINDOWS) */
 
 

@@ -224,6 +224,4 @@ KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar c
 }
 
 
-#endif /* KI_PLATFORM_WINDOWS */
-
-
+#endif /* (defined KI_PLATFORM_WINDOWS) */

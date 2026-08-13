@@ -19,36 +19,43 @@
 #include <windows.h>
 #include <wincrypt.h>
 
+/* stdlib includes */
+#include <stdint.h>
+
 /* Kira includes */
-#include <kira/def.h>
+#include <kira/kcm.h>
+#include <kira/dbg.h>
 
 
 /* static library bindings */
 #pragma comment (lib, "crypt32.lib")
 
 
-KiTUint64 KI_CALL KiVirtual_KrnlHtGetRandomSeed(KiTVoid) {
-    KiTUint64 resVal = 0;
+KiEErrorCode KI_CALL KiPlatform_GetRandomBytes(KiTSize sizeInBytes, KiTVoid *resPtr) {
+    KI_ASSERT(sizeInBytes > 0,   KiErr_SizeParameter);
+    KI_ASSERT(resPtr != nullptr, KiErr_OutParameter);
 
-    /* Acquire cryptographic provider context. */
+    /* (1) Acquire cryptographic provider context. */
     HCRYPTPROV cryptProv;
-    if (CryptAcquireContextW(&cryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) == FALSE)
-        goto lbl_ONERRORDET;
+    if (CryptAcquireContextW(&cryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) == FALSE) {
+        memset((void *)resPtr, 0, (size_t)sizeInBytes);
 
-    /* Fill the seed array. */
-    BOOL const retVal = CryptGenRandom(cryptProv, (DWORD)sizeof resVal, (BYTE *)resVal);
+        return KiErr_CannotGenRandom;
+    }
+
+    /* (2) Fill the provided memory buffer with high-quality random bytes. */
+    BOOL const retVal = CryptGenRandom(cryptProv, (DWORD)sizeInBytes, (BYTE *)resPtr);
     
-    /* Release the context. */
+    /* (3) Release the context. */
     CryptReleaseContext(cryptProv, 0);
-    if (retVal != FALSE)
-        return resVal;
+    if (retVal != FALSE) {
+        memset((void *)resPtr, 0, (size_t)sizeInBytes);
 
-lbl_ONERRORDET:
-    /* Failed to retrieve context or random number, or supposed to use deterministic seed. */
-    return 0x9c9d7865503d5fdf;
+        return KiErr_CannotGenRandom;
+    }
+
+    return KiErr_Ok;
 }
 
 
-#endif /* KI_PLATFORM_WINDOWS */
-
-
+#endif /* (defined KI_PLATFORM_WINDOWS) */

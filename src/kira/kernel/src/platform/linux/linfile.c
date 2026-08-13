@@ -224,8 +224,11 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_ReadFromFile(KiTVoid *fHandle, 
 
     /* EOF is not considered an error. */
     size_t const res = *resSize = fread((void *)dstBufPtr, 1, (size_t)sizeInBytes, (FILE *)fHandle);
-    if (res < sizeInBytes && ferror((FILE *)fHandle) != 0)
+    if (res < sizeInBytes && ferror((FILE *)fHandle) != 0) {
+        *resSize = 0;
+
         return KiErr_IOError;
+    }
 
     return KiErr_Ok;
 }

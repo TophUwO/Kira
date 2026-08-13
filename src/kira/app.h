@@ -21,6 +21,8 @@
 
 
 /**
+ * \typedef KiSReturnState
+ * \struct  KiSReturnState
  */
 KI_NATIVE typedef struct KiSReturnState {
     KiTSize      m_structSize;
@@ -31,7 +33,7 @@ KI_NATIVE typedef struct KiSReturnState {
 
 /**
  * \interface KiIEvent
- * \brief     represents a basic native Kira event
+ * \brief     represents a basic native \c Kira event
  *
  * \c KiIEvent serves as the base interface for all other event types. For ease of access and control, it is recommended
  * that, when you create a new event type, you compose the resulting interface of \c KiIEvent and the methods required
@@ -78,7 +80,7 @@ KI_INTERFACE(KiIEvent) KI_AUXILIARY {
 
 /**
  * \interface KiIApplication
- * \brief     represents the \e client (= application), i.e., the central controlling instance of the software system
+ * \brief     represents the \e client (= application), i.e., the central controlling instance of the software
  */
 KI_INTERFACE(KiIApplication) KI_EXCLUDES(KiIEventDrivenApplication) KI_BUILTIN {
     KI_METADATA(
@@ -98,6 +100,8 @@ KI_INTERFACE(KiIApplication) KI_EXCLUDES(KiIEventDrivenApplication) KI_BUILTIN {
     KI_BASE(KiIApplication)
 
     /**
+     * \fn    KiIApplication::Run(KiIApplication *self, KiSReturnState *resPtr)
+     * \brief entrypoint of a Kira application
      */
     KiTVoid (KI_CALL *Run)(KiIApplication *self, KiSReturnState *resPtr);
 };

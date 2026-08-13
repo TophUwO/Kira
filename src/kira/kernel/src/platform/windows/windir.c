@@ -152,6 +152,19 @@ KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) {
     return '\\';
 }
 
+KiTChar *KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *pathStr) {
+    KI_ASSERT(pathStr != nullptr, KiErr_InOutParameter);
+
+    KiTChar *sepPtr = strchr(pathStr, '/');
+    while (sepPtr != nullptr) {
+        *sepPtr = KiPlatform_GetPathSeparator();
+
+        sepPtr = strchr(sepPtr, '/');
+    }
+
+    return pathStr;
+}
+
 KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) {
     KI_ASSERT(pathStr != nullptr, KiErr_InParameter);
 
@@ -191,6 +204,4 @@ KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) {
 }
 
 
-#endif /* KI_PLATFORM_WINDOWS */
-
-
+#endif /* (defined KI_PLATFORM_WINDOWS) */

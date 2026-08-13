@@ -131,6 +131,9 @@ KI_NATIVE extern KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const
 KI_NATIVE extern KiTChar KI_CALL KiPlatform_GetPathSeparator(KiTVoid) KI_PLATFORM;
 /**
  */
+KI_NATIVE extern KiTChar *KI_CALL KiPlatform_CanonicalizeSeparators(KiTChar *pathStr) KI_PLATFORM;
+/**
+ */
 KI_NATIVE extern KiTBool KI_CALL KiPlatform_PathExists(KiTChar const *pathStr, KiTBool isDir) KI_PLATFORM;
 /**
  */
@@ -139,7 +142,7 @@ KI_NATIVE extern KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathSt
 /**
  * 
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_OpenFile(KiTChar const *pathStr, KiEFileAccessMode mode, KiTVoid **resPtr) KI_PLATFORM;
+KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_OpenFile(KiTChar const *pathStr, KiTChar const *modeStr, KiTVoid **resPtr) KI_PLATFORM;
 /**
  * 
  */

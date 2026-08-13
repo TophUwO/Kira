@@ -1,0 +1,13 @@
+{
+    "activeProfile": "default",
+    "environment": {
+        "args": [],
+        "env":  {
+            "KIRA_ENV_TEST_VAR1": "Hello, world!",
+            "KIRA_ENV_TEST_VAR2": "kika",
+            "KIRA_ENV_TEST_VAR3": "",
+            "": "lol"
+        }
+    },
+    "additionalModuleDirs": []
+}
