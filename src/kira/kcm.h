@@ -1,7 +1,7 @@
 /****************************************************************************************************************
  * Kira - cross-platform component-based modular application development framework written in C11               *
  *                                                                                                              *
- * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
+ * (c) 2024-2026 Toffi <tophuwo01@gmail.com>                                                                    *
  *                                                                                                              *
  * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
  * this project. If this file is not present, visit                                                             *
@@ -728,10 +728,10 @@ KI_INTERFACE(KiIBase) KI_AUXILIARY KI_BUILTIN {
         "brief":   "base interface containing methods for capability querying and lifetime management",
         "version": [1, 0, 0],
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2024-2025 TophUwO"
+            "copyright": "(c) 2024-2025 Toffi"
         }
     )
 
@@ -833,10 +833,10 @@ KI_INTERFACE(KiIComponentFactory) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
         "brief":   "interface exposing an API that is able to create components",
         "version": [1, 0, 0],
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2024-2025 TophUwO"
+            "copyright": "(c) 2024-2025 Toffi"
         }
     )
     KI_BASE(KiIComponentFactory)
@@ -867,10 +867,10 @@ KI_INTERFACE(KiIModule) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
         "brief":   "interface exposing information for the runtime reflection system",
         "version": [1, 0, 0],
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2024-2025 TophUwO"
+            "copyright": "(c) 2024-2025 Toffi"
         }
     )
     KI_BASE(KiIModule)
@@ -931,10 +931,10 @@ KI_INTERFACE(KiIErrorStringifier) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
         "brief":   "interface providing stringifications for module-specific error codes",
         "version": [1, 0, 0, 0]
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2025 TophUwO"
+            "copyright": "(c) 2025 Toffi"
         }
     )
     KI_BASE(KiIErrorStringifier)

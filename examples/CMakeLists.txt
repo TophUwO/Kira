@@ -9,3 +9,12 @@
 # ****************************************************************************************************************
 
 
+# (1) Get all immediate subdirectories.
+file(GLOB children RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/*")
+
+# (2) Go over the found subdirectories and include them into the CMake project.
+foreach (child ${children})
+    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${child}")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/${child}")
+    endif()
+endforeach()

@@ -1,7 +1,7 @@
 /****************************************************************************************************************
  * Kira - cross-platform component-based modular application development framework written in C11               *
  *                                                                                                              *
- * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
+ * (c) 2024-2026 Toffi <tophuwo01@gmail.com>                                                                    *
  *                                                                                                              *
  * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
  * this project. If this file is not present, visit                                                             *
@@ -58,10 +58,10 @@ KI_INTERFACE(KiIEvent) KI_AUXILIARY {
         "brief":   "represents a generic Kira application event",
         "version": [1, 0, 0],
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2024-2026 TophUwO"
+            "copyright": "(c) 2024-2026 Toffi"
         }
     )
     KI_BASE(KiIEvent)
@@ -91,10 +91,10 @@ KI_INTERFACE(KiIApplication) KI_EXCLUDES(KiIEventDrivenApplication) KI_BUILTIN {
         "brief":   "provides the entrypoint for a generic application; can be anything; e.g., console, GUI, or real-time",
         "version": [1, 0, 0],
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2024-2026 TophUwO"
+            "copyright": "(c) 2024-2026 Toffi"
         }
     )
     KI_BASE(KiIApplication)
@@ -118,10 +118,10 @@ KI_INTERFACE(KiIEventDrivenApplication) KI_EXCLUDES(KiIApplication) KI_BUILTIN {
         "brief":   "provides the entrypoint for an application that is event-driven; e.g., a GUI application",
         "version": [1, 0, 0],
         "legal":   {
-            "author":    "TophUwO",
+            "author":    "Toffi",
             "contact":   "tophuwo01@gmail.com",
             "license":   "Apache License 2.0",
-            "copyright": "(c) 2024-2026 TophUwO"
+            "copyright": "(c) 2024-2026 Toffi"
         }
     )    
     KI_BASE(KiIEventDrivenApplication)

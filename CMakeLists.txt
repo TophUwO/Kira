@@ -1,7 +1,7 @@
 # ****************************************************************************************************************
 # * Kira - cross-platform component-based modular application development framework written in C11               *
 # *                                                                                                              *
-# * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                  *
+# * (c) 2024-2025 Toffi <tophuwo01@gmail.com>                                                                    *
 # *                                                                                                              *
 # * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
 # * this project. If this file is not present, visit                                                             *
@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.30 FATAL_ERROR)
 project(Kira
     VERSION      0.1.0.1
     DESCRIPTION  "cross-platform component-based modular application development framework written in C11"
-    HOMEPAGE_URL "https://www.github.com/TophUwO/Kira.git"
+    HOMEPAGE_URL "https://www.github.com/Toffi/Kira.git"
     LANGUAGES    C
 )
 
@@ -136,4 +136,5 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/src/kira/kernel)
 # Add launcher target.
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/kira/launcher)
 
-
+# Add examples.
+add_subdirectory(examples)
