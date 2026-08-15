@@ -1,12 +1,12 @@
-/*****************************************************************************************************************
- * Kira - cross-platform 2-D role-playing game (RPG) game engine for desktop and mobile, and console platforms *
- *                                                                                                               *
- * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                   *
- *                                                                                                               *
- * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of  *
- * this project. If this file is not present, visit                                                              *
- *     https://www.apache.org/licenses/LICENSE-2.0                                                               *
- *****************************************************************************************************************/
+/****************************************************************************************************************
+ * Kira - cross-platform component-based modular application development framework written in C11               *
+ *                                                                                                              *
+ * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
+ *                                                                                                              *
+ * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
+ * this project. If this file is not present, visit                                                             *
+ *     https://www.apache.org/licenses/LICENSE-2.0                                                              *
+ ****************************************************************************************************************/
 
 
 /**
@@ -22,7 +22,8 @@
 #include <kira/kernel/rt.h>
 
 
-KiTInt8 KI_CALL KiKrnlCompareVersions(KiSVersion const *lVerPtr, KiSVersion const *rVerPtr) {
+/** \cond INTERNAL */
+static KiTInt8 KI_CALL KiInternal_CompareVersions(KiSVersion const *lVerPtr, KiSVersion const *rVerPtr) {
     KI_ASSERT(lVerPtr != nullptr, KiErr_InParameter);
     KI_ASSERT(rVerPtr != nullptr, KiErr_InParameter);
 
@@ -48,8 +49,10 @@ KiTInt8 KI_CALL KiKrnlCompareVersions(KiSVersion const *lVerPtr, KiSVersion cons
         "of \"KiTUint64\"."
     );
 }
+/** \endcond */
 
-KiTBool KI_CALL KiKrnlIsVersionInRange(
+
+KiTBool KI_CALL KiIsVersionInRange(
     KiSVersion const *verPtr,
     KiSVersion const *minVerPtr,
     KiSVersion const *maxVerPtr,
@@ -60,12 +63,19 @@ KiTBool KI_CALL KiKrnlIsVersionInRange(
     KI_ASSERT(maxVerPtr != nullptr, KiErr_InParameter);
 
     /* Compare against boundaries. */
-    KiTInt8 const minCmpRes = KiKrnlCompareVersions(verPtr, minVerPtr);
-    KiTInt8 const maxCmpRes = KiKrnlCompareVersions(verPtr, maxVerPtr);
+    KiTInt8 const minCmpRes = KiInternal_CompareVersions(verPtr, minVerPtr);
+    KiTInt8 const maxCmpRes = KiInternal_CompareVersions(verPtr, maxVerPtr);
     {
         /* Check if we are inside the bounds. */
         return isInclusive ? (minCmpRes >= 0 && maxCmpRes <= 0) : (minCmpRes > 0 && maxCmpRes < 0);
     }
+}
+
+KiTInt8 KI_CALL KiCompareVersions(KiSVersion const *lVerPtr, KiSVersion const *rVerPtr) {
+    KI_ASSERT(lVerPtr != nullptr, KiErr_InParameter);
+    KI_ASSERT(rVerPtr != nullptr, KiErr_InParameter);
+
+    return KiInternal_CompareVersions(lVerPtr, rVerPtr);
 }
 
 

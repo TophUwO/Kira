@@ -1,17 +1,17 @@
-/*****************************************************************************************************************
- * Kira - cross-platform 2-D role-playing game (RPG) game engine for desktop and mobile, and console platforms   *
- *                                                                                                               *
- * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                   *
- *                                                                                                               *
- * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of  *
- * this project. If this file is not present, visit                                                              *
- *     https://www.apache.org/licenses/LICENSE-2.0                                                               *
- *****************************************************************************************************************/
+/****************************************************************************************************************
+ * Kira - cross-platform component-based modular application development framework written in C11               *
+ *                                                                                                              *
+ * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
+ *                                                                                                              *
+ * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
+ * this project. If this file is not present, visit                                                             *
+ *     https://www.apache.org/licenses/LICENSE-2.0                                                              *
+ ****************************************************************************************************************/
 
 /**
- * \file  term.c
- * \brief implements the component that terminates the application in case a fatal error (in response to a failed
- *        \c KI_ASSERT(), for example) occurs 
+ * \file  abort.c
+ * \brief implements the functions that terminate the application in case a fatal error (in response to a failed
+ *        \c KI_ASSERT(), for example) occurs
  */
 
 
@@ -29,7 +29,7 @@
 /** \cond INTERNAL */
 /**
  */
-static KiTChar const **gl_c_ErrorMsgFormat = &(KiTChar const *){
+static KiTChar const *gl_c_ErrorMsgFormat = {
     "A debug error occurred and the application was forced to halt:\n\n"
     "  Expr:\t%s\n"
     "  Code:\t%s (%u)\n"
@@ -45,13 +45,13 @@ static KiTChar const **gl_c_ErrorMsgFormat = &(KiTChar const *){
 
 /**
  */
-static KiTChar *KI_CALL Internal_FormatMessage(KiSDebugTerminationContext const *termCtxt) {
-    KI_ASSERT(termCtxt != nullptr, KiErr_InParameter);
+static KiTChar *KI_CALL Internal_FormatMessage(KiSAbortContext const *abortCtxtPtr) {
+    KI_ASSERT(abortCtxtPtr != nullptr, KiErr_InParameter);
 
     /* Query error stringifications. */
-    KiSStringView const *codeStr  = KiQueryErrorString(termCtxt->m_errorCode);
-    KiSStringView const *briefStr = KiQueryErrorBrief(termCtxt->m_errorCode);
-    KiSStringView const *detStr   = KiQueryErrorDetails(termCtxt->m_errorCode);
+    KiSStringView const *codeStr  = KiQueryErrorString(abortCtxtPtr->m_errorCode);
+    KiSStringView const *briefStr = KiQueryErrorBrief(abortCtxtPtr->m_errorCode);
+    KiSStringView const *detStr   = KiQueryErrorDetails(abortCtxtPtr->m_errorCode);
 
     /* Compute required size. */
     KiTSize reqSize = 0;
@@ -59,14 +59,14 @@ static KiTChar *KI_CALL Internal_FormatMessage(KiSDebugTerminationContext const 
         reqSize = (KiTSize)snprintf(
             nullptr,
             0,
-            *gl_c_ErrorMsgFormat,
-            termCtxt->m_failedExpr.mp_strPtr,
+            gl_c_ErrorMsgFormat,
+            abortCtxtPtr->m_failedExpr.mp_strPtr,
             codeStr->mp_strPtr,
-            termCtxt->m_errorCode,
+            abortCtxtPtr->m_errorCode,
             briefStr->mp_strPtr,
-            termCtxt->m_filePath.mp_strPtr,
-            termCtxt->m_fileLine,
-            termCtxt->m_fnName.mp_strPtr,
+            abortCtxtPtr->m_filePath.mp_strPtr,
+            abortCtxtPtr->m_fileLine,
+            abortCtxtPtr->m_fnName.mp_strPtr,
             detStr->mp_strPtr
         );
 
@@ -82,14 +82,14 @@ static KiTChar *KI_CALL Internal_FormatMessage(KiSDebugTerminationContext const 
         snprintf(
             bufPtr,
             reqSize,
-            *gl_c_ErrorMsgFormat,
-            termCtxt->m_failedExpr.mp_strPtr,
+            gl_c_ErrorMsgFormat,
+            abortCtxtPtr->m_failedExpr.mp_strPtr,
             codeStr->mp_strPtr,
-            termCtxt->m_errorCode,
+            abortCtxtPtr->m_errorCode,
             briefStr->mp_strPtr,
-            termCtxt->m_filePath.mp_strPtr,
-            termCtxt->m_fileLine,
-            termCtxt->m_fnName.mp_strPtr,
+            abortCtxtPtr->m_filePath.mp_strPtr,
+            abortCtxtPtr->m_fileLine,
+            abortCtxtPtr->m_fnName.mp_strPtr,
             detStr->mp_strPtr
         );
     }
@@ -99,8 +99,8 @@ static KiTChar *KI_CALL Internal_FormatMessage(KiSDebugTerminationContext const 
 /** \endcond */
 
 
-KI_NORETURN KiTVoid KI_CALL KiDebugTerminateProcess(KiSDebugTerminationContext const *termCtxt) {
-    KI_ASSERT(termCtxt != nullptr, KiErr_InParameter);
+KI_API KI_NORETURN KiTVoid KI_CALL KiAbort(KiSAbortContext const *abortCtxtPtr) {
+    KI_ASSERT(abortCtxtPtr != nullptr, KiErr_InParameter);
 
     /** \cond */
     static _Atomic(KiTInt32) gl_actFlag;
@@ -108,20 +108,20 @@ KI_NORETURN KiTVoid KI_CALL KiDebugTerminateProcess(KiSDebugTerminationContext c
 
     if (atomic_fetch_or(&gl_actFlag, KI_TRUE) == KI_FALSE) {
         /* Format the error message. */
-        KiTChar *msgBufPtr = Internal_FormatMessage(termCtxt);
+        KiTChar *msgBufPtr = Internal_FormatMessage(abortCtxtPtr);
         {
             /* Print error message or show message box or call the Oracle of Delphi for advice. */
             KiPlatform_Notify(
                 msgBufPtr != nullptr
                     ? msgBufPtr
                     : "****\n\nThere was a problem formatting the message buffer. \n\n****",
-                termCtxt
+                abortCtxtPtr
             );
         }
         free(msgBufPtr);
 
         /* Actually exit. This call does not return. */
-        KiPlatform_Exit(termCtxt->m_errorCode);
+        KiPlatform_Exit(abortCtxtPtr->m_errorCode);
     }
 
     /*

@@ -1,7 +1,7 @@
 /****************************************************************************************************************
  * Kira - cross-platform component-based modular application development framework written in C11               *
  *                                                                                                              *
- * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                  *
+ * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
  *                                                                                                              *
  * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
  * this project. If this file is not present, visit                                                             *
@@ -409,6 +409,19 @@ KI_NATIVE typedef struct KiSVersion {
  */
 #define KI_MAKE_VERSION_STRING(ma, mi, pa, rev) #ma"."#mi"."#pa"-rev"#rev
 
+/**
+ */
+KI_NATIVE KI_API KiTBool KI_CALL KiIsVersionInRange(
+    KiSVersion const *verPtr,
+    KiSVersion const *minVerPtr,
+    KiSVersion const *maxVerPtr,
+    KiTBool isInclusive
+);
+
+/**
+ */
+KI_NATIVE KI_API KiTInt8 KI_CALL KiCompareVersions(KiSVersion const *lVerPtr, KiSVersion const *rVerPtr);
+
 
 /**
  */
@@ -482,6 +495,7 @@ KI_NATIVE typedef struct KiSNumericRange {
         KiSStaticArray: (var).m_stArrayVal, \
         KiSArrayView:   (var).m_avVal       \
     )
+
 /**
  */
 #define KI_VARIANT_SET(var, val) KiSetVariant(var, __KI_TYPEOF_IMPL__(val), val)

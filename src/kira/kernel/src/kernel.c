@@ -67,29 +67,6 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
         gl_KernelState.m_rtSpecs.m_structSize = size2Copy;
     }
 
-    /* Start debugging session if necessary. */
-#if (defined KI_CONFIG_DEBUG)
-    {
-        /**
-         * \brief represents the default debug options in case no overriding debug options were passed by the launcher
-         *        component
-         */
-        static KiSDebugOptions const gl_c_DefDbgOptions = {
-            .m_structSize       = sizeof gl_c_DefDbgOptions,
-            .m_useDetRng        = KI_TRUE,
-            .m_isAssertsEnabled = KI_TRUE
-        };
-
-        KiEErrorCode errCode = KiStartDebugSession(
-            rtSpecs->mp_dbgOpts != nullptr
-                ? rtSpecs->mp_dbgOpts
-                : (gl_KernelState.m_rtSpecs.mp_dbgOpts = (KiSDebugOptions *)&gl_c_DefDbgOptions)
-        );
-        if (errCode != KiErr_Ok)
-            return errCode;
-    }
-#endif
-
     /* Load kernel modules. This will also load a configuration and profile. */
     KiEErrorCode errCode = KiStartKernelModules();
     if (errCode != KiErr_Ok)
@@ -97,7 +74,6 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
 
     // enum all modules
     // add all comps to reg
-    // create all debug handlers
     // load the rest of the modules (via iterative dfs)
 
     /* All good. */
@@ -106,10 +82,6 @@ KiEErrorCode KI_CALL KiStartup(KiSRuntimeSpecification const *rtSpecs) {
 
 KiEErrorCode KI_CALL KiShutdown(KiTVoid) {
     KiEErrorCode const errCode = KiShutdownKernelModules();
-
-#if (defined KI_CONFIG_DEBUG)
-    KiStopDebugSession();
-#endif
 
     return errCode;
 }

@@ -1,12 +1,12 @@
-/*****************************************************************************************************************
- * Kira - cross-platform 2-D role-playing game (RPG) game engine for desktop and mobile, and console platforms *
- *                                                                                                               *
- * (c) 2024-2025 TophUwO <tophuwo01@gmail.com>                                                                   *
- *                                                                                                               *
- * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of  *
- * this project. If this file is not present, visit                                                              *
- *     https://www.apache.org/licenses/LICENSE-2.0                                                               *
- *****************************************************************************************************************/
+/****************************************************************************************************************
+ * Kira - cross-platform component-based modular application development framework written in C11               *
+ *                                                                                                              *
+ * (c) 2024-2026 TophUwO <tophuwo01@gmail.com>                                                                  *
+ *                                                                                                              *
+ * The source code is licensed under the Apache License 2.0. Refer to the LICENSE file in the root directory of *
+ * this project. If this file is not present, visit                                                             *
+ *     https://www.apache.org/licenses/LICENSE-2.0                                                              *
+ ****************************************************************************************************************/
 
 /** \cond INTERNAL */
 /**
@@ -22,8 +22,7 @@
 
 /* Kira includes */
 #include <kira/def.h>
-
-#include <kira/kernel/dbg.h>
+#include <kira/dbg.h>
 
 #include <kira/kernel/int/sync.h>
 
@@ -180,23 +179,6 @@ KI_NATIVE extern KiSFunctionHandle KI_CALL KiPlatform_ResolveSymbol(KiTDynLibHan
 
 /**
  */
-KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_VirtualReserve(KiTVoid *stAddr, KiTSize reqSz, KiTVoid **resPtr) KI_PLATFORM;
-/**
- * must return zeroed memory on all platforms
- */
-KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_VirtualCommit(KiTVoid *stAddr, KiTSize reqSz, KiTVoid **resPtr) KI_PLATFORM;
-/**
- */
-KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_VirtualUncommit(KiTVoid *stAddr, KiTSize reqSz) KI_PLATFORM;
-/**
- */
-KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_VirtualFree(KiTVoid *stAddr, KiTSize reqSz) KI_PLATFORM;
-/**
- */
-KI_NATIVE extern KiTSize KI_CALL KiPlatform_VirtualGetPageSize(KiTVoid) KI_PLATFORM;
-
-/**
- */
 KI_NATIVE extern KiEErrorCode KI_CALL KiVirtual_RWLockCreate(KiTRWLockHandle *resPtr) KI_PLATFORM;
 /**
  */
@@ -216,7 +198,7 @@ KI_NATIVE extern KiTVoid KI_CALL KiVirtual_RWLockReleaseWrite(KiTRWLockHandle *r
 
 /**
  */
-KI_NATIVE extern KiTVoid KI_CALL KiPlatform_Notify(KiTChar const *mBuf, KiSDebugTerminationContext const *tCtxt) KI_PLATFORM;
+KI_NATIVE extern KiTVoid KI_CALL KiPlatform_Notify(KiTChar const *mBuf, KiSAbortContext const *tCtxt) KI_PLATFORM;
 /**
  */
 KI_NATIVE extern KI_NORETURN KiTVoid KI_CALL KiPlatform_Exit(KiEErrorCode errCode) KI_PLATFORM;

@@ -27,11 +27,10 @@
 /**
  */
 KI_NATIVE typedef struct KiSRuntimeSpecification {
-    KiTSize           m_structSize;
-    int               m_argc;
-    char            **mpp_argv;
-    char            **mpp_envp;
-    KiSDebugOptions  *mp_dbgOpts;
+    KiTSize   m_structSize;
+    int       m_argc;
+    char    **mpp_argv;
+    char    **mpp_envp;
 } KiSRuntimeSpecification;
 
 
@@ -64,16 +63,3 @@ KI_NATIVE KI_API KiSJson const *KI_CALL KiGetRuntimeConfiguration(KiTVoid);
 /**
  */
 KI_NATIVE KI_API KiTVoid KI_CALL KiInvokeOnAssertHandler(KiTVoid const *extraParam);
-
-/**
- */
-KI_NATIVE KI_API KiTInt8 KI_CALL KiCompareVersions(KiSVersion const *lVerPtr, KiSVersion const *rVerPtr);
-/**
- */
-KI_NATIVE KI_API KiTBool KI_CALL KiIsVersionInRange(
-    KiSVersion const *verPtr,
-    KiSVersion const *minVerPtr,
-    KiSVersion const *maxVerPtr,
-    KiTBool isInclusive
-);
-
