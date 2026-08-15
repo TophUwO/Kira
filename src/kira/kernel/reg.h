@@ -55,5 +55,3 @@ KI_NATIVE KI_API KiEErrorCode KI_CALL KiQueryComponent(
     KiTChar const *subsysId,
     KiIBase **resPtr
 );
-
-

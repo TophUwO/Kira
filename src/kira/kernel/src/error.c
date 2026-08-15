@@ -491,5 +491,3 @@ KI_KRNLMOD_DEFINE(ErrorStringificationService) {
     .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(ErrorStringificationService)
 };
 /** \endcond */
-
-

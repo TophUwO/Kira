@@ -12,9 +12,9 @@
  * \file  winfile.c
  * \brief implements Windows-specific basic file handling routines
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* stdlib includes */
 #include <stdio.h>
 
@@ -219,6 +219,4 @@ KiEErrorCode KI_CALL KiPlatform_WriteToFile(KiTVoid *fHandle, KiTVoid const *src
     /* All good. */
     return KiErr_Ok;
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

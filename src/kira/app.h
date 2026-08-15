@@ -130,5 +130,3 @@ KI_INTERFACE(KiIEventDrivenApplication) KI_EXCLUDES(KiIApplication) KI_BUILTIN {
      */
     KiTVoid (KI_CALL *OnEvent)(KiIEventDrivenApplication *self, KiIEvent *evPtr);
 };
-
-

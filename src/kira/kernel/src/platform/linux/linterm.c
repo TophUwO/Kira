@@ -12,9 +12,9 @@
  * \file  linterm.c
  * \brief implements Linux-specific routine for process termination
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,8 +34,4 @@ KiTVoid KI_CALL KiPlatform_Notify(KiTChar const *mBuf, KiSDebugTerminationContex
 KiTVoid KI_CALL KiPlatform_Exit(KiEErrorCode errCode) {
     exit((int)errCode);
 }
-
-
-#endif
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

@@ -12,9 +12,9 @@
  * \file  winsleep.c
  * \brief implements the native sleep() routine for the Windows(R) platform
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 
@@ -25,8 +25,4 @@
 KiTVoid KI_CALL KiPlatform_Sleep(KiTUint32 sleepMs) {
     Sleep((DWORD)sleepMs);
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */
-
-

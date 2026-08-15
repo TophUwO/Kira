@@ -48,7 +48,7 @@
 #else
     #define __KIRA_FUNCSIG__
     #define KI_ASSERT(expr, errorCode)
-#endif
+#endif /* (defined KI_CONFIG_DEBUG) */
 
 
 /**
@@ -68,5 +68,3 @@ KI_NATIVE typedef struct KiSAbortContext {
 /**
  */
 KI_NATIVE KI_API KI_NORETURN KiTVoid KI_CALL KiAbort(KiSAbortContext const *abortCtxtPtr);
-
-

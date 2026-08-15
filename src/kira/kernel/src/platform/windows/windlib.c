@@ -12,9 +12,9 @@
  * \file  windlib.c
  * \brief implements the platform-dependent functions (this file is Windows(R)-specific) for the dynamic library service
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* stdlib includes */
 #include <stdlib.h>
 #include <string.h>
@@ -59,6 +59,4 @@ KiTBool KI_CALL KiPlatform_IsLibrary(KiTChar const *filePath) {
 
     return !strcmp(extBuf, ".dll") || !strcmp(extBuf, ".DLL");
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

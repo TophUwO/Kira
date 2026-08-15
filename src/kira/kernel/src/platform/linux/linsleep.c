@@ -12,9 +12,9 @@
  * \file  linsleep.c
  * \brief implements Linux-specific routine for putting a thread to sleep
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <time.h>
 
@@ -30,8 +30,4 @@ KiTVoid KI_CALL KiPlatform_Sleep(KiTUint32 sleepMs) {
 
     KI_IGNORE_RETURN_VALUE(nanosleep(&(struct timespec const){ .tv_sec = sleepMs / 1000, .tv_nsec = nSec }, nullptr));
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

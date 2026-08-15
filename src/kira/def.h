@@ -28,7 +28,7 @@
 #else
     /* We need to at least have C11 support for Kira to work. */
     #error Kira requires full C11 compiler support. Use, e.g., -std=c11, or change to a newer toolset. 
-#endif
+#endif /* (__STDC_VERSION__ >= 202311L) */
 
 /* What if some poor soul still uses a compiler incompliant with C23? Shame on them, obviously. */
 #if ((!defined __cplusplus) && (!defined KI_STD_C23))
@@ -37,13 +37,13 @@
 
     #if (!defined bool)
         #define bool _Bool
-    #endif
-#endif
+    #endif /* (!defined bool) */
+#endif /* ((!defined __cplusplus) && (!defined KI_STD_C23)) */
 
 /* We need to also fix static assertions if not done by the platform itself. */
 #if (defined KI_STD_C23)
     #define _Static_assert static_assert
-#endif
+#endif /* (defined KI_STD_C23) */
 /** \endcond */
 
 /**
@@ -55,20 +55,20 @@
     #define KI_NATIVE extern "C"
 #else
     #define KI_NATIVE
-#endif
+#endif /* (defined __cplusplus) */
 #if ((defined _WIN32) || (defined __CYGWIN__))
     #if (defined KI_KERNEL_EXPORT)
         #define KI_API __declspec(dllexport)
     #else
         #define KI_API __declspec(dllimport)
-    #endif
+    #endif /* (defined KI_KERNEL_EXPORT) */
 #else
     #if (defined KI_KERNEL_EXPORT)
         #define KI_API __attribute__((visibility("default")))
     #else
         #define KI_API
-    #endif
-#endif
+    #endif /* (defined KI_KERNEL_EXPORT) */
+#endif /* ((defined _WIN32) || (defined __CYGWIN__)) */
 #if (defined KI_HOST_MSVC)
     #define KI_CALL     __cdecl
     #define KI_NORETURN __declspec(noreturn)
@@ -77,10 +77,10 @@
         #define KI_CALL __attribute__((cdecl))
     #else
         #define KI_CALL
-    #endif
+    #endif /* (defined KI_PLATFORM_WINDOWS) */
 
     #define KI_NORETURN __attribute__((noreturn))
-#endif
+#endif /* (defined KI_HOST_MSVC) */
 
 /**
  * \def   KI_PLATFORM
@@ -119,7 +119,7 @@ typedef long double        KiTLongDouble;
 #else
     typedef KiTInt32  KiTIntptr, KiTOffset, KiTIndex;
     typedef KiTUint32 KiTSize;
-#endif
+#endif /* (defined KI_TARGET_X64) */
 
 _Static_assert(sizeof(KiTByte)     == 1, "Size of type \"KiTByte\" must be exactly one byte.");
 _Static_assert(sizeof(KiTInt16)    == 2, "Size of type \"KiTInt16\" must be exactly two bytes.");
@@ -180,7 +180,5 @@ _Static_assert(_Alignof(KiTInt64)  == 8, "Alignment requirement of type \"KiTInt
     #define KI_INDEX_MAX    ((KiTIndex)(KI_INTPTR_MAX))
     #define KI_SIZE_MIN     ((KiTSize)(0U))
     #define KI_SIZE_MAX     ((KiTSize)(4294967295U))
-#endif
+#endif /* (defined KI_TARGET_X64) */
 /** @} */
-
- 

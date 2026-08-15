@@ -77,5 +77,3 @@ KiTInt8 KI_CALL KiCompareVersions(KiSVersion const *lVerPtr, KiSVersion const *r
 
     return KiInternal_CompareVersions(lVerPtr, rVerPtr);
 }
-
-

@@ -105,5 +105,3 @@ KI_NATIVE KI_API KiTBool KI_CALL KiGetJsonElementValues(
 /**
  */
 KI_NATIVE KI_API KiEJsonValueType KI_CALL KiGetJsonElementType(KiSJson const *elemPtr);
-
-

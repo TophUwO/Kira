@@ -46,5 +46,3 @@ KI_NATIVE extern KiTVoid KI_CALL KiAcquireWrite(KiTRWLockHandle *rwLockPtr);
 /**
  */
 KI_NATIVE extern KiTVoid KI_CALL KiReleaseWrite(KiTRWLockHandle *rwLockPtr);
-
-

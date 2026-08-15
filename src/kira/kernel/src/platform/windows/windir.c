@@ -12,9 +12,9 @@
  * \file  windir.c
  * \brief implements Windows(R)-specific routines regarding directory handling
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 #include <shlwapi.h>
@@ -202,6 +202,4 @@ KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) {
 
     return res;
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

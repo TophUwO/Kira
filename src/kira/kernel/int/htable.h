@@ -70,5 +70,3 @@ KI_NATIVE extern KiTBool KI_CALL KiIsInHashtable(KiSHashtable *htPtr, KiTVoid co
 /**
  */
 KI_NATIVE extern KiTVoid *KI_CALL KiGetFromHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr);
-
-

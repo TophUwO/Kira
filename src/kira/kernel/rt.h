@@ -59,7 +59,3 @@ KI_NATIVE KI_API KiSRuntimeSpecification const *KI_CALL KiGetRuntimeSpecificatio
 /**
  */
 KI_NATIVE KI_API KiSJson const *KI_CALL KiGetRuntimeConfiguration(KiTVoid);
-
-/**
- */
-KI_NATIVE KI_API KiTVoid KI_CALL KiInvokeOnAssertHandler(KiTVoid const *extraParam);

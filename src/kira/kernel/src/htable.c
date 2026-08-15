@@ -378,5 +378,3 @@ KiTVoid *KI_CALL KiGetFromHashtable(KiSHashtable *htPtr, KiTVoid const *keyPtr) 
     return (KiTVoid *)htPtr->mp_tupleArr[elemIdx].mp_value;
 }
 /** \endcond */
-
-

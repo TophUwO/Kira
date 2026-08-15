@@ -12,9 +12,9 @@
  * \file  winsync.c
  * \brief implements the kernel-level synchronization primitives for the Microsoft Windows(R) platform
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 
@@ -74,6 +74,4 @@ KiTVoid KI_CALL KiVirtual_RWLockReleaseWrite(KiTRWLockHandle *rwLockPtr) {
 
     ReleaseSRWLockExclusive((SRWLOCK *)rwLockPtr);
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

@@ -49,5 +49,3 @@ KiTVoid KI_CALL KiAcquireWrite(KiTRWLockHandle *rwLockPtr) {
 KiTVoid KI_CALL KiReleaseWrite(KiTRWLockHandle *rwLockPtr) {
     KiVirtual_RWLockReleaseWrite(rwLockPtr);
 }
-
-

@@ -12,9 +12,8 @@
  * \file  winrand.c
  * \brief implements native random number seed generation for the Kicrosoft(R) Windows(R) platform
  */
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 #include <wincrypt.h>
@@ -56,6 +55,4 @@ KiEErrorCode KI_CALL KiPlatform_GetRandomBytes(KiTSize sizeInBytes, KiTVoid *res
 
     return KiErr_Ok;
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

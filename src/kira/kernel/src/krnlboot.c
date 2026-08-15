@@ -83,5 +83,3 @@ KiEErrorCode KI_CALL KiShutdownKernelModules(KiTVoid) {
     return KiErr_Ok;
 }
 /** \endcond */
-
-

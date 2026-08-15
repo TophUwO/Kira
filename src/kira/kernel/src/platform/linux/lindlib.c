@@ -12,9 +12,9 @@
  * \file  lindlib.c
  * \brief implements Linux-specific routines regarding dynamic library management
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <string.h>
 
@@ -24,7 +24,7 @@
     #include <elf.h>
 #else
     #error "elf.h" is currently required. 
-#endif
+#endif  /* (__has_include(<elf.h>)) */
 
 /* Kira includes */
 #include <kira/kernel/int/platform.h>
@@ -36,7 +36,7 @@
     KI_NATIVE typedef Elf64_Ehdr KiSElfHeader;
 #else
     KI_NATIVE typedef Elf32_Ehdr KiSElfHeader;
-#endif
+#endif /* (defined __LP64__) */
 /** \endcond */
 
 
@@ -125,8 +125,4 @@ KiTBool KI_CALL KiPlatform_IsLibrary(KiTChar const *filePath) {
     KiPlatform_CloseFile(fileHandle);
     return res;
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

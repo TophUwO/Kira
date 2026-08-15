@@ -12,9 +12,9 @@
  * \file  linfile.c
  * \brief implements Linux-specific basic file handling routines
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <stdio.h>
 #include <errno.h>
@@ -247,8 +247,4 @@ KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_WriteToFile(KiTVoid *fHandle, K
 
     return KiErr_Ok;
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

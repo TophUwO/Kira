@@ -957,5 +957,3 @@ KI_INTERFACE(KiIErrorStringifier) KI_EXTENDS(KiIBase) KI_AUXILIARY KI_BUILTIN {
      */
     KiSStringView const *(KI_CALL *QueryErrorDetails)(KiIErrorStringifier *self, KiEErrorCode errorCode);
 };
-
-

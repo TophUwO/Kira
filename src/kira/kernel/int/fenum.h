@@ -76,5 +76,3 @@ KI_NATIVE extern KiSFileEnumerationProperties const *KI_CALL KiGetFECProperties(
 /**
  */
 KI_NATIVE extern KiEErrorCode KI_CALL KiGetFECLastError(KiSFileEnumerationContext const *ctxtPtr);
-
-

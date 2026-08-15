@@ -62,5 +62,3 @@ KI_NATIVE extern KiTChar const *KI_CALL KiGetCString(KiSString const *strPtr);
 /**
  */
 KI_NATIVE extern KiTSize KI_CALL KiGetStringSize(KiSString const *strPtr);
-
-

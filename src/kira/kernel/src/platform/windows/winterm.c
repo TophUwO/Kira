@@ -12,9 +12,9 @@
  * \file  winterm.c
  * \brief implements functions for the debug termination service specific to the Windows(R) platform
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 
@@ -40,6 +40,4 @@ KI_NORETURN KiTVoid KI_CALL KiPlatform_Exit(KiEErrorCode errCode) {
     ExitProcess((UINT)errCode);
 }
 /** \endcond */
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

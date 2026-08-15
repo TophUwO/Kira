@@ -12,9 +12,9 @@
  * \file  linsync.c
  * \brief implements Linux-specific low-level synchronization routines
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <stdlib.h>
 
@@ -87,8 +87,4 @@ KiTVoid KI_CALL KiVirtual_RWLockReleaseWrite(KiTRWLockHandle *rwLockPtr) {
 
     KI_IGNORE_RETURN_VALUE(pthread_rwlock_unlock((pthread_rwlock_t *)*rwLockPtr));
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

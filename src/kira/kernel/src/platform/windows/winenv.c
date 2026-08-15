@@ -12,9 +12,9 @@
  * \file  winenv.c
  * \brief implements the retrieval routines for command-line and environment variables for the Windows(R) platform
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 
@@ -222,6 +222,4 @@ KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar c
     free(kvPairBlock);
     return (KiTBool)res;
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

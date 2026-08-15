@@ -72,5 +72,3 @@ KI_NATIVE extern KiTVoid *KI_CALL KiGetArrayElementAt(KiSArray const *arrPtr, Ki
 /**
  */
 KI_NATIVE extern KiTSize KI_CALL KiGetArrayElementCount(KiSArray const *arrPtr);
-
-

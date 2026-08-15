@@ -25,5 +25,3 @@
 /**
  */
 KI_NATIVE KiSString *KI_CALL KiGetRootProfilePath(KiTVoid);
-
-

@@ -17,7 +17,7 @@
 /* stdlib includes */
 #if ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS))
     #define _CRT_SECURE_NO_WARNINGS 1
-#endif
+#endif /* ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS)) */
 #include <stdlib.h>
 
 #include <string.h>
@@ -255,5 +255,3 @@ KiTSize KI_CALL KiGetArrayElementCount(KiSArray const *arrPtr) {
 
     return arrPtr->m_elemCnt;
 }
-
-

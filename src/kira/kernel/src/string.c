@@ -224,5 +224,3 @@ KiTSize KI_CALL KiGetStringSize(KiSString const *strPtr) {
 
     return KiGetBufferSize((KiSBuffer const *)strPtr);
 }
-
-

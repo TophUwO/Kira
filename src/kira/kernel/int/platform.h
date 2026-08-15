@@ -213,5 +213,3 @@ KI_NATIVE extern KiTVoid KI_CALL KiPlatform_Sleep(KiTUint32 sleepMs) KI_PLATFORM
 KI_NATIVE extern KiEErrorCode KI_CALL KiPlatform_GetRandomBytes(KiTSize sizeInBytes, KiTVoid *resPtr) KI_PLATFORM;
 /** \} */
 /** \endcond */
-
-

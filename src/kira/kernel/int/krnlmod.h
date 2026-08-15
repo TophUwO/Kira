@@ -49,5 +49,3 @@ KI_NATIVE typedef struct KiSModuleInfo {
     KiEErrorCode (KI_CALL *mp_fnInit)(KiTVoid *extraParam);
     KiEErrorCode (KI_CALL *mp_fnUninit)(KiTVoid *extraParam);
 } KiSModuleInfo;
-
-

@@ -300,5 +300,3 @@ KiTVoid const *KI_CALL KiGetBufferPointer(KiSBuffer const *bufPtr, KiTOffset off
 
     return (KiTByte *)bufPtr->mp_buffer + off;
 }
-
-

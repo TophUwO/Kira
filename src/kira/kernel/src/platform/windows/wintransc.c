@@ -12,9 +12,9 @@
  * \file  wintransc.c
  * \brief implements the to-native-string conversions for the Windows(R) platform
  */
+
+
 #if (defined KI_PLATFORM_WINDOWS)
-
-
 /* Windows includes */
 #include <windows.h>
 
@@ -95,6 +95,4 @@ KiTChar *KI_CALL KiPlatform_CreateFromNativeEncoding(KiTVoid const *srcPtr, KiTI
     *memSizePtr = reqSize * sizeof *cvtRes;
     return cvtRes;
 }
-
-
 #endif /* (defined KI_PLATFORM_WINDOWS) */

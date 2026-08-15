@@ -367,5 +367,3 @@ KI_KRNLMOD_DEFINE(RuntimeConfiguration) {
     .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(RuntimeConfiguration)
 };
 /** \endcond */
-
-

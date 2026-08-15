@@ -75,5 +75,3 @@ KI_NATIVE extern KiTVoid const *KI_CALL KiGetBufferPointer(KiSBuffer const *bufP
 /**
  */
 KI_NATIVE extern KiTSize KI_CALL KiGetBufferSize(KiSBuffer const *bufPtr);
-
-

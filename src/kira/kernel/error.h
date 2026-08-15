@@ -42,5 +42,3 @@ KI_NATIVE KI_API KiEErrorCode KI_CALL KiNativeErrorCodeToKiraErrorCode(KiTInt32 
 /**
  */
 KI_NATIVE KI_API KiEErrorCode KI_CALL KiErrnoToKiraErrorCode(KiTInt32 errnoCode);
-
-

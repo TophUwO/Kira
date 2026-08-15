@@ -20,14 +20,14 @@
 #include <errno.h>
 #if (defined KI_PLATFORM_LINUX)
     #include <string.h>
-#endif
+#endif /* (defined KI_PLATFORM_LINUX) */
 
 /* external/stdlib includes */
 #if (defined KI_PLATFORM_WINDOWS)
     #include <kira/kernel/ext/dirent/dirent.h>
 #else
     #include <dirent.h>
-#endif
+#endif /* (defined KI_PLATFORM_WINDOWS) */
 
 /* Kira includes */
 #include <kira/dbg.h>
@@ -384,5 +384,3 @@ KiEErrorCode KI_CALL KiGetFECLastError(KiSFileEnumerationContext const *ctxtPtr)
 
     return ctxtPtr->m_lastError;
 }
-
-

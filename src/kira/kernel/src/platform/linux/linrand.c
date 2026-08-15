@@ -12,9 +12,9 @@
  * \file  linrand.c
  * \brief implements the Linux-specific cryptographically-secure random-number generator
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <errno.h>
 
@@ -46,8 +46,4 @@ KiEErrorCode KI_CALL KiPlatform_GetRandomBytes(KiTSize sizeInBytes, KiTVoid *res
 
     return KiErr_Ok;
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

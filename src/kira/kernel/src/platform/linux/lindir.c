@@ -12,9 +12,9 @@
  * \file  lindir.c
  * \brief implements Linux-specific routines regarding directory handling
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <stdlib.h>
 
@@ -183,8 +183,4 @@ KiTBool KI_CALL KiPlatform_IsPathRelative(KiTChar const *pathStr) {
 
     return *pathStr != '/';
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

@@ -135,5 +135,3 @@ KI_API KI_NORETURN KiTVoid KI_CALL KiAbort(KiSAbortContext const *abortCtxtPtr) 
     while (KI_TRUE)
         KiPlatform_Sleep(100);
 }
-
-

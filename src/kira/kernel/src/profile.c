@@ -234,5 +234,3 @@ KI_KRNLMOD_DEFINE(ProfileManager) {
     .mp_fnUninit  = &KI_KRNLMOD_UNINITFN(ProfileManager)
 };
 /** \endcond */
-
-

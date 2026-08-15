@@ -12,9 +12,9 @@
  * \file  linenv.c
  * \brief implements the Linux-specific routines for the management of environment variables
  */
+
+
 #if (defined KI_PLATFORM_LINUX)
-
-
 /* stdlib includes */
 #include <stdlib.h>
 
@@ -65,8 +65,4 @@ KiTBool KI_CALL KiPlatform_SetEnvironmentVariable(KiTChar const *name, KiTChar c
     /* Update the value of *name*. If *name* does not exist, it is added to the environment. */
     return setenv(name, value, KI_TRUE) != -1;
 }
-
-
-#endif /* KI_PLATFORM_LINUX */
-
-
+#endif /* (defined KI_PLATFORM_LINUX) */

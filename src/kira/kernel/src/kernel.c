@@ -17,7 +17,7 @@
 /* stdlib includes */
 #if ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS))
     #define _CRT_SECURE_NO_WARNINGS 1
-#endif
+#endif /* ((defined KI_PLATFORM_WINDOWS) && (!defined _CRT_SECURE_NO_WARNINGS)) */
 #include <stdatomic.h>
 
 #include <string.h>
@@ -126,10 +126,3 @@ KiSReturnState *KI_CALL KiGetReturnState(KiTVoid) {
 KiSRuntimeSpecification const *KI_CALL KiGetRuntimeSpecification(KiTVoid) {
     return (KiSRuntimeSpecification const *)&gl_KernelState.m_rtSpecs;
 }
-
-
-KiTVoid KI_CALL KiInvokeOnAssertHandler(KiTVoid const *extraParam) {
-    
-}
-
-
